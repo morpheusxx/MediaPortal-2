@@ -404,22 +404,18 @@ namespace MediaPortal.UI.Players.Video
 
       // Only rebuild the graph when we had a former media type (not on first run!)
       if (requireRebuild)
-      {
         _graphRebuilder.DoAsynchRebuild();
-        _bdReader.OnGraphRebuild(_changedChangedMediaType);
-      }
 
       return _changedChangedMediaType == BluRayAPI.ChangedMediaType.None ? 0 : 1;
     }
 
 
     /// <summary>
-    /// Informs the ITsReader that the graph rebuild was done.
+    /// Informs the IBDReader that the graph rebuild was done.
     /// </summary>
     protected void OnAfterGraphRebuild()
     {
-      IBDReader tsReader = (IBDReader)_fileSource;
-      tsReader.OnGraphRebuild(_changedChangedMediaType);
+      _bdReader.OnGraphRebuild(_changedChangedMediaType);
     }
 
     public int OnBDevent(BluRayAPI.BluRayEvent bluRayEvent)

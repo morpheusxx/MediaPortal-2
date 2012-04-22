@@ -292,7 +292,6 @@ namespace MediaPortal.UI.Players.Video
     {
       if (_bdReader != null)
         _bdReader.SetChapter(chapterIndex);
-      return;
     }
 
     public bool ChaptersAvailable
@@ -320,7 +319,7 @@ namespace MediaPortal.UI.Players.Video
 
     public string CurrentChapter
     {
-      get { return _chapterNames != null ? _chapterNames[_currentChapter] : null; }
+      get { return _chapterNames != null && _currentChapter < _chapterNames.Length ? _chapterNames[_currentChapter] : null; }
     }
 
     public bool IsHandlingUserInput
@@ -492,7 +491,6 @@ namespace MediaPortal.UI.Players.Video
 
         case BluRayAPI.BDEvents.Playitem:
           BluRayPlayerBuilder.LogDebug("Playitem changed to {0}", bdevent.Param);
-          EnumerateChapters();
           //if (menuState == BluRayAPI.MenuState.Root && chapters != null && _currentTitle != BLURAY_TITLE_FIRST_PLAY && _currentTitle != BLURAY_TITLE_TOP_MENU)
           //  menuItems = MenuItems.All;
           break;

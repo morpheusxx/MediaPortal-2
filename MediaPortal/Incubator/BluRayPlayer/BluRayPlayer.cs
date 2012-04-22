@@ -72,6 +72,8 @@ namespace MediaPortal.UI.Players.Video
     protected uint _currentChapter;
     protected BluRayAPI.MenuState _menuState;
     protected bool _forceTitle;
+    protected double _currentPos;
+    protected double _duration;
 
     #endregion
 
@@ -440,7 +442,8 @@ namespace MediaPortal.UI.Players.Video
 
     public int OnClockChange(long duration, long position)
     {
-      // TODO: implement code
+      _currentPos = position / 10000000.0;
+      _duration = duration / 10000000.0;
       return 0;
     }
 
@@ -649,6 +652,36 @@ namespace MediaPortal.UI.Players.Video
 
         streamInfos[i] = streamInfo;
       }
+    }
+
+    public override TimeSpan CurrentTime
+    {
+      get
+      {
+        return ToTimeSpan(_currentPos);
+      }
+      set
+      {
+        base.CurrentTime = value;
+      }
+    }
+
+    public override TimeSpan Duration
+    {
+      get
+      {
+        return ToTimeSpan(_duration);
+      }
+    }
+
+    /// <summary>
+    /// Converts a <see cref="double"/> time stamp to <see cref="TimeSpan"/>.
+    /// </summary>
+    /// <param name="timeStamp">Time stamp to convert.</param>
+    /// <returns>TimeSpan instance.</returns>
+    private static TimeSpan ToTimeSpan(double timeStamp)
+    {
+      return new TimeSpan(0, 0, 0, 0, (int)(timeStamp * 1000.0f));
     }
   }
 }

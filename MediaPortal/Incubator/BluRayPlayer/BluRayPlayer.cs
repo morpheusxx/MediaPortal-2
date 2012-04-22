@@ -406,7 +406,7 @@ namespace MediaPortal.UI.Players.Video
       if (requireRebuild)
         _graphRebuilder.DoAsynchRebuild();
 
-      return _changedChangedMediaType == BluRayAPI.ChangedMediaType.None ? 0 : 1;
+      return _changedChangedMediaType != BluRayAPI.ChangedMediaType.None && requireRebuild ? 1 : 0;
     }
 
 

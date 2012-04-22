@@ -428,6 +428,12 @@ namespace MediaPortal.UI.Players.Video
       return 0;
     }
 
+    public int OnClockChange(long duration, long position)
+    {
+      // TODO: implement code
+      return 0;
+    }
+
     /// <summary>
     /// Render BluRay OSD on video surface if available.
     /// </summary>

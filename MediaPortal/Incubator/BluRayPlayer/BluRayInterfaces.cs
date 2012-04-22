@@ -38,6 +38,9 @@ namespace MediaPortal.UI.Players.Video
 
     [PreserveSig]
     int OnOSDUpdate([Out] BluRayAPI.OSDTexture osdInfo);
+
+    [PreserveSig]
+    int OnClockChange([Out] long duration, [Out] long position);
   }
 
   [Guid("79A37017-3178-4859-8079-ECB9D546FEC2"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -90,6 +93,12 @@ namespace MediaPortal.UI.Players.Video
 
     [PreserveSig]
     int MouseMove(int x, int y);
+
+    [PreserveSig]
+    int SetVideoDecoder(int format, ref Guid decoder);
+
+    [PreserveSig]
+    int SetVC1Override(ref Guid decoder);
   }
 
   [ComImport, Guid(BluRayAPI.BDREADER_GUID)]

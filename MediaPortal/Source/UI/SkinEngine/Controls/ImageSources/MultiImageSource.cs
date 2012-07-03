@@ -40,7 +40,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
   /// </summary>
   public class MultiImageSource : MultiImageSourceBase
   {
-    protected AbstractProperty _uriSourceProperty;
+    protected AbstractProperty _imageSourceProperty;
     protected AbstractProperty _rotationProperty;
     protected AbstractProperty _decodePixelWidthProperty;
     protected AbstractProperty _decodePixelHeightProperty;
@@ -49,7 +49,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected TextureAsset _lastTexture = null;
     protected TextureAsset _currentTexture = null;
-    protected TextureAsset _nextTexture = null;
+    protected TextureImageSource _imageSource;
+
     protected bool _source = true;
 
     #region Ctor
@@ -62,7 +63,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     void Init()
     {
-      _uriSourceProperty = new SProperty(typeof(string), null);
+      _imageSourceProperty = new SProperty(typeof(object), null);
       _rotationProperty = new SProperty(typeof(RightAngledRotation), RightAngledRotation.Zero);
       _decodePixelWidthProperty = new SProperty(typeof(int), 0);
       _decodePixelHeightProperty = new SProperty(typeof(int), 0);
@@ -71,12 +72,12 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     void Attach()
     {
-      _uriSourceProperty.Attach(OnSourceChanged);
+      _imageSourceProperty.Attach(OnSourceChanged);
     }
 
     void Detach()
     {
-      _uriSourceProperty.Detach(OnSourceChanged);
+      _imageSourceProperty.Detach(OnSourceChanged);
     }
 
     public override void DeepCopy(IDeepCopyable source, ICopyManager copyManager)
@@ -84,7 +85,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       base.DeepCopy(source, copyManager);
       Detach();
       MultiImageSource mis = (MultiImageSource) source;
-      UriSource = mis.UriSource;
+      ImageSource = copyManager.GetCopy(mis.ImageSource);
       DecodePixelWidth = mis.DecodePixelWidth;
       DecodePixelHeight = mis.DecodePixelHeight;
       Thumbnail = mis.Thumbnail;
@@ -98,18 +99,18 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     #region Public properties
 
     /// <summary>
-    /// Gets or sets the path to the current image for this source. When this property is changed over time, the last image is
+    /// Gets or sets the image for this source. When this property is changed over time, the last image is
     /// merged into the next image via one of the configured transitions in <see cref="MultiImageSourceBase.Transition"/>.
     /// </summary>
-    public string UriSource
+    public object ImageSource
     {
-      get { return (string) _uriSourceProperty.GetValue(); }
-      set { _uriSourceProperty.SetValue(value); }
+      get { return _imageSourceProperty.GetValue(); }
+      set { _imageSourceProperty.SetValue(value); }
     }
 
-    public AbstractProperty UriSourceProperty
+    public AbstractProperty ImageSourceProperty
     {
-      get { return _uriSourceProperty; }
+      get { return _imageSourceProperty; }
     }
 
     public RightAngledRotation Rotation
@@ -196,19 +197,32 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       if (_source)
       {
         _source = false;
-        string uri = UriSource;
-        if (String.IsNullOrEmpty(uri))
+        _imageSource = ImageSource as TextureImageSource;
+        string uri = ImageSource as string;
+        if (_imageSource == null)
         {
           _nextTexture = null;
           if (_currentTexture != null)
             CycleTextures(RightAngledRotation.Zero);
-        }
-        else
-        {
-          _nextTexture = ContentManager.Instance.GetTexture(uri, DecodePixelWidth, DecodePixelHeight, Thumbnail);
-          _nextTexture.ThumbnailDimension = ThumbnailDimension;
+          if (string.IsNullOrEmpty(uri))
+          {
+            if (_currentTexture != null)
+              CycleTextures(null, RightAngledRotation.Zero);
+          }
+          else
+          {
+            nextTexture = ContentManager.Instance.GetTexture(uri, DecodePixelWidth, DecodePixelHeight, Thumbnail);
+            nextTexture.ThumbnailDimension = ThumbnailDimension;
+          }
         }
       }
+      // Image source allocation can be done asynchronously, so check when the TextureAsset is created.
+      if (_imageSource != null && !_imageSource.IsAllocated)
+      {
+        _imageSource.Allocate();
+        nextTexture = _imageSource.TextureAsset;
+      }
+
       // Check our previous texture is allocated. Synchronous.
       if (_lastTexture != null && !_lastTexture.IsAllocated)
         _lastTexture.Allocate();
@@ -289,12 +303,28 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected void OnSourceChanged(AbstractProperty prop, object oldValue)
     {
+      IObservable oldSource = oldValue as IObservable;
+      if (oldSource != null)
+        oldSource.ObjectChanged -= OnImageSourceChanged;
+
+      IObservable newSource = ImageSource as IObservable;
+      if (newSource != null)
+        newSource.ObjectChanged += OnImageSourceChanged;
+
+      _source = true;
+    }
+
+    private void OnImageSourceChanged(IObservable observable)
+    {
       _source = true;
     }
 
     protected override void FreeData()
     {
       base.FreeData();
+      IDisposable disposable = ImageSource as IDisposable;
+      if (disposable != null)
+        disposable.Dispose();
       _lastTexture = null;
       _currentTexture = null;
       _nextTexture = null;

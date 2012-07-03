@@ -45,6 +45,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     protected AbstractProperty _decodePixelWidthProperty;
     protected AbstractProperty _decodePixelHeightProperty;
     protected AbstractProperty _thumbnailDimensionProperty;
+    protected AbstractProperty _waitProperty;
     protected bool _thumbnail = false;
 
     protected TextureAsset _lastTexture = null;
@@ -68,6 +69,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       _decodePixelWidthProperty = new SProperty(typeof(int), 0);
       _decodePixelHeightProperty = new SProperty(typeof(int), 0);
       _thumbnailDimensionProperty = new SProperty(typeof(int), 0);
+      _waitProperty = new SProperty(typeof(bool), true);
     }
 
     void Attach()
@@ -90,6 +92,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       DecodePixelHeight = mis.DecodePixelHeight;
       Thumbnail = mis.Thumbnail;
       ThumbnailDimension = mis.ThumbnailDimension;
+      Wait = mis.Wait;
       Attach();
       FreeData();
     }
@@ -111,6 +114,20 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     public AbstractProperty ImageSourceProperty
     {
       get { return _imageSourceProperty; }
+    }
+
+    /// <summary>
+    /// Gets or sets an indicator if the transition effect needs to be finished before changing image source to next one.
+    /// </summary>
+    public bool Wait
+    {
+      get { return (bool) _waitProperty.GetValue(); }
+      set { _waitProperty.SetValue(value); }
+    }
+
+    public AbstractProperty WaitProperty
+    {
+      get { return _waitProperty; }
     }
 
     public RightAngledRotation Rotation
@@ -234,8 +251,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       {
         if (!_nextTexture.LoadFailed)
           _nextTexture.AllocateAsync();
-        if (!_transitionActive && _nextTexture.IsAllocated)
-          CycleTextures(RightAngledRotation.Zero);
+        if ((!_transitionActive || !Wait) && _nextTexture.IsAllocated)
+          CycleTextures(_nextTexture, Rotation);
       }
     }
 

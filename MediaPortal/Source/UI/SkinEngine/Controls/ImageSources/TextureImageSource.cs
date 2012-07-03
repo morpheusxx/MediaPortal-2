@@ -24,6 +24,7 @@
 
 using System.Drawing;
 using MediaPortal.Common.General;
+using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
@@ -47,6 +48,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     protected AbstractProperty _borderColorProperty;
     protected AbstractProperty _effectProperty;
     protected AbstractProperty _effectTimerProperty;
+    protected TextureAsset _texture;
 
     protected PrimitiveBuffer _primitiveBuffer;
     protected ImageContext _imageContext = new ImageContext();
@@ -102,6 +104,11 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     #endregion
 
     #region Public properties
+
+    public TextureAsset TextureAsset
+    {
+      get { return _texture; }
+    }
 
     /// <summary>
     /// Gets or sets the color of the border around images to small for the frame.

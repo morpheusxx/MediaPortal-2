@@ -49,7 +49,6 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     protected AbstractProperty _decodePixelWidthProperty;
     protected AbstractProperty _decodePixelHeightProperty;
 
-    protected TextureAsset _texture = null;
     protected AbstractProperty _thumbnailDimensionProperty;
 
     protected bool _thumbnail = false;

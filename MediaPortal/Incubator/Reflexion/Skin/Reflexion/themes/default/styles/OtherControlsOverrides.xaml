@@ -14,27 +14,7 @@
   <Model x:Key="BackgroundManagerModel" Id="1F4CAEDE-7108-483d-B5C8-18BEC7EC58E5"/>
 
   <!-- default brush used to paint the background of a page/window -->
-  <ResourceWrapper x:Key="BackgroundBrush">
-    <VisualBrush AnimationEnabled="True">
-      <VisualBrush.Animation>
-        <animation:KenBurnsAnimator Duration="20" /> <!-- Temporaty longer duration to have enough time to test effect in Series -->
-      </VisualBrush.Animation>
-      <VisualBrush.Visual>
-        <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-          <Grid.Resources>
-            <Model x:Key="FanArtBackgroundModel" Id="8F42C8E9-E8A3-475C-A50A-99E1E644DC91"/>
-          </Grid.Resources>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-          </Grid.ColumnDefinitions>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-          </Grid.RowDefinitions>
-          <Image VerticalAlignment="Stretch" Stretch="Uniform" Grid.Row="0" Grid.Column="0" Source="Reflex.jpg"/>
-        </Grid>
-      </VisualBrush.Visual>
-    </VisualBrush>
-  </ResourceWrapper>
+  <ResourceWrapper x:Key="BackgroundBrush"/>
   
   <!-- Scaling constants -->
   <ResourceWrapper x:Key="HomeMenuItemScaleMax"        Resource="2.0" />

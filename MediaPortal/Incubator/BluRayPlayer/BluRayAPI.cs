@@ -357,7 +357,7 @@ namespace MediaPortal.UI.Players.Video
     }
 
     [Flags]
-    public enum MediaTypeChange
+    public enum ChangedMediaType
     {
       None = 0,
       Video = 1,

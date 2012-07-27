@@ -63,7 +63,7 @@ namespace MediaPortal.UI.Players.Video
 
     protected readonly DeviceEx _device = SkinContext.Device;
 
-    protected BluRayAPI.MediaTypeChange _changedMediaType;
+    protected BluRayAPI.ChangedMediaType _changedChangedMediaType;
     protected BluRayAPI.BluRayStreamFormats _currentVideoFormat;
     protected BluRayAPI.BluRayStreamFormats _currentAudioFormat;
 
@@ -155,7 +155,7 @@ namespace MediaPortal.UI.Players.Video
       f.Load(strFile, null);
 
       // Init GraphRebuilder
-      _graphRebuilder = new GraphRebuilder(_graphBuilder, _fileSource, SyncObj) { PlayerName = PlayerTitle };
+      _graphRebuilder = new GraphRebuilder(_graphBuilder, _fileSource, OnAfterGraphRebuild) { PlayerName = PlayerTitle };
 
       // Get the complete BD title information (including all streams, chapters...)
       _titleInfos = GetTitleInfoCollection(_bdReader);
@@ -381,14 +381,14 @@ namespace MediaPortal.UI.Players.Video
       BluRayPlayerBuilder.LogInfo("OnMediaTypeChanged() - {0} ({1} fps), {2}", videoFormat, videoRate, audioFormat);
       bool requireRebuild = false;
 
-      _changedMediaType = BluRayAPI.MediaTypeChange.None;
+      _changedChangedMediaType = BluRayAPI.ChangedMediaType.None;
 
       if (videoFormat != _currentVideoFormat)
       {
         if (_currentVideoFormat != BluRayAPI.BluRayStreamFormats.Unknown)
           requireRebuild = true;
 
-        _changedMediaType |= BluRayAPI.MediaTypeChange.Video;
+        _changedChangedMediaType |= BluRayAPI.ChangedMediaType.Video;
         _currentVideoFormat = videoFormat;
       }
 
@@ -397,7 +397,7 @@ namespace MediaPortal.UI.Players.Video
         if (_currentAudioFormat != BluRayAPI.BluRayStreamFormats.Unknown)
           requireRebuild = true;
 
-        _changedMediaType |= BluRayAPI.MediaTypeChange.Audio;
+        _changedChangedMediaType |= BluRayAPI.ChangedMediaType.Audio;
         _currentAudioFormat = audioFormat;
       }
 
@@ -405,10 +405,20 @@ namespace MediaPortal.UI.Players.Video
       if (requireRebuild)
       {
         _graphRebuilder.DoAsynchRebuild();
-        _bdReader.OnGraphRebuild((int)_changedMediaType);
+        _bdReader.OnGraphRebuild(_changedChangedMediaType);
       }
 
-      return _changedMediaType == BluRayAPI.MediaTypeChange.None ? 0 : 1;
+      return _changedChangedMediaType == BluRayAPI.ChangedMediaType.None ? 0 : 1;
+    }
+
+
+    /// <summary>
+    /// Informs the ITsReader that the graph rebuild was done.
+    /// </summary>
+    protected void OnAfterGraphRebuild()
+    {
+      IBDReader tsReader = (IBDReader)_fileSource;
+      tsReader.OnGraphRebuild(_changedChangedMediaType);
     }
 
     public int OnBDevent(BluRayAPI.BluRayEvent bluRayEvent)

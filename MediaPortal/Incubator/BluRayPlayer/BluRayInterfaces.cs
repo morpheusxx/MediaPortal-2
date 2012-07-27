@@ -77,7 +77,7 @@ namespace MediaPortal.UI.Players.Video
     int FreeTitleInfo(IntPtr info);
 
     [PreserveSig]
-    int OnGraphRebuild(int info);
+    int OnGraphRebuild(BluRayAPI.ChangedMediaType info);
 
     [PreserveSig]
     int ForceTitleBasedPlayback(bool force, UInt32 title);

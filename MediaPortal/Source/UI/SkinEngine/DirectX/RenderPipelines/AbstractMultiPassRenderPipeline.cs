@@ -36,7 +36,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     protected const string GLOBAL_RENDER_SURFACE_ASSET_KEY = "SkinEngine::GlobalRenderSurface";
     protected RenderTargetAsset _renderTarget = null;
     protected Surface _backbuffer = null;
-    protected Rectangle _renderRect;
     protected Rectangle _firstFrameTargetRect;
     protected Rectangle _secondFrameTargetRect;
 
@@ -46,11 +45,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
       _backbuffer = GraphicsDevice.Device.GetRenderTarget(0);
       _renderTarget = ContentManager.Instance.GetRenderTarget(GLOBAL_RENDER_SURFACE_ASSET_KEY);
       _renderTarget.AllocateRenderTarget(GraphicsDevice.Width, GraphicsDevice.Height);
-      _renderRect = new Rectangle(0, 0, GraphicsDevice.Width, GraphicsDevice.Height);
       GraphicsDevice.Device.SetRenderTarget(0, _renderTarget.Surface);
-      GraphicsDevice.RenderPass = RenderPassType.SingleOrFirstPass;
-      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.Black, 1.0f, 0);
-      GraphicsDevice.Device.BeginScene();
+      base.BeginRender();
     }
 
     public override void Render()
@@ -58,11 +54,9 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
       // First frame.
       base.Render();
       CopyFirstFrameToBackbuffer();
-      GraphicsDevice.Device.EndScene();
 
       // Second frame.
       GraphicsDevice.RenderPass = RenderPassType.SecondPass;
-      GraphicsDevice.Device.BeginScene();
       base.Render();
       CopySecondFrameToBackbuffer();
     }

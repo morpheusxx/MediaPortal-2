@@ -145,7 +145,10 @@ namespace MediaPortal.UI.Players.Video
           _aspectRatio.Width = arx;
           _aspectRatio.Height = ary;
 
-          using (Surface surf = new Surface(dwSurface))
+          Surface surf = new Surface(dwSurface); // No using / Dispose here as we did not create this surface (done by EVR!)
+          SurfaceDescription surfaceDesc = _surface == null ? new SurfaceDescription() : _surface.Description;
+          SurfaceDescription surfDesc = surf.Description;
+          if (surfaceDesc.Width != surfDesc.Width || surfaceDesc.Height != surfDesc.Height)
           {
             if (_surface != null)
               _surface.Dispose();

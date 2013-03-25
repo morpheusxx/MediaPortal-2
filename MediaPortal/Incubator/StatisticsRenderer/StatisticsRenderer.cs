@@ -251,29 +251,27 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     private void DrawTearingTest()
     {
-      using (Surface surface = _device.GetRenderTarget(0))
-      {
-        int left = _tearingPos;
-        int width = surface.Description.Width;
-        int height = surface.Description.Height;
-        Size size = new Size(4, height);
-        Point topLeft = new Point(left, 0);
-        if (topLeft.X + size.Width >= width)
-          topLeft.X = 0;
+      Surface surface = _device.GetRenderTarget(0);
+      int left = _tearingPos;
+      int width = surface.Description.Width;
+      int height = surface.Description.Height;
+      Size size = new Size(4, height);
+      Point topLeft = new Point(left, 0);
+      if (topLeft.X + size.Width >= width)
+        topLeft.X = 0;
 
-        Rectangle rcTearing = new Rectangle(topLeft, size);
+      Rectangle rcTearing = new Rectangle(topLeft, size);
 
-        _device.ColorFill(surface, rcTearing, new Color4(255, 255, 255, 255));
+      _device.ColorFill(surface, rcTearing, new Color4(255, 255, 255, 255));
 
-        topLeft = new Point((rcTearing.Right + 15) % width, 0);
-        if (topLeft.X + size.Width >= width)
-          topLeft.X = 0;
+      topLeft = new Point((rcTearing.Right + 15)%width, 0);
+      if (topLeft.X + size.Width >= width)
+        topLeft.X = 0;
 
-        rcTearing = new Rectangle(topLeft, size);
-        _device.ColorFill(surface, rcTearing, new Color4(255, 100, 100, 100));
+      rcTearing = new Rectangle(topLeft, size);
+      _device.ColorFill(surface, rcTearing, new Color4(255, 100, 100, 100));
 
-        _tearingPos = (_tearingPos + 7) % width;
-      }
+      _tearingPos = (_tearingPos + 7)%width;
     }
 
     private void DrawText(string text)

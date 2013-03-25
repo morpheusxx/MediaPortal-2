@@ -331,8 +331,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
           TryDispose(ref _texture);
           _texture = new Texture(device, desc.Width, desc.Height, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
         }
-        using (Surface target = _texture.GetSurfaceLevel(0))
-          device.StretchRectangle(playerSurface, target, TextureFilter.None);
+        Surface target = _texture.GetSurfaceLevel(0);
+        device.StretchRectangle(playerSurface, target, TextureFilter.None);
       }
       return _imageContext.StartRender(renderContext, _scaledVideoSize, _texture, _videoTextureClip, BorderColor.ToArgb(), _lastFrameData);
     }

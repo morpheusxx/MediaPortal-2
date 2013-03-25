@@ -1777,23 +1777,23 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       }
 
       // Get the current backbuffer
-      using (Surface backBuffer = GraphicsDevice.Device.GetRenderTarget(0))
-      {
-        // Change the rendertarget to the render texture
-        GraphicsDevice.Device.SetRenderTarget(0, renderSurface);
+      Surface backBuffer = GraphicsDevice.Device.GetRenderTarget(0);
 
-        // Fill the background of the texture with an alpha value of 0
-        GraphicsDevice.Device.Clear(ClearFlags.Target, Color.FromArgb(0, Color.Black), 1.0f, 0);
+      // Change the rendertarget to the render texture
+      GraphicsDevice.Device.SetRenderTarget(0, renderSurface);
 
-        // Render the control into the given texture
-        RenderOverride(renderContext);
+      // Fill the background of the texture with an alpha value of 0
+      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.FromArgb(0, Color.Black), 1.0f, 0);
 
-        // Render opacity brush so that it modifies the alpha channel in the target
-        RenderOpacityBrush(renderContext);
+      // Render the control into the given texture
+      RenderOverride(renderContext);
 
-        // Restore the backbuffer
-        GraphicsDevice.Device.SetRenderTarget(0, backBuffer);
-      }
+      // Render opacity brush so that it modifies the alpha channel in the target
+      RenderOpacityBrush(renderContext);
+
+      // Restore the backbuffer
+      GraphicsDevice.Device.SetRenderTarget(0, backBuffer);
+
       // Restore standard transformation matrix
       if (oldTransform.HasValue)
         GraphicsDevice.FinalTransform = oldTransform.Value;

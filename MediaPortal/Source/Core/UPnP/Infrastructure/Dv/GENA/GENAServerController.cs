@@ -28,7 +28,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
+using Griffin.WebServer;
 using MediaPortal.Utilities;
 using UPnP.Infrastructure.Dv.DeviceTree;
 using UPnP.Infrastructure.Utils.HTTP;
@@ -300,7 +301,7 @@ namespace UPnP.Infrastructure.Dv.GENA
     /// <param name="context">The HTTP client context of the specified <paramref name="request"/>.</param>
     /// <param name="config">The UPnP endpoint over that the HTTP request was received.</param>
     /// <returns><c>true</c> if the request could be handled and a HTTP response was sent, else <c>false</c>.</returns>
-    public bool HandleHTTPRequest(IHttpRequest request, IHttpClientContext context, EndpointConfiguration config)
+    public bool HandleHTTPRequest(IRequest request, IHttpContext context, EndpointConfiguration config)
     {
       if (request.Method == "SUBSCRIBE")
       { // SUBSCRIBE events
@@ -308,13 +309,13 @@ namespace UPnP.Infrastructure.Dv.GENA
         DvService service;
         if (config.EventSubPathsToServices.TryGetValue(pathAndQuery, out service))
         {
-          IHttpResponse response = request.CreateResponse(context);
-          string httpVersion = request.HttpVersion;
-          string userAgentStr = request.Headers.Get("USER-AGENT");
-          string callbackURLsStr = request.Headers.Get("CALLBACK");
-          string nt = request.Headers.Get("NT");
-          string sid = request.Headers.Get("SID");
-          string timeoutStr = request.Headers.Get("TIMEOUT");
+          IResponse response = context.Response;
+          string httpVersion = request.ProtocolVersion;
+          string userAgentStr = request.Headers["USER-AGENT"].Value;
+          string callbackURLsStr = request.Headers["CALLBACK"].Value;
+          string nt = request.Headers["NT"].Value;
+          string sid = request.Headers["SID"].Value;
+          string timeoutStr = request.Headers["TIMEOUT"].Value;
           int timeout = UPnPConsts.GENA_DEFAULT_SUBSCRIPTION_TIMEOUT;
           ICollection<string> callbackURLs = null;
           if ((!string.IsNullOrEmpty(timeoutStr) && (!timeoutStr.StartsWith("Second-") ||
@@ -322,15 +323,13 @@ namespace UPnP.Infrastructure.Dv.GENA
               (!string.IsNullOrEmpty(callbackURLsStr) &&
               !TryParseCallbackURLs(callbackURLsStr, out callbackURLs)))
           {
-            response.Status = HttpStatusCode.BadRequest;
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.BadRequest;
             return true;
           }
           if (!string.IsNullOrEmpty(sid) && (callbackURLs != null || !string.IsNullOrEmpty(nt)))
           {
-            response.Status = HttpStatusCode.BadRequest;
-            response.Reason = "Incompatible Header Fields";
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.BadRequest;
+            response.StatusDescription = "Incompatible Header Fields";
             return true;
           }
           if (callbackURLs != null && !string.IsNullOrEmpty(nt))
@@ -345,8 +344,7 @@ namespace UPnP.Infrastructure.Dv.GENA
                 int minorVersion;
                 if (!ParserHelper.ParseUserAgentUPnP1MinorVersion(userAgentStr, out minorVersion))
                 {
-                  response.Status = HttpStatusCode.BadRequest;
-                  response.Send();
+                  response.StatusCode = (int) HttpStatusCode.BadRequest;
                   return true;
                 }
                 subscriberSupportsUPnP11 = minorVersion >= 1;
@@ -355,41 +353,36 @@ namespace UPnP.Infrastructure.Dv.GENA
             catch (Exception e)
             {
               UPnPConfiguration.LOGGER.Warn("GENAServerController: Error in event subscription", e);
-              response.Status = HttpStatusCode.BadRequest;
-              response.Send();
+              response.StatusCode = (int) HttpStatusCode.BadRequest;
               return true;
             }
             if (service.HasComplexStateVariables && !subscriberSupportsUPnP11)
             {
-              response.Status = HttpStatusCode.ServiceUnavailable;
-              response.Send();
+              response.StatusCode = (int) HttpStatusCode.ServiceUnavailable;
               return true;
             }
             bool validURLs = callbackURLs.All(url => url.StartsWith("http://"));
             if (nt != "upnp:event" || !validURLs)
             {
-              response.Status = HttpStatusCode.PreconditionFailed;
-              response.Reason = "Precondition Failed";
-              response.Send();
+              response.StatusCode = (int) HttpStatusCode.PreconditionFailed;
+              response.StatusDescription = "Precondition Failed";
               return true;
             }
             DateTime date;
             if (Subscribe(config, service, callbackURLs, httpVersion, subscriberSupportsUPnP11, ref timeout,
                 out date, out sid))
             {
-              response.Status = HttpStatusCode.OK;
+              response.StatusCode = (int) HttpStatusCode.OK;
               response.AddHeader("DATE", date.ToUniversalTime().ToString("R"));
               response.AddHeader("SERVER", UPnPConfiguration.UPnPMachineInfoHeader);
               response.AddHeader("SID", sid);
               response.AddHeader("CONTENT-LENGTH", "0");
               response.AddHeader("TIMEOUT", "Second-"+timeout);
-              response.Send();
               SendInitialEventNotification(sid);
               return true;
             }
-            response.Status = HttpStatusCode.ServiceUnavailable;
-            response.Reason = "Unable to accept renewal"; // See (DevArch), table 4-4
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.ServiceUnavailable;
+            response.StatusDescription = "Unable to accept renewal"; // See (DevArch), table 4-4
             return true;
           }
           if (!string.IsNullOrEmpty(sid))
@@ -397,18 +390,16 @@ namespace UPnP.Infrastructure.Dv.GENA
             DateTime date;
             if (RenewSubscription(config, sid, ref timeout, out date))
             {
-              response.Status = HttpStatusCode.OK;
+              response.StatusCode = (int) HttpStatusCode.OK;
               response.AddHeader("DATE", date.ToUniversalTime().ToString("R"));
               response.AddHeader("SERVER", UPnPConfiguration.UPnPMachineInfoHeader);
               response.AddHeader("SID", sid);
               response.AddHeader("CONTENT-LENGTH", "0");
               response.AddHeader("TIMEOUT", "Second-"+timeout);
-              response.Send();
               return true;
             }
-            response.Status = HttpStatusCode.ServiceUnavailable;
-            response.Reason = "Unable to accept renewal";
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.ServiceUnavailable;
+            response.StatusDescription = "Unable to accept renewal";
             return true;
           }
         }
@@ -419,26 +410,23 @@ namespace UPnP.Infrastructure.Dv.GENA
         DvService service;
         if (config.EventSubPathsToServices.TryGetValue(pathAndQuery, out service))
         {
-          IHttpResponse response = request.CreateResponse(context);
-          string sid = request.Headers.Get("SID");
-          string callbackURL = request.Headers.Get("CALLBACK");
-          string nt = request.Headers.Get("NT");
+          IResponse response = context.Response;
+          string sid = request.Headers["SID"].Value;
+          string callbackURL = request.Headers["CALLBACK"].Value;
+          string nt = request.Headers["NT"].Value;
           if (string.IsNullOrEmpty(sid) || !string.IsNullOrEmpty(callbackURL) || !string.IsNullOrEmpty(nt))
           {
-            response.Status = HttpStatusCode.BadRequest;
-            response.Reason = "Incompatible Header Fields";
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.BadRequest;
+            response.StatusDescription = "Incompatible Header Fields";
             return true;
           }
           if (Unsubscribe(config, sid))
           {
-            response.Status = HttpStatusCode.OK;
-            response.Send();
+            response.StatusCode = (int) HttpStatusCode.OK;
             return true;
           }
-          response.Status = HttpStatusCode.PreconditionFailed;
-          response.Reason = "Precondition Failed";
-          response.Send();
+          response.StatusCode = (int) HttpStatusCode.PreconditionFailed;
+          response.StatusDescription = "Precondition Failed";
           return true;
         }
       }

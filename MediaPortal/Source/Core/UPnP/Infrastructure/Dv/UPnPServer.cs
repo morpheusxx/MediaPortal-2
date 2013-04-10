@@ -25,21 +25,16 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
-using HttpServer;
+using Griffin.WebServer;
 using MediaPortal.Utilities.Exceptions;
 using UPnP.Infrastructure.Dv.DeviceTree;
 using UPnP.Infrastructure.Dv.GENA;
-using UPnP.Infrastructure.Dv.SOAP;
 using UPnP.Infrastructure.Dv.SSDP;
 using UPnP.Infrastructure.Utils;
-using HttpListener=HttpServer.HttpListener;
 
 namespace UPnP.Infrastructure.Dv
 {
@@ -102,15 +97,6 @@ namespace UPnP.Infrastructure.Dv
       }
     }
 
-    private void OnHttpListenerRequestReceived(object sender, RequestEventArgs e)
-    {
-      IHttpClientContext context = (IHttpClientContext) sender;
-      lock (_serverData.SyncObj)
-        if (!_serverData.IsActive)
-          return;
-      HandleHTTPRequest_NoLock(context, e.Request);
-    }
-
     #endregion
 
     /// <summary>
@@ -171,12 +157,15 @@ namespace UPnP.Infrastructure.Dv
 
         if (UPnPConfiguration.USE_IPV4)
         {
-          _serverData.HTTPListenerV4 = HttpListener.Create(IPAddress.Any, 0);
-          _serverData.HTTPListenerV4.RequestReceived += OnHttpListenerRequestReceived;
+          var moduleManager = new ModuleManager();
+          var upnpModule = new UPnPModule(_serverData);
+          moduleManager.Add(upnpModule);
           try
           {
-            _serverData.HTTPListenerV4.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv4 isn't installed
-            _serverData.HTTP_PORTv4 = _serverData.HTTPListenerV4.LocalEndpoint.Port;
+            var server = new HttpServer(moduleManager);
+            server.Start(IPAddress.Any, 0); // Might fail if IPv4 isn't installed
+            _serverData.HTTPListenerV4 = server;
+            _serverData.HTTP_PORTv4 = ((IPEndPoint) _serverData.HTTPListenerV4.Server.Listener.LocalEndPoint).Port;
             UPnPConfiguration.LOGGER.Info("UPnP server: HTTP listener for IPv4 protocol started at port {0}", _serverData.HTTP_PORTv4);
           }
           catch (SocketException e)
@@ -195,12 +184,15 @@ namespace UPnP.Infrastructure.Dv
 
         if (UPnPConfiguration.USE_IPV6)
         {
-          _serverData.HTTPListenerV6 = HttpListener.Create(IPAddress.IPv6Any, 0); // Might fail if IPv6 isn't installed
-          _serverData.HTTPListenerV6.RequestReceived += OnHttpListenerRequestReceived;
+          var moduleManager = new ModuleManager();
+          var upnpModule = new UPnPModule(_serverData);
+          moduleManager.Add(upnpModule);
           try
           {
-            _serverData.HTTPListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE);
-            _serverData.HTTP_PORTv6 = _serverData.HTTPListenerV6.LocalEndpoint.Port;
+            var server = new HttpServer(moduleManager);
+            server.Start(IPAddress.IPv6Any, 0); // Might fail if IPv6 isn't installed
+            _serverData.HTTPListenerV6 = server;
+            _serverData.HTTP_PORTv6 = ((IPEndPoint) _serverData.HTTPListenerV6.Server.Listener.LocalEndPoint).Port;
             UPnPConfiguration.LOGGER.Info("UPnP server: HTTP listener for IPv6 protocol started at port {0}", _serverData.HTTP_PORTv6);
           }
           catch (SocketException e)
@@ -271,165 +263,14 @@ namespace UPnP.Infrastructure.Dv
       _serverData.GENAController.Close();
       _serverData.SSDPController.Close();
       if (_serverData.HTTPListenerV4 != null)
-        _serverData.HTTPListenerV4.Stop();
+        _serverData.HTTPListenerV4.Server.Stop();
       if (_serverData.HTTPListenerV6 != null)
-        _serverData.HTTPListenerV6.Stop();
+        _serverData.HTTPListenerV6.Server.Stop();
       lock (_serverData.SyncObj)
         _serverData.UPnPEndPoints.Clear();
     }
 
     #region Protected methods
-
-    private static CultureInfo GetFirstCultureOrDefault(string cultureList, CultureInfo defaultCulture)
-    {
-      if (string.IsNullOrEmpty(cultureList))
-        return defaultCulture;
-      int index = cultureList.IndexOf(',');
-      if (index > -1)
-        try
-        {
-          return CultureInfo.GetCultureInfo(cultureList.Substring(0, index));
-        }
-        catch (ArgumentException) { }
-      return defaultCulture;
-    }
-
-    /// <summary>
-    /// Handles all kinds of HTTP over TCP requests - Description, Control and Event subscriptions.
-    /// </summary>
-    /// <param name="context">HTTP client context of the current request.</param>
-    /// <param name="request">HTTP request to handle.</param>
-    protected void HandleHTTPRequest_NoLock(IHttpClientContext context, IHttpRequest request)
-    {
-      Uri uri = request.Uri;
-      string hostName = uri.Host;
-      string pathAndQuery = uri.LocalPath; // Unfortunately, Uri.PathAndQuery doesn't decode characters like '{' and '}', so we use the Uri.LocalPath property
-      try
-      {
-        DvService service;
-        ICollection<EndpointConfiguration> endpoints;
-        lock (_serverData.SyncObj)
-          endpoints = _serverData.UPnPEndPoints;
-        foreach (EndpointConfiguration config in endpoints)
-        {
-          if (!NetworkHelper.HostNamesEqual(hostName, NetworkHelper.IPAddrToHostName(config.EndPointIPAddress)))
-            continue;
-
-          // Common check for supported encodings
-          string acceptEncoding = request.Headers.Get("ACCEPT-ENCODING") ?? string.Empty;
-
-          // Handle different HTTP methods here
-          if (request.Method == "GET")
-          { // GET of descriptions
-            if (pathAndQuery.StartsWith(config.DescriptionPathBase))
-            {
-              string acceptLanguage = request.Headers.Get("ACCEPT-LANGUAGE");
-              CultureInfo culture = GetFirstCultureOrDefault(acceptLanguage, CultureInfo.InvariantCulture);
-
-              string description = null;
-              DvDevice rootDevice;
-              lock (_serverData.SyncObj)
-                if (config.RootDeviceDescriptionPathsToRootDevices.TryGetValue(pathAndQuery, out rootDevice))
-                  description = rootDevice.BuildRootDeviceDescription(_serverData, config, culture);
-                else if (config.SCPDPathsToServices.TryGetValue(pathAndQuery, out service))
-                  description = service.BuildSCPDDocument(config, _serverData);
-              if (description != null)
-              {
-                IHttpResponse response = request.CreateResponse(context);
-                response.Status = HttpStatusCode.OK;
-                response.ContentType = "text/xml; charset=utf-8";
-                if (!string.IsNullOrEmpty(acceptLanguage))
-                  response.AddHeader("CONTENT-LANGUAGE", culture.ToString());
-                using (MemoryStream responseStream = new MemoryStream(UPnPConsts.UTF8_NO_BOM.GetBytes(description)))
-                  CompressionHelper.WriteCompressedStream(acceptEncoding, response, responseStream);
-                SafeSendResponse(response);
-                return;
-              }
-            }
-          }
-          else if (request.Method == "POST")
-          { // POST of control messages
-            if (config.ControlPathsToServices.TryGetValue(pathAndQuery, out service))
-            {
-              string contentType = request.Headers.Get("CONTENT-TYPE");
-              string userAgentStr = request.Headers.Get("USER-AGENT");
-              IHttpResponse response = request.CreateResponse(context);
-              int minorVersion;
-              if (string.IsNullOrEmpty(userAgentStr))
-                minorVersion = 0;
-              else if (!ParserHelper.ParseUserAgentUPnP1MinorVersion(userAgentStr, out minorVersion))
-              {
-                response.Status = HttpStatusCode.BadRequest;
-                SafeSendResponse(response);
-                return;
-              }
-              string mediaType;
-              Encoding encoding;
-              if (!EncodingUtils.TryParseContentTypeEncoding(contentType, Encoding.UTF8, out mediaType, out encoding))
-                throw new ArgumentException("Unable to parse content type");
-              if (mediaType != "text/xml")
-              { // As specified in (DevArch), 3.2.1
-                response.Status = HttpStatusCode.UnsupportedMediaType;
-                SafeSendResponse(response);
-                return;
-              }
-              response.AddHeader("DATE", DateTime.Now.ToUniversalTime().ToString("R"));
-              response.AddHeader("SERVER", UPnPConfiguration.UPnPMachineInfoHeader);
-              response.AddHeader("CONTENT-TYPE", "text/xml; charset=\"utf-8\"");
-              string result;
-              HttpStatusCode status;
-              try
-              {
-                CallContext callContext = new CallContext(request, context, config);
-                status = SOAPHandler.HandleRequest(service, request.Body, encoding, minorVersion >= 1, callContext, out result);
-              }
-              catch (Exception e)
-              {
-                UPnPConfiguration.LOGGER.Warn("Action invocation failed", e);
-                result = SOAPHandler.CreateFaultDocument(501, "Action failed");
-                status = HttpStatusCode.InternalServerError;
-              }
-              response.Status = status;
-              using (MemoryStream responseStream = new MemoryStream(encoding.GetBytes(result)))
-                CompressionHelper.WriteCompressedStream(acceptEncoding, response, responseStream);
-              SafeSendResponse(response);
-              return;
-            }
-          }
-          else if (request.Method == "SUBSCRIBE" || request.Method == "UNSUBSCRIBE")
-          {
-            GENAServerController gsc;
-            lock (_serverData.SyncObj)
-              gsc = _serverData.GENAController;
-            if (gsc.HandleHTTPRequest(request, context, config))
-              return;
-          }
-          else
-          {
-            context.Respond(HttpHelper.HTTP11, HttpStatusCode.MethodNotAllowed, null);
-            return;
-          }
-        }
-        // Url didn't match
-        context.Respond(HttpHelper.HTTP11, HttpStatusCode.NotFound, null);
-      }
-      catch (Exception e)
-      {
-        UPnPConfiguration.LOGGER.Error("UPnPServer: Error handling HTTP request '{0}'", e, uri);
-        IHttpResponse response = request.CreateResponse(context);
-        response.Status = HttpStatusCode.InternalServerError;
-        SafeSendResponse(response);
-      }
-    }
-
-    protected void SafeSendResponse(IHttpResponse response)
-    {
-      try
-      {
-        response.Send();
-      }
-      catch (IOException) { }
-    }
 
     protected void GenerateObjectURLs(EndpointConfiguration config)
     {

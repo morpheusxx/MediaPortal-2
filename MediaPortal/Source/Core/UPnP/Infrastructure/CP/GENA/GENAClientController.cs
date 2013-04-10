@@ -31,7 +31,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Xml;
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
 using MediaPortal.Utilities.Exceptions;
 using MediaPortal.Utilities.Network;
 using UPnP.Infrastructure.Common;
@@ -451,13 +451,13 @@ namespace UPnP.Infrastructure.CP.GENA
       return request;
     }
 
-    public HttpStatusCode HandleUnicastEventNotification(IHttpRequest request)
+    public HttpStatusCode HandleUnicastEventNotification(IRequest request)
     {
-      string nt = request.Headers.Get("NT");
-      string nts = request.Headers.Get("NTS");
-      string sid = request.Headers.Get("SID");
-      string seqStr = request.Headers.Get("SEQ");
-      string contentType = request.Headers.Get("CONTENT-TYPE");
+      string nt = request.Headers["NT"].Value;
+      string nts = request.Headers["NTS"].Value;
+      string sid = request.Headers["SID"].Value;
+      string seqStr = request.Headers["SEQ"].Value;
+      string contentType = request.Headers["CONTENT-TYPE"].Value;
 
       lock (_cpData.SyncObj)
       {

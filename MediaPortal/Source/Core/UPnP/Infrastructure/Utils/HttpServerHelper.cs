@@ -23,7 +23,7 @@
 #endregion
 
 using System.Net;
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
 
 namespace UPnP.Infrastructure.Utils
 {
@@ -35,9 +35,9 @@ namespace UPnP.Infrastructure.Utils
     /// <param name="request">Http client request.</param>
     /// <returns><see cref="string"/> instance containing the client's IP address. The returned IP address can be
     /// parsed by calling <see cref="IPAddress.Parse"/>.</returns>
-    public static string GetRemoteAddress(IHttpRequest request)
+    public static string GetRemoteAddress(IRequest request)
     {
-      return request.Headers["remote_addr"];
+      return request.Headers["remote_addr"].Value;
     }
   }
 }

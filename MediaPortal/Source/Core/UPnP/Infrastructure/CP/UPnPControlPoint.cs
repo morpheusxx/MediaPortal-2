@@ -26,11 +26,12 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
+using Griffin.WebServer;
+using Griffin.WebServer.Modules;
 using MediaPortal.Utilities.Exceptions;
 using UPnP.Infrastructure.CP.DeviceTree;
 using UPnP.Infrastructure.Utils;
-using HttpListener=HttpServer.HttpListener;
 
 namespace UPnP.Infrastructure.CP
 {
@@ -71,7 +72,7 @@ namespace UPnP.Infrastructure.CP
   /// </code>
   /// </example>
   /// </remarks>
-  public class UPnPControlPoint : IDisposable
+  public class UPnPControlPoint : IWorkerModule, IDisposable
   {
     /// <summary>
     /// Size of the queue which holds open HTTP requests before they are evaluated.
@@ -108,18 +109,7 @@ namespace UPnP.Infrastructure.CP
     }
 
     #region Event handlers
-
-    private void OnHttpListenerRequestReceived(object sender, RequestEventArgs e)
-    {
-      IHttpClientContext context = (IHttpClientContext) sender;
-      lock (_cpData.SyncObj)
-      {
-        if (!_isActive)
-          return;
-        HandleHTTPRequest(context, e.Request);
-      }
-    }
-
+    
     private void OnDeviceRebooted(RootDescriptor rootdescriptor)
     {
       foreach (DeviceConnection connection in _connectedDevices.Values)
@@ -181,16 +171,16 @@ namespace UPnP.Infrastructure.CP
 
         if (UPnPConfiguration.USE_IPV4)
         {
-          _httpListenerV4 = HttpListener.Create(IPAddress.Any, 0);
-          _httpListenerV4.RequestReceived += OnHttpListenerRequestReceived;
+          var moduleManager = new ModuleManager();
+          var server = new HttpServer(moduleManager);
+          moduleManager.Add(this);
           try
           {
-            _httpListenerV4.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv4 isn't installed
-            _cpData.HttpPortV4 = _httpListenerV4.LocalEndpoint.Port;
+            server.Start(IPAddress.Any, 0); // Might fail if IPv4 isn't installed
+            // TODO: _cpData.HttpPortV4 = _serverData.HTTPListenerV4.LocalEndpoint.Port;
           }
           catch (SocketException e)
           {
-            _httpListenerV4 = null;
             _cpData.HttpPortV4 = 0;
             UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv4)", e);
           }
@@ -202,16 +192,16 @@ namespace UPnP.Infrastructure.CP
         }
         if (UPnPConfiguration.USE_IPV6)
         {
-          _httpListenerV6 = HttpListener.Create(IPAddress.IPv6Any, 0);
-          _httpListenerV6.RequestReceived += OnHttpListenerRequestReceived;
+          var moduleManager = new ModuleManager();
+          var server = new HttpServer(moduleManager);
+          moduleManager.Add(this);
           try
           {
-            _httpListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv6 isn't installed
-            _cpData.HttpPortV6 = _httpListenerV6.LocalEndpoint.Port;
+            server.Start(IPAddress.IPv6Any, 0); // Might fail if IPv6 isn't installed
+            // TODO: _cpData.HttpPortV6 = _serverData.HTTPListenerV6.LocalEndpoint.Port;
           }
           catch (SocketException e)
           {
-            _httpListenerV6 = null;
             _cpData.HttpPortV6 = 0;
             UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv6)", e);
           }
@@ -350,7 +340,7 @@ namespace UPnP.Infrastructure.CP
       }
     }
 
-    protected void HandleHTTPRequest(IHttpClientContext context, IHttpRequest request)
+    protected void HandleHTTPRequest(IHttpContext context, IRequest request)
     {
       Uri uri = request.Uri;
       string hostName = uri.Host;
@@ -367,29 +357,34 @@ namespace UPnP.Infrastructure.CP
               continue;
             if (pathAndQuery == connection.GENAClientController.EventNotificationPath)
             {
-              IHttpResponse response = request.CreateResponse(context);
-              response.Status = connection.GENAClientController.HandleUnicastEventNotification(request);
-              response.Send();
+              context.Response.StatusCode = (int) connection.GENAClientController.HandleUnicastEventNotification(request);
               return;
             }
           }
         }
         else
         {
-          context.Respond(HttpHelper.HTTP11, HttpStatusCode.MethodNotAllowed, null);
+          context.Response.StatusCode = (int) HttpStatusCode.MethodNotAllowed;
           return;
         }
         // Url didn't match
-        context.Respond(HttpHelper.HTTP11, HttpStatusCode.NotFound, null);
+        context.Response.StatusCode = (int) HttpStatusCode.NotFound;
       }
       catch (Exception) // Don't log the exception here - we don't care about not being able to send the return value to the client
       {
-        IHttpResponse response = request.CreateResponse(context);
-        response.Status = HttpStatusCode.InternalServerError;
-        response.Send();
+        context.Response.StatusCode = (int) HttpStatusCode.InternalServerError;
       }
     }
 
     #endregion
+
+    public void BeginRequest (IHttpContext context)
+    { }
+
+    public void EndRequest (IHttpContext context)
+    { }
+
+    public void HandleRequestAsync (IHttpContext context, Action<IAsyncModuleResult> callback)
+    { }
   }
 }

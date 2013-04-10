@@ -22,30 +22,31 @@
 
 #endregion
 
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
+using Griffin.WebServer;
 using UPnP.Infrastructure.Utils;
 
 namespace UPnP.Infrastructure.Dv
 {
   public class CallContext
   {
-    protected IHttpRequest _request;
-    protected IHttpClientContext _httpContext;
+    protected IRequest _request;
+    protected IHttpContext _httpContext;
     protected EndpointConfiguration _endpoint;
 
-    public CallContext(IHttpRequest request, IHttpClientContext httpContext, EndpointConfiguration endpoint)
+    public CallContext(IRequest request, IHttpContext httpContext, EndpointConfiguration endpoint)
     {
       _request = request;
       _httpContext = httpContext;
       _endpoint = endpoint;
     }
 
-    public IHttpRequest Request
+    public IRequest Request
     {
       get { return _request; }
     }
 
-    public IHttpClientContext HttpContext
+    public IHttpContext HttpContext
     {
       get { return _httpContext; }
     }

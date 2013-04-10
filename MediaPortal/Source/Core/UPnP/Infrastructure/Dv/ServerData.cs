@@ -24,7 +24,8 @@
 
 using System;
 using System.Collections.Generic;
-using HttpServer;
+using Griffin.Networking.Servers;
+using Griffin.WebServer;
 using UPnP.Infrastructure.Dv.DeviceTree;
 using UPnP.Infrastructure.Dv.GENA;
 using UPnP.Infrastructure.Dv.SSDP;
@@ -69,12 +70,12 @@ namespace UPnP.Infrastructure.Dv
     /// <summary>
     /// HTTP listener to answer description, control and eventing requests for IPv4.
     /// </summary>
-    public HttpListener HTTPListenerV4;
+    public HttpServer HTTPListenerV4;
 
     /// <summary>
     /// HTTP listener to answer description, control and eventing requests for IPv6.
     /// </summary>
-    public HttpListener HTTPListenerV6;
+    public HttpServer HTTPListenerV6;
 
     /// <summary>
     /// Port where the HTTP server is listening for IPv4.

@@ -77,6 +77,18 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Griffin.Networking, Version=0.5.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\External\Griffin.WebServer\Griffin.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="Griffin.Networking.Protocol.Http, Version=0.5.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\External\Griffin.WebServer\Griffin.Networking.Protocol.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Griffin.WebServer, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\External\Griffin.WebServer\Griffin.WebServer.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -98,6 +110,7 @@
     <Compile Include="Infrastructure\CP\Exceptions.cs" />
     <Compile Include="Infrastructure\CP\GENA\EventSubscription.cs" />
     <Compile Include="Infrastructure\Dv\CallContext.cs" />
+    <Compile Include="Infrastructure\UPnPModule.cs" />
     <Compile Include="Infrastructure\Utils\CompressionHelper.cs" />
     <Compile Include="Infrastructure\Utils\UDPAsyncReceiveState.cs" />
     <Compile Include="Infrastructure\ILogger.cs" />
@@ -174,11 +187,6 @@
     <Compile Include="Infrastructure\UPnPConfiguration.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HttpServer\HttpServer.csproj">
-      <Project>{B1C97BB7-8E27-4C1B-B086-A1204EF8FB79}</Project>
-      <Name>HttpServer</Name>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\MediaPortal.Utilities\MediaPortal.Utilities.csproj">
       <Project>{4FE7B8AE-1330-424A-91A1-C68D7ABF9CB8}</Project>
       <Name>MediaPortal.Utilities</Name>

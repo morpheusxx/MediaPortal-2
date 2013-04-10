@@ -30,7 +30,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Linq;
-using HttpServer;
+using Griffin.Networking.Protocol.Http.Protocol;
 
 namespace UPnP.Infrastructure.Utils
 {
@@ -143,7 +143,7 @@ namespace UPnP.Infrastructure.Utils
     /// <param name="acceptEncoding">The Request's accepted encodings.</param>
     /// <param name="response">Response to be written.</param>
     /// <param name="inputStream">The input stream the will be written into the Response.</param>
-    public static void WriteCompressedStream(string acceptEncoding, IHttpResponse response, MemoryStream inputStream)
+    public static void WriteCompressedStream(string acceptEncoding, IResponse response, MemoryStream inputStream)
     {
       IDeCompressor compressor = CheckSupportedCompression(acceptEncoding);
       

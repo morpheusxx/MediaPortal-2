@@ -102,7 +102,7 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Incubator\GeoLocation\GeoLocation\GeoLocation.csproj">
+    <ProjectReference Include="..\..\..\..\Incubator\GeoLocation\GeoLocation.csproj">
       <Project>{c9949db1-cf39-4c29-a031-430a0536341e}</Project>
       <Name>GeoLocation</Name>
     </ProjectReference>

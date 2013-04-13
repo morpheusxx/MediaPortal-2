@@ -24,6 +24,8 @@
 
 #region Imports
 
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
 using MediaPortal.Extensions.GeoLocation.IPLookup;
 using MediaPortal.Extensions.GeoLocation.IPLookup.Data;
 using MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation.Data;
@@ -90,6 +92,9 @@ namespace MediaPortal.Extensions.GeoLocation
         Thread.Sleep(60);
       }
 
+      if(_currentLocation == null)
+        ServiceRegistration.Get<ILogger>().Debug("GeoLocation: GPS Lookup Failed.");
+
       return _currentLocation;
     }
 
@@ -117,6 +122,8 @@ namespace MediaPortal.Extensions.GeoLocation
           return location;
         }
       }
+
+      ServiceRegistration.Get<ILogger>().Debug("GeoLocation: IPLookup Failed.");
 
       return null;
     }

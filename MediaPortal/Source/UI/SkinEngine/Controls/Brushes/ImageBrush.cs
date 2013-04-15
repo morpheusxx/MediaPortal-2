@@ -24,6 +24,7 @@
 
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.ContentManagement;
+using MediaPortal.UI.SkinEngine.Controls.ImageSources;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
@@ -38,7 +39,6 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
     #region Protected fields
 
     protected AbstractProperty _imageSourceProperty;
-    protected AbstractProperty _downloadProgressProperty;
     protected AbstractProperty _thumbnailProperty;
     protected TextureAsset _tex;
 
@@ -61,22 +61,19 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     void Init()
     {
-      _imageSourceProperty = new SProperty(typeof(string), null);
-      _downloadProgressProperty = new SProperty(typeof(double), 0.0);
+      _imageSourceProperty = new SProperty(typeof(object), null);
       _thumbnailProperty = new SProperty(typeof(bool), false);
     }
 
     void Attach()
     {
       _imageSourceProperty.Attach(OnPropertyChanged);
-      _downloadProgressProperty.Attach(OnPropertyChanged);
       _thumbnailProperty.Attach(OnPropertyChanged);
     }
 
     void Detach()
     {
       _imageSourceProperty.Detach(OnPropertyChanged);
-      _downloadProgressProperty.Detach(OnPropertyChanged);
       _thumbnailProperty.Detach(OnPropertyChanged);
     }
 
@@ -86,7 +83,6 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       base.DeepCopy(source, copyManager);
       ImageBrush b = (ImageBrush) source;
       ImageSource = b.ImageSource;
-      DownloadProgress = b.DownloadProgress;
       Thumbnail = b.Thumbnail;
       _tex = null;
       Attach();
@@ -101,21 +97,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       get { return _imageSourceProperty; }
     }
 
-    public string ImageSource
+    public object ImageSource
     {
-      get { return (string) _imageSourceProperty.GetValue(); }
+      get { return _imageSourceProperty.GetValue(); }
       set { _imageSourceProperty.SetValue(value); }
-    }
-
-    public AbstractProperty DownloadProgressProperty
-    {
-      get { return _downloadProgressProperty; }
-    }
-
-    public double DownloadProgress
-    {
-      get { return (double) _downloadProgressProperty.GetValue(); }
-      set { _downloadProgressProperty.SetValue(value); }
     }
 
     public override Texture Texture
@@ -165,8 +150,20 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     public override void Allocate()
     {
-      if (_tex == null && !string.IsNullOrEmpty(ImageSource))
-        _tex = ContentManager.Instance.GetTexture(ImageSource, Thumbnail);
+      if (_tex == null)
+      {
+        string uriSource = ImageSource as string;
+        if (!string.IsNullOrEmpty(uriSource))
+          _tex = ContentManager.Instance.GetTexture(uriSource, Thumbnail);
+
+        TextureImageSource imageSource = ImageSource as TextureImageSource;
+        if (imageSource != null)
+        {
+          imageSource.Allocate();
+          _tex = imageSource.TextureAsset;
+        }
+      }
+
       if (_tex != null && !_tex.IsAllocated)
         _tex.Allocate();
     }

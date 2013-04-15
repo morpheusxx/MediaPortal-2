@@ -49,7 +49,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     protected bool _thumbnail = false;
 
     protected TextureAsset _lastTexture = null;
-    protected TextureAsset _currentTexture = null;
+    protected TextureAsset _nextTexture = null;
     protected TextureImageSource _imageSource;
 
     protected bool _source = true;
@@ -219,17 +219,17 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
         if (_imageSource == null)
         {
           _nextTexture = null;
-          if (_currentTexture != null)
+          if (_texture != null)
             CycleTextures(RightAngledRotation.Zero);
           if (string.IsNullOrEmpty(uri))
           {
-            if (_currentTexture != null)
-              CycleTextures(null, RightAngledRotation.Zero);
+            if (_texture != null)
+              CycleTextures(RightAngledRotation.Zero);
           }
           else
           {
-            nextTexture = ContentManager.Instance.GetTexture(uri, DecodePixelWidth, DecodePixelHeight, Thumbnail);
-            nextTexture.ThumbnailDimension = ThumbnailDimension;
+            _nextTexture = ContentManager.Instance.GetTexture(uri, DecodePixelWidth, DecodePixelHeight, Thumbnail);
+            _nextTexture.ThumbnailDimension = ThumbnailDimension;
           }
         }
       }
@@ -237,22 +237,22 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       if (_imageSource != null && !_imageSource.IsAllocated)
       {
         _imageSource.Allocate();
-        nextTexture = _imageSource.TextureAsset;
+        _nextTexture = _imageSource.TextureAsset;
       }
 
       // Check our previous texture is allocated. Synchronous.
       if (_lastTexture != null && !_lastTexture.IsAllocated)
         _lastTexture.Allocate();
       // Check our current texture is allocated. Synchronous.
-      if (_currentTexture != null && !_currentTexture.IsAllocated)
-        _currentTexture.Allocate();
+      if (_texture != null && !_texture.IsAllocated)
+        _texture.Allocate();
       // Check our next texture is allocated. Asynchronous.
       if (_nextTexture != null)
       {
         if (!_nextTexture.LoadFailed)
           _nextTexture.AllocateAsync();
         if ((!_transitionActive || !Wait) && _nextTexture.IsAllocated)
-          CycleTextures(_nextTexture, Rotation);
+          CycleTextures(Rotation);
       }
     }
 
@@ -277,31 +277,31 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected override Texture CurrentTexture
     {
-      get { return _currentTexture == null ? null : _currentTexture.Texture; }
+      get { return _texture == null ? null : _texture.Texture; }
     }
 
     protected override SizeF CurrentRawSourceSize
     {
-      get { return _currentTexture == null ? SizeF.Empty : new SizeF(_currentTexture.Width, _currentTexture.Height); }
+      get { return _texture == null ? SizeF.Empty : new SizeF(_texture.Width, _texture.Height); }
     }
 
     protected override RectangleF CurrentTextureClip
     {
-      get { return _currentTexture == null ? RectangleF.Empty : new RectangleF(0, 0, _currentTexture.MaxU, _currentTexture.MaxV); }
+      get { return _texture == null ? RectangleF.Empty : new RectangleF(0, 0, _texture.MaxU, _texture.MaxV); }
     }
 
     public override bool IsAllocated
     {
-      get { return _currentTexture != null && _currentTexture.IsAllocated; }
+      get { return _texture != null && _texture.IsAllocated; }
     }
 
     protected void CycleTextures(RightAngledRotation rotation)
     {
       // Current -> Last
-      _lastTexture = _currentTexture;
+      _lastTexture = _texture;
       _lastImageContext = _imageContext;
       // Next -> Current
-      _currentTexture = _nextTexture;
+      _texture = _nextTexture;
       _imageContext = new ImageContext
         {
             FrameSize = _frameSize,
@@ -311,7 +311,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       // Clear next
       _nextTexture = null;
 
-      if (_lastTexture != _currentTexture)
+      if (_lastTexture != _texture)
       {
         StartTransition();
         FireChanged();
@@ -343,7 +343,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       if (disposable != null)
         disposable.Dispose();
       _lastTexture = null;
-      _currentTexture = null;
+      _texture = null;
       _nextTexture = null;
       _lastImageContext.Clear();
     }

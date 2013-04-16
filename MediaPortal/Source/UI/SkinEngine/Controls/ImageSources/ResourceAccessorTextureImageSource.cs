@@ -38,7 +38,6 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
   {
     #region Protected fields
 
-    protected TextureAsset _texture = null;
     protected bool _flipX = false;
     protected bool _flipY = false;
 

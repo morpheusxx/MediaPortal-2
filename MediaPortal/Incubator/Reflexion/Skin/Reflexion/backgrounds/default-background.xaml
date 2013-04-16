@@ -14,8 +14,25 @@ Default background image - no media present
   <DockPanel  VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
     <!-- Overlay of fanart -->
     <StackPanel DockPanel.Dock="Center">
+      <StackPanel.Resources>
+        <Model x:Key="FanArtBackgroundModel" Id="8F42C8E9-E8A3-475C-A50A-99E1E644DC91"/>
+      </StackPanel.Resources>
       <StackPanel.Background>
-        <VisualBrush x:Name="FanartVisualBrush">
+        <!--<ImageBrush>
+          <ImageBrush.ImageSource>
+            <MultiImageSource Transition="transitions\granular_dissolve;transitions\fade;transitions\dissolve;transitions\wipe_right;transitions\wipe_down;transitions\wipe_down-right;transitions\wipe_up-left"
+                    TransitionInOut="False" TransitionDuration="0.5" Wait="false">
+              <MultiImageSource.ImageSource>
+                <fanart:FanArtImageSource 
+                        fanart:FanArtMediaType="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtMediaType}" 
+                        fanart:FanArtType="FanArt" 
+                        fanart:FanArtName="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtName}"
+                        fanart:MaxWidth="1920" fanart:MaxHeight="1080"/>
+              </MultiImageSource.ImageSource>
+            </MultiImageSource>
+          </ImageBrush.ImageSource>
+        </ImageBrush>-->
+        <!--<VisualBrush x:Name="FanartVisualBrush">
           <VisualBrush.Visual>
             <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
               <Grid.Resources>
@@ -43,7 +60,7 @@ Default background image - no media present
               </Image>
             </Grid>
           </VisualBrush.Visual>
-        </VisualBrush>
+        </VisualBrush>-->
       </StackPanel.Background>
     </StackPanel>
     

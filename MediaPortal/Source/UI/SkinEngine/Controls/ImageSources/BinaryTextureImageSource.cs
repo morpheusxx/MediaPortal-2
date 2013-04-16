@@ -38,9 +38,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
   {
     #region Protected fields
 
-    protected static SHA1 sha1 = SHA1.Create();
+    protected static SHA1 _sha1 = SHA1.Create();
 
-    protected TextureAsset _texture = null;
     protected bool _flipX = false;
     protected bool _flipY = false;
 
@@ -70,7 +69,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     /// </summary>
     /// <param name="textureData">Binary data to create the texture for.</param>
     /// <param name="rotation">Desired rotation for the given image.</param>
-    public BinaryTextureImageSource(byte[] textureData, RightAngledRotation rotation) : this(textureData, rotation, BitConverter.ToString(sha1.ComputeHash(textureData))) {}
+    public BinaryTextureImageSource(byte[] textureData, RightAngledRotation rotation) : this(textureData, rotation, BitConverter.ToString(_sha1.ComputeHash(textureData))) {}
 
     #endregion
 

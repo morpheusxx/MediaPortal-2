@@ -82,7 +82,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       Detach();
       base.DeepCopy(source, copyManager);
       ImageBrush b = (ImageBrush) source;
-      ImageSource = b.ImageSource;
+      ImageSource = copyManager.GetCopy(b.ImageSource);
       Thumbnail = b.Thumbnail;
       _tex = null;
       Attach();
@@ -130,8 +130,21 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     protected override void OnPropertyChanged(AbstractProperty prop, object oldValue)
     {
+      IObservable oldSource = oldValue as IObservable;
+      if (oldSource != null)
+        oldSource.ObjectChanged -= OnImageSourceChanged;
+
+      IObservable newSource = ImageSource as IObservable;
+      if (newSource != null)
+        newSource.ObjectChanged += OnImageSourceChanged;
+
       Free();
       base.OnPropertyChanged(prop, oldValue);
+    }
+
+    private void OnImageSourceChanged(IObservable observable)
+    {
+      Free();
     }
 
     protected override Vector2 BrushDimensions

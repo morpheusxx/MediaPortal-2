@@ -168,6 +168,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client
       _fanArtTypeProperty.Attach(UpdateSource);
       _fanArtNameProperty.Attach(UpdateSource);
       _cacheProperty.Attach(UpdateSource);
+      TryAttach(ImageSource);
     }
 
     protected void Detach()
@@ -176,6 +177,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client
       _fanArtTypeProperty.Detach(UpdateSource);
       _fanArtNameProperty.Detach(UpdateSource);
       _cacheProperty.Detach(UpdateSource);
+      TryDetach(ImageSource);
     }
 
     protected bool BuildBaseUrl()

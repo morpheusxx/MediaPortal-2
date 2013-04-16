@@ -134,6 +134,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
       WidthProperty.Attach(OnImageSizeChanged);
       HeightProperty.Attach(OnImageSizeChanged);
+      TryAttach(Source);
+      TryAttach(FallbackSource);
     }
 
     void Detach()
@@ -147,6 +149,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
       WidthProperty.Detach(OnImageSizeChanged);
       HeightProperty.Detach(OnImageSizeChanged);
+      TryDetach(Source);
+      TryDetach(FallbackSource);
     }
 
     public override void DeepCopy(IDeepCopyable source, ICopyManager copyManager)
@@ -176,14 +180,18 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     void OnSourceChanged(AbstractProperty property, object oldValue)
     {
+      TryDetach(oldValue);
       InvalidateImageSources();
+      TryAttach(Source);
     }
 
     void OnFallbackSourceChanged(AbstractProperty property, object oldValue)
     {
+      TryDetach(oldValue);
       if (!_fallbackSourceInUse)
         return;
       InvalidateImageSources();
+      TryAttach(FallbackSource);
     }
 
     protected void InvalidateImageSources()
@@ -194,10 +202,31 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     protected void DisposeImageSources()
     {
+      TryDetach(_sourceState.ImageSource);
       MPF.TryCleanupAndDispose(_sourceState.ImageSource);
       _sourceState.ImageSource = null;
+      TryDetach(_fallbackSourceState.ImageSource);
       MPF.TryCleanupAndDispose(_fallbackSourceState.ImageSource);
       _fallbackSourceState.ImageSource = null;
+    }
+
+    protected void TryAttach(object imageSource)
+    {
+      IObservable oldSource = imageSource as IObservable;
+      if (oldSource != null)
+        oldSource.ObjectChanged += OnImageSourceChanged;
+    }
+
+    protected void TryDetach(object imageSource)
+    {
+      IObservable oldSource = imageSource as IObservable;
+      if (oldSource != null)
+        oldSource.ObjectChanged -= OnImageSourceChanged;
+    }
+
+    private void OnImageSourceChanged(IObservable observable)
+    {
+      InvalidateImageSources();
     }
 
     /// <summary>

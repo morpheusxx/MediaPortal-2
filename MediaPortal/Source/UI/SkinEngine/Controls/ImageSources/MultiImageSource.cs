@@ -74,11 +74,13 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     void Attach()
     {
+      TryAttach(ImageSource);
       _imageSourceProperty.Attach(OnSourceChanged);
     }
 
     void Detach()
     {
+      TryDetach(ImageSource);
       _imageSourceProperty.Detach(OnSourceChanged);
     }
 
@@ -320,20 +322,16 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected void OnSourceChanged(AbstractProperty prop, object oldValue)
     {
-      IObservable oldSource = oldValue as IObservable;
-      if (oldSource != null)
-        oldSource.ObjectChanged -= OnImageSourceChanged;
-
-      IObservable newSource = ImageSource as IObservable;
-      if (newSource != null)
-        newSource.ObjectChanged += OnImageSourceChanged;
-
+      TryDetach(oldValue);
+      TryAttach(ImageSource);
       _source = true;
     }
 
-    private void OnImageSourceChanged(IObservable observable)
+    protected override void OnImageSourceChanged(IObservable observable)
     {
+      base.OnImageSourceChanged(observable);
       _source = true;
+      FireChanged();
     }
 
     protected override void FreeData()

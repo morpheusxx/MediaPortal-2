@@ -88,6 +88,28 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       _effectProperty.Detach(OnEffectChanged);
     }
 
+    protected void TryAttach(object imageSource)
+    {
+      IObservable oldSource = imageSource as IObservable;
+      if (oldSource != null)
+      {
+        oldSource.ObjectChanged -= OnImageSourceChanged;
+        oldSource.ObjectChanged += OnImageSourceChanged;
+      }
+    }
+
+    protected void TryDetach(object imageSource)
+    {
+      IObservable oldSource = imageSource as IObservable;
+      if (oldSource != null)
+        oldSource.ObjectChanged -= OnImageSourceChanged;
+    }
+
+    protected virtual void OnImageSourceChanged(IObservable observable)
+    {
+      FireChanged();
+    }
+
     public override void DeepCopy(IDeepCopyable source, ICopyManager copyManager)
     {
       base.DeepCopy(source, copyManager);

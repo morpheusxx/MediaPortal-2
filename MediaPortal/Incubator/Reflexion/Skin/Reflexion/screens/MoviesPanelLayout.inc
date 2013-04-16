@@ -70,11 +70,17 @@
 
               <Image Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Stretch="UniformToFill" Margin="15" FallbackSource="{Binding MediaItem}">
                 <Image.Source>
-                  <fanart:FanArtImageSource 
-                  fanart:FanArtMediaType="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtMediaType}" 
-                  fanart:FanArtType="FanArt" 
+                  <!--<MultiImageSource Transition="transitions\granular_dissolve;transitions\fade;transitions\dissolve;transitions\wipe_right;transitions\wipe_down;transitions\wipe_down-right;transitions\wipe_up-left"
+        TransitionInOut="False" TransitionDuration="0.5" Wait="false">
+                    <MultiImageSource.ImageSource>-->
+
+                      <fanart:FanArtImageSource
+                  fanart:FanArtMediaType="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtMediaType}"
+                  fanart:FanArtType="FanArt"
                   fanart:FanArtName="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtName}"
                   fanart:MaxWidth="580" fanart:MaxHeight="360"/>
+                    <!--</MultiImageSource.ImageSource>
+                  </MultiImageSource>-->
                 </Image.Source>
               </Image>
             </Grid>
@@ -94,7 +100,7 @@
           </Border>
 
           <Border Grid.Column="1" Grid.Row="0" x:Name="CoverBorder" BorderBrush="#000000" CornerRadius="20" BorderThickness="2" Width="460" Height="665" Background="#E4000000">
-            <Image VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="UniformToFill" Margin="15">
+            <!--<Image VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="UniformToFill" Margin="15">
               <Image.Source>
                 <fanart:FanArtImageSource 
                 fanart:FanArtMediaType="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtMediaType}" 
@@ -102,7 +108,7 @@
                 fanart:FanArtName="{Binding Source={StaticResource FanArtBackgroundModel}, Path=FanArtName}"
                 fanart:MaxWidth="500" fanart:MaxHeight="660"/>
               </Image.Source>
-            </Image>
+            </Image>-->
 
           </Border>
 

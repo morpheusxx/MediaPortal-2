@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using Griffin.Networking.Protocol.Http.Protocol;
@@ -23,6 +22,18 @@ namespace UPnP.Infrastructure
     public UPnPModule(ServerData serverData)
     {
       _serverData = serverData;
+    }
+    
+    public void BeginRequest(IHttpContext context)
+    { }
+
+    public void EndRequest(IHttpContext context)
+    { }
+
+    public void HandleRequestAsync(IHttpContext context, Action<IAsyncModuleResult> callback)
+    {
+      // Since this module only supports sync
+      callback(new AsyncModuleResult(context, HandleRequest(context)));
     }
 
     /// <summary>
@@ -50,7 +61,7 @@ namespace UPnP.Infrastructure
             continue;
 
           // Common check for supported encodings
-          string acceptEncoding = request.Headers["ACCEPT-ENCODING"].Value ?? string.Empty;
+          string acceptEncoding = request.GetHeader("ACCEPT-ENCODING") ?? string.Empty;
 
           // Handle different HTTP methods here
           if (request.Method == "GET")
@@ -58,7 +69,7 @@ namespace UPnP.Infrastructure
             // GET of descriptions
             if (pathAndQuery.StartsWith(config.DescriptionPathBase))
             {
-              string acceptLanguage = request.Headers["ACCEPT-LANGUAGE"].Value;
+              string acceptLanguage = request.GetHeader("ACCEPT-LANGUAGE");
               CultureInfo culture = GetFirstCultureOrDefault(acceptLanguage, CultureInfo.InvariantCulture);
 
               string description = null;
@@ -85,8 +96,8 @@ namespace UPnP.Infrastructure
             // POST of control messages
             if (config.ControlPathsToServices.TryGetValue(pathAndQuery, out service))
             {
-              string contentType = request.Headers["CONTENT-TYPE"].Value;
-              string userAgentStr = request.Headers["USER-AGENT"].Value;
+              string contentType = request.GetHeader("CONTENT-TYPE");
+              string userAgentStr = request.GetHeader("USER-AGENT");
               int minorVersion;
               if (string.IsNullOrEmpty(userAgentStr))
                 minorVersion = 0;
@@ -113,8 +124,9 @@ namespace UPnP.Infrastructure
               try
               {
                 CallContext callContext = new CallContext(request, context, config);
-                status = SOAPHandler.HandleRequest(service, request.Body, encoding, minorVersion >= 1, callContext,
-                  out result);
+                if (request.Body == null)
+                  request.Body = new MemoryStream();
+                status = SOAPHandler.HandleRequest(service, request.Body, encoding, minorVersion >= 1, callContext, out result);
               }
               catch (Exception e)
               {
@@ -154,18 +166,6 @@ namespace UPnP.Infrastructure
       }
     }
 
-    public void BeginRequest(IHttpContext context)
-    {
-    }
-
-    public void EndRequest(IHttpContext context)
-    {
-    }
-
-    public void HandleRequestAsync(IHttpContext context, Action<IAsyncModuleResult> callback)
-    {
-    }
-    
     private static CultureInfo GetFirstCultureOrDefault(string cultureList, CultureInfo defaultCulture)
     {
       if (string.IsNullOrEmpty(cultureList))

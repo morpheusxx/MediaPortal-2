@@ -148,6 +148,8 @@ namespace UPnP.Infrastructure.Utils
       IDeCompressor compressor = CheckSupportedCompression(acceptEncoding);
       
       byte[] buffer;
+      if (response.Body == null)
+        response.Body = new MemoryStream();
 #if !DISABLE_COMPRESSION
       if (compressor == null)
       {
@@ -155,6 +157,8 @@ namespace UPnP.Infrastructure.Utils
         buffer = inputStream.ToArray();
         response.ContentLength = buffer.Length;
         response.Body.Write(buffer, 0, buffer.Length);
+        if (response.Body.CanSeek)
+          response.Body.Position = 0;
         return;
 #if !DISABLE_COMPRESSION
       }
@@ -170,6 +174,8 @@ namespace UPnP.Infrastructure.Utils
 
       response.ContentLength = buffer.Length;
       response.Body.Write(buffer, 0, buffer.Length);
+      if (response.Body.CanSeek)
+        response.Body.Position = 0;
     }
   }
 

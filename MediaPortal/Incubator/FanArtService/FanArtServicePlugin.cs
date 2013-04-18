@@ -22,7 +22,7 @@
 
 #endregion
 
-using HttpServer.HttpModules;
+using Griffin.WebServer.Modules;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.PluginManager;
@@ -33,7 +33,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
 {
   public class FanArtServicePlugin: IPluginStateTracker
   {
-    private HttpModule _fanartModule;
+    private IWorkerModule _fanartModule;
     public void Activated(PluginRuntime pluginRuntime)
     {
       var meta = pluginRuntime.Metadata;

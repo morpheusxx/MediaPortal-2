@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using HttpServer;
 using MediaPortal.Common.SystemResolver;
 using MediaPortal.UI.FrontendServer;
 using MediaPortal.Common;
@@ -133,7 +132,7 @@ namespace MediaPortal.UI.Services.FrontendServer
     {
       UPnPConfiguration.PRODUCT_VERSION = MP2SERVER_DEVICEVERSION;
       UPnPConfiguration.LOGGER = new UPnPLoggerDelegate();
-      HttpResponse.HTTP_SERVER_NAME = MP2_HTTP_SERVER_NAME;
+      //TODO:HttpResponse.HTTP_SERVER_NAME = MP2_HTTP_SERVER_NAME;
 
       ISystemResolver systemResolver = ServiceRegistration.Get<ISystemResolver>();
       _upnpServer = new UPnPFrontendServer(systemResolver.LocalSystemId);

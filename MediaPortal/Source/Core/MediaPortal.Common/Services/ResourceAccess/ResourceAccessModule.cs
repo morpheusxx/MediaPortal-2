@@ -26,18 +26,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using HttpServer;
-using HttpServer.Exceptions;
-using HttpServer.HttpModules;
-using HttpServer.Sessions;
+using Griffin.Networking.Protocol.Http;
+using Griffin.Networking.Protocol.Http.Protocol;
+using Griffin.WebServer;
+using Griffin.WebServer.Modules;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Threading;
 using MediaPortal.Utilities.SystemAPI;
+using UPnP.Infrastructure.Utils;
 
 namespace MediaPortal.Common.Services.ResourceAccess
 {
-  public class ResourceAccessModule : HttpModule, IDisposable
+  public class ResourceAccessModule : IWorkerModule, IDisposable
   {
     public const string DEFAULT_MIME_TYPE = "application/octet-stream";
 
@@ -252,20 +253,20 @@ namespace MediaPortal.Common.Services.ResourceAccess
       IList<Range> result = new List<Range>();
       try
       {
-        string[] tokens = byteRangesSpecifier.Split(new char[] {'='});
+        string[] tokens = byteRangesSpecifier.Split(new char[] { '=' });
         if (tokens.Length == 2 && tokens[0].Trim() == "bytes")
-          foreach (string rangeSpec in tokens[1].Split(new char[] {','}))
+          foreach (string rangeSpec in tokens[1].Split(new char[] { ',' }))
           {
-            tokens = rangeSpec.Split(new char[] {'-'});
+            tokens = rangeSpec.Split(new char[] { '-' });
             if (tokens.Length != 2)
-              return new Range[] {};
+              return new Range[] { };
             if (!string.IsNullOrEmpty(tokens[0]))
               if (!string.IsNullOrEmpty(tokens[1]))
                 result.Add(new Range(long.Parse(tokens[0]), long.Parse(tokens[1])));
               else
-                result.Add(new Range(long.Parse(tokens[0]), size-1));
+                result.Add(new Range(long.Parse(tokens[0]), size - 1));
             else
-              result.Add(new Range(Math.Max(0, size - long.Parse(tokens[1])), size-1));
+              result.Add(new Range(Math.Max(0, size - long.Parse(tokens[1])), size - 1));
           }
       }
       catch (Exception e)
@@ -276,18 +277,16 @@ namespace MediaPortal.Common.Services.ResourceAccess
       return result;
     }
 
-    protected void SendRange(IHttpResponse response, Stream resourceStream, Range range, bool onlyHeaders)
+    protected void SendRange(IResponse response, Stream resourceStream, Range range, bool onlyHeaders)
     {
       if (range.From > resourceStream.Length)
       {
-        response.Status = HttpStatusCode.RequestedRangeNotSatisfiable;
-        response.SendHeaders();
+        response.StatusCode = (int) HttpStatusCode.RequestedRangeNotSatisfiable;
         return;
       }
-      response.Status = HttpStatusCode.PartialContent;
-      response.ContentLength = range.Length;
-      response.AddHeader("Content-Range", string.Format("bytes {0}-{1}/{2}", range.From, range.To, resourceStream.Length));
-      response.SendHeaders();
+      response.StatusCode = (int) HttpStatusCode.PartialContent;
+      response.ContentLength = (int)/* TODO: add long support! */ range.Length;
+      response.AddHeader("Content-Range", string.Format("bytes {0}-{1}/{2}", range.From, range.To, (int)/* TODO: add long support! */ resourceStream.Length));
 
       if (onlyHeaders)
         return;
@@ -296,11 +295,10 @@ namespace MediaPortal.Common.Services.ResourceAccess
       Send(response, resourceStream, range.Length);
     }
 
-    protected void SendWholeFile(IHttpResponse response, Stream resourceStream, bool onlyHeaders)
+    protected void SendWholeFile(IResponse response, Stream resourceStream, bool onlyHeaders)
     {
-      response.Status = HttpStatusCode.OK;
-      response.ContentLength = resourceStream.Length;
-      response.SendHeaders();
+      response.StatusCode = (int) HttpStatusCode.OK;
+      response.ContentLength = (int)/* TODO: add long support! */resourceStream.Length;
 
       if (onlyHeaders)
         return;
@@ -308,16 +306,19 @@ namespace MediaPortal.Common.Services.ResourceAccess
       Send(response, resourceStream, resourceStream.Length);
     }
 
-    protected void Send(IHttpResponse response, Stream resourceStream, long length)
+    protected void Send(IResponse response, Stream resourceStream, long length)
     {
       const int BUF_LEN = 8192;
       byte[] buffer = new byte[BUF_LEN];
       int bytesRead;
+      if (response.Body == null)
+        response.Body = new MemoryStream();
       while ((bytesRead = resourceStream.Read(buffer, 0, length > BUF_LEN ? BUF_LEN : (int) length)) > 0) // Don't use Math.Min since (int) length is negative for length > Int32.MaxValue
       {
         length -= bytesRead;
-        response.SendBody(buffer, 0, bytesRead);
+        response.Body.Write(buffer, 0, bytesRead);
       }
+      response.Body.Position = 0;
     }
 
     protected bool IsAllowedToAccess(ResourcePath resourcePath)
@@ -349,7 +350,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
     /// <returns><c>true</c> if this module is able to handle the request, else <c>false</c>.</returns>
     /// <exception cref="InternalServerException">If an exception occured in the server.</exception>
     /// <exception cref="ForbiddenException">If the file path is forbidden.</exception>
-    public override bool Process(IHttpRequest request, IHttpResponse response, IHttpSession session)
+    public bool Process(IRequest request, IResponse response)
     {
       ResourcePath resourcePath;
       Uri uri = request.Uri;
@@ -360,7 +361,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
       if (!IsAllowedToAccess(resourcePath))
       {
         ServiceRegistration.Get<ILogger>().Warn("ResourceAccessModule: Client tries to access forbidden resource '{0}'", resourcePath);
-        throw new ForbiddenException(string.Format("Access of resource '{0}' not allowed", resourcePath));
+        throw new HttpException(HttpStatusCode.Unauthorized, string.Format("Access of resource '{0}' not allowed", resourcePath));
       }
 
       try
@@ -370,20 +371,20 @@ namespace MediaPortal.Common.Services.ResourceAccess
         {
           response.ContentType = GuessMimeType(resourceStream, resourcePath.FileName);
 
-          if (!string.IsNullOrEmpty(request.Headers["If-Modified-Since"]))
+          if (!string.IsNullOrEmpty(request.GetHeader("If-Modified-Since")))
           {
-            DateTime lastRequest = DateTime.Parse(request.Headers["If-Modified-Since"]);
+            DateTime lastRequest = DateTime.Parse(request.GetHeader("If-Modified-Since"));
             if (lastRequest.CompareTo(fsra.LastChanged) <= 0)
-              response.Status = HttpStatusCode.NotModified;
+              response.StatusCode = (int) HttpStatusCode.NotModified;
           }
 
           response.AddHeader("Last-Modified", fsra.LastChanged.ToUniversalTime().ToString("r"));
 
-          string byteRangesSpecifier = request.Headers["Range"];
+          string byteRangesSpecifier = request.GetHeader("Range");
           IList<Range> ranges = ParseRanges(byteRangesSpecifier, resourceStream.Length);
-          bool onlyHeaders = request.Method == "Headers" || response.Status == HttpStatusCode.NotModified;
+          bool onlyHeaders = request.Method == "Headers" || response.StatusCode == (int) HttpStatusCode.NotModified;
           if (ranges != null && ranges.Count == 1)
-              // We only support one range
+            // We only support one range
             SendRange(response, resourceStream, ranges[0], onlyHeaders);
           else
             SendWholeFile(response, resourceStream, onlyHeaders);
@@ -391,7 +392,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
       }
       catch (FileNotFoundException ex)
       {
-        throw new InternalServerException(string.Format("Failed to proccess resource '{0}'", resourcePath), ex);
+        throw new HttpException(HttpStatusCode.InternalServerError, string.Format("Failed to proccess resource '{0}': {1}", resourcePath, ex));
       }
 
       return true;
@@ -408,5 +409,14 @@ namespace MediaPortal.Common.Services.ResourceAccess
       int pos = uri.LastIndexOf('.');
       return pos == -1 ? null : uri.Substring(pos);
     }
+
+    public void BeginRequest(IHttpContext context)
+    { }
+
+    public void EndRequest(IHttpContext context)
+    { }
+
+    public void HandleRequestAsync(IHttpContext context, Action<IAsyncModuleResult> callback)
+    { }
   }
 }

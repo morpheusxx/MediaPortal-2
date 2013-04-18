@@ -27,7 +27,7 @@ using Griffin.Networking.Protocol.Http.Protocol;
 
 namespace UPnP.Infrastructure.Utils
 {
-  public class HttpServerHelper
+  public static class HttpServerHelper
   {
     /// <summary>
     /// Given an HTTP request, this method returns the client's IP address.
@@ -37,7 +37,19 @@ namespace UPnP.Infrastructure.Utils
     /// parsed by calling <see cref="IPAddress.Parse"/>.</returns>
     public static string GetRemoteAddress(IRequest request)
     {
-      return request.Headers["remote_addr"].Value;
+      return request.GetHeader("remote_addr");
+    }
+
+    /// <summary>
+    /// Extension method to safely return a header entry with name <paramref name="header"/>.
+    /// </summary>
+    /// <param name="request">The request.</param>
+    /// <param name="header">Name of header.</param>
+    /// <returns>Header value or <c>string.Empty</c> if missing.</returns>
+    public static string GetHeader(this IRequest request, string header)
+    {
+      IHeaderItem item = request.Headers["remote_addr"];
+      return item != null ? item.Value : string.Empty;
     }
   }
 }

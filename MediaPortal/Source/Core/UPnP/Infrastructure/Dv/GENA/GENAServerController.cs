@@ -311,11 +311,11 @@ namespace UPnP.Infrastructure.Dv.GENA
         {
           IResponse response = context.Response;
           string httpVersion = request.ProtocolVersion;
-          string userAgentStr = request.Headers["USER-AGENT"].Value;
-          string callbackURLsStr = request.Headers["CALLBACK"].Value;
-          string nt = request.Headers["NT"].Value;
-          string sid = request.Headers["SID"].Value;
-          string timeoutStr = request.Headers["TIMEOUT"].Value;
+          string userAgentStr = request.GetHeader("USER-AGENT");
+          string callbackURLsStr = request.GetHeader("CALLBACK");
+          string nt = request.GetHeader("NT");
+          string sid = request.GetHeader("SID");
+          string timeoutStr = request.GetHeader("TIMEOUT");
           int timeout = UPnPConsts.GENA_DEFAULT_SUBSCRIPTION_TIMEOUT;
           ICollection<string> callbackURLs = null;
           if ((!string.IsNullOrEmpty(timeoutStr) && (!timeoutStr.StartsWith("Second-") ||
@@ -411,9 +411,9 @@ namespace UPnP.Infrastructure.Dv.GENA
         if (config.EventSubPathsToServices.TryGetValue(pathAndQuery, out service))
         {
           IResponse response = context.Response;
-          string sid = request.Headers["SID"].Value;
-          string callbackURL = request.Headers["CALLBACK"].Value;
-          string nt = request.Headers["NT"].Value;
+          string sid = request.GetHeader("SID");
+          string callbackURL = request.GetHeader("CALLBACK");
+          string nt = request.GetHeader("NT");
           if (string.IsNullOrEmpty(sid) || !string.IsNullOrEmpty(callbackURL) || !string.IsNullOrEmpty(nt))
           {
             response.StatusCode = (int) HttpStatusCode.BadRequest;

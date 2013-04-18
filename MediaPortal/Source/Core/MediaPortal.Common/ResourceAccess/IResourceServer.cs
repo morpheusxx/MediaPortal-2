@@ -22,7 +22,8 @@
 
 #endregion
 
-using HttpServer.HttpModules;
+using Griffin.WebServer;
+using Griffin.WebServer.Modules;
 
 namespace MediaPortal.Common.ResourceAccess
 {
@@ -48,16 +49,16 @@ namespace MediaPortal.Common.ResourceAccess
     /// Adds a new HTTP module to the HTTP server.
     /// </summary>
     /// <remarks>
-    /// The HTTP module approach is implemented by our <see cref="HttpServer.HttpServer"/> and fits very well into
+    /// The HTTP module approach is implemented by our <see cref="HttpServer"/> and fits very well into
     /// the MediaPortal concept: Plugins simply can add a module to the HTTP server.
     /// </remarks>
     /// <param name="module"></param>
-    void AddHttpModule(HttpModule module);
+    void AddHttpModule(IWorkerModule module);
 
     /// <summary>
     /// Removes an HTTP module from the HTTP server.
     /// </summary>
     /// <param name="module">Module to remove.</param>
-    void RemoveHttpModule(HttpModule module);
+    void RemoveHttpModule(IWorkerModule module);
   }
 }

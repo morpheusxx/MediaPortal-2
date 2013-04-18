@@ -27,43 +27,56 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Web;
-using HttpServer;
-using HttpServer.HttpModules;
-using HttpServer.Sessions;
+using Griffin.Networking.Protocol.Http.Protocol;
+using Griffin.WebServer;
+using Griffin.WebServer.Modules;
 using MediaPortal.Common;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 
 namespace MediaPortal.Extensions.UserServices.FanArtService
 {
-  public class FanartAccessModule : HttpModule
+  public class FanartAccessModule : IWorkerModule
   {
+
+    public void BeginRequest(IHttpContext context)
+    {
+    }
+
+    public void EndRequest(IHttpContext context)
+    {
+    }
+
+    public void HandleRequestAsync(IHttpContext context, Action<IAsyncModuleResult> callback)
+    {
+      // Since this module only supports sync
+      callback(new AsyncModuleResult(context, HandleRequest(context)));
+    }
+
     /// <summary>
     /// Method that process the url
     /// </summary>
-    /// <param name="request">Information sent by the browser about the request</param>
-    /// <param name="response">Information that is being sent back to the client.</param>
-    /// <param name="session">Session used to </param>
+    /// <param name="context">Information sent by the browser about the request</param>
     /// <returns>true if this module handled the request.</returns>
-    public override bool Process (IHttpRequest request, IHttpResponse response, IHttpSession session)
+    public ModuleResult HandleRequest(IHttpContext context)
     {
-      Uri uri = request.Uri;
+      Uri uri = context.Request.Uri;
       if (!uri.AbsolutePath.StartsWith("/FanartService"))
-        return false;
+        return ModuleResult.Continue;
 
       IFanArtService fanart = ServiceRegistration.Get<IFanArtService>(false);
       if (fanart == null)
-        return false;
+        return ModuleResult.Stop;
 
       FanArtConstants.FanArtMediaType mediaType;
       FanArtConstants.FanArtType fanArtType;
       int maxWidth;
       int maxHeight;
       if (uri.Segments.Length < 4)
-        return false;
-      if (!Enum.TryParse(GetSegmentWithoutSlash(uri,2), out mediaType))
-        return false;
+        return ModuleResult.Stop;
+      if (!Enum.TryParse(GetSegmentWithoutSlash(uri, 2), out mediaType))
+        return ModuleResult.Stop;
       if (!Enum.TryParse(GetSegmentWithoutSlash(uri, 3), out fanArtType))
-        return false;
+        return ModuleResult.Stop;
       string name = GetSegmentWithoutSlash(uri, 4);
 
       // Both values are optional
@@ -72,11 +85,11 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
 
       IList<FanArtImage> files = fanart.GetFanArt(mediaType, fanArtType, name, maxWidth, maxHeight, true);
       if (files == null || files.Count == 0)
-        return false;
+        return ModuleResult.Stop;
 
       using (MemoryStream memoryStream = new MemoryStream(files[0].BinaryData))
-        SendWholeStream(response, memoryStream, false);
-      return true;
+        SendWholeStream(context.Response, memoryStream, false);
+      return ModuleResult.Stop;
     }
 
     protected static string GetSegmentWithoutSlash(Uri uri, int index)
@@ -86,11 +99,10 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
       return HttpUtility.UrlDecode(uri.Segments[index].Replace("/", string.Empty));
     }
 
-    protected void SendWholeStream(IHttpResponse response, Stream resourceStream, bool onlyHeaders)
+    protected void SendWholeStream(IResponse response, Stream resourceStream, bool onlyHeaders)
     {
-      response.Status = HttpStatusCode.OK;
-      response.ContentLength = resourceStream.Length;
-      response.SendHeaders();
+      response.StatusCode = (int) HttpStatusCode.OK;
+      response.ContentLength = (int) /* TODO: long support */ resourceStream.Length;
 
       if (onlyHeaders)
         return;
@@ -98,15 +110,19 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
       Send(response, resourceStream, resourceStream.Length);
     }
 
-    protected void Send(IHttpResponse response, Stream resourceStream, long length)
+    protected void Send(IResponse response, Stream resourceStream, long length)
     {
       const int BUF_LEN = 8192;
       byte[] buffer = new byte[BUF_LEN];
       int bytesRead;
+      if (response.Body == null)
+        response.Body = new MemoryStream();
       while ((bytesRead = resourceStream.Read(buffer, 0, length > BUF_LEN ? BUF_LEN : (int) length)) > 0) // Don't use Math.Min since (int) length is negative for length > Int32.MaxValue
       {
         length -= bytesRead;
-        response.SendBody(buffer, 0, bytesRead);
+        response.Body.Write(buffer, 0, bytesRead);
+        if (response.Body.CanSeek)
+          response.Body.Position = 0;
       }
     }
   }

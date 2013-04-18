@@ -96,6 +96,8 @@ namespace UPnP.Infrastructure.Dv.SOAP
       {
         IList<object> inParameterValues = null; // Default to null if there aren't parameters, will be lazily initialized later
         DvAction action;
+        if (messageStream.CanSeek)
+          messageStream.Position = 0;
         using (StreamReader streamReader = new StreamReader(messageStream, streamEncoding))
           using(XmlReader reader = XmlReader.Create(streamReader, UPnPConfiguration.DEFAULT_XML_READER_SETTINGS))
           {

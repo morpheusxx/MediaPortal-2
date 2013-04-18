@@ -453,11 +453,11 @@ namespace UPnP.Infrastructure.CP.GENA
 
     public HttpStatusCode HandleUnicastEventNotification(IRequest request)
     {
-      string nt = request.Headers["NT"].Value;
-      string nts = request.Headers["NTS"].Value;
-      string sid = request.Headers["SID"].Value;
-      string seqStr = request.Headers["SEQ"].Value;
-      string contentType = request.Headers["CONTENT-TYPE"].Value;
+      string nt = request.GetHeader("NT");
+      string nts = request.GetHeader("NTS");
+      string sid = request.GetHeader("SID");
+      string seqStr = request.GetHeader("SEQ");
+      string contentType = request.GetHeader("CONTENT-TYPE");
 
       lock (_cpData.SyncObj)
       {
@@ -476,9 +476,9 @@ namespace UPnP.Infrastructure.CP.GENA
         if (!EncodingUtils.TryParseContentTypeEncoding(contentType, Encoding.UTF8, out mediaType, out contentEncoding) ||
             mediaType != "text/xml")
           return HttpStatusCode.BadRequest;
-        Stream stream = request.Body;
-        return HandleEventNotification(stream, contentEncoding, subscription.Service,
-            _upnpVersion);
+        if (request.Body == null)
+          request.Body = new MemoryStream();
+        return HandleEventNotification(request.Body, contentEncoding, subscription.Service, _upnpVersion);
       }
     }
 
@@ -529,12 +529,13 @@ namespace UPnP.Infrastructure.CP.GENA
       }
     }
 
-    public static HttpStatusCode HandleEventNotification(Stream stream, Encoding streamEncoding, CpService service,
-        UPnPVersion upnpVersion)
+    public static HttpStatusCode HandleEventNotification(Stream stream, Encoding streamEncoding, CpService service, UPnPVersion upnpVersion)
     {
       try
       {
         // Parse XML document
+        if (stream.CanSeek)
+          stream.Position = 0;
         using (StreamReader streamReader = new StreamReader(stream, streamEncoding))
           using (XmlReader reader = XmlReader.Create(streamReader, UPnPConfiguration.DEFAULT_XML_READER_SETTINGS))
           {

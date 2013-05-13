@@ -27,6 +27,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
@@ -34,6 +35,9 @@ namespace MediaPortal.Utilities.Process
 {
   public class ProcessUtils
   {
+    private static readonly Encoding CONSOLE_ENCODING = Encoding.UTF8;
+    private static readonly string CONSOLE_ENCODING_PREAMBLE = CONSOLE_ENCODING.GetString(CONSOLE_ENCODING.GetPreamble());
+
     #region Imports and consts
 
     // ReSharper disable InconsistentNaming
@@ -117,7 +121,7 @@ namespace MediaPortal.Utilities.Process
     internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    internal static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
+    internal static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, ref SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
     internal static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, IntPtr hSourceHandle, IntPtr hTargetProcess, out IntPtr targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);
@@ -194,7 +198,7 @@ namespace MediaPortal.Utilities.Process
     public static bool TryExecute_Impersonated(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
       IntPtr userToken;
-      if (!ImpersonationHelper.GetTokenByProcess("explorer", out userToken))
+      if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
         return false;
 
       string unused;
@@ -247,13 +251,12 @@ namespace MediaPortal.Utilities.Process
     public static bool TryExecuteReadString_Impersonated(string executable, string arguments, out string result, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
       IntPtr userToken;
-      if (!ImpersonationHelper.GetTokenByProcess("explorer", out userToken))
+      if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
       {
         result = null;
         return false;
       }
-
-      return TryExecute_Impersonated(executable, arguments, userToken, false, out result, priorityClass, maxWaitMs);
+      return TryExecute_Impersonated(executable, arguments, userToken, true, out result, priorityClass, maxWaitMs);
     }
 
     #region Private methods
@@ -283,18 +286,46 @@ namespace MediaPortal.Utilities.Process
     /// <returns></returns>
     private static bool TryExecute(string executable, string arguments, bool redirectInputOutput, out string result, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
     {
+      StringBuilder outputBuilder = new StringBuilder();
       using (System.Diagnostics.Process process = new System.Diagnostics.Process { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = redirectInputOutput } })
       {
+        if (redirectInputOutput)
+        {
+          // Set UTF-8 encoding for standard output.
+          process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
+          // Enable raising events because Process does not raise events by default.
+          process.EnableRaisingEvents = true;
+          // Attach the event handler for OutputDataReceived before starting the process.
+          process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
+        }
         process.Start();
         process.PriorityClass = priorityClass;
-        using (process.StandardOutput)
-          result = redirectInputOutput ? process.StandardOutput.ReadToEnd() : null;
+
+        if (redirectInputOutput)
+          process.BeginOutputReadLine();
+
         if (process.WaitForExit(maxWaitMs))
+        {
+          result = RemoveEncodingPreamble(outputBuilder.ToString());
           return process.ExitCode == 0;
+        }
         if (!process.HasExited)
           process.Kill();
       }
+      result = null;
       return false;
+    }
+
+    /// <summary>
+    /// Helper method to remove an existing encoding preamble (<see cref="Encoding.GetPreamble"/>) from the given <paramref name="rawString"/>.
+    /// </summary>
+    /// <param name="rawString">Raw string that might include the preamble (BOM).</param>
+    /// <returns>String without preamble.</returns>
+    private static string RemoveEncodingPreamble(string rawString)
+    {
+      if (!string.IsNullOrWhiteSpace(rawString) && rawString.StartsWith(CONSOLE_ENCODING_PREAMBLE))
+        return rawString.Substring(CONSOLE_ENCODING_PREAMBLE.Length);
+      return rawString;
     }
 
     /// <summary>
@@ -311,52 +342,62 @@ namespace MediaPortal.Utilities.Process
     /// <returns><c>true</c> if process was executed and finished correctly</returns>
     private static bool TryExecute_Impersonated(string executable, string arguments, IntPtr token, bool redirectInputOutput, out string result, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
-      //string appCmdLine = executable + (!string.IsNullOrWhiteSpace(arguments) ? " " + arguments : string.Empty);
       IntPtr inputHandle = IntPtr.Zero;
       IntPtr outputHandle = IntPtr.Zero;
       IntPtr errorHandle = IntPtr.Zero;
       try
       {
         PROCESS_INFORMATION pi;
-        if (!TryExecute_Impersonated(executable, arguments, token, redirectInputOutput, out pi, out inputHandle, out outputHandle, out errorHandle))
-          throw new InvalidOperationException("Failed to start process!");
+        if (!StartProcess(executable, arguments, token, redirectInputOutput, out pi, out inputHandle, out outputHandle, out errorHandle))
+        {
+          int hr = Marshal.GetLastWin32Error();
+          throw new InvalidOperationException(string.Format("Failed to start process! hr: 0x{0:x08}", hr));
+        }
 
         SetProcessPriority(pi.hProcess, priorityClass);
-
-        if (redirectInputOutput && outputHandle != IntPtr.Zero)
-        {
-          const int bufferSize = 0x1000;
-          using (SafeFileHandle safeFileHandle = new SafeFileHandle(outputHandle, false))
-          {
-            StreamReader reader = new StreamReader(new FileStream(safeFileHandle, FileAccess.Read, bufferSize, false), Console.OutputEncoding, true, bufferSize);
-            result = reader.ReadToEnd();
-          }
-        }
-        else
-          result = null;
 
         ProcessWaitHandle waitable = new ProcessWaitHandle(pi.hProcess);
         if (waitable.WaitOne(maxWaitMs))
         {
           uint exitCode;
-          return GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0;
+          if (GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0)
+          {
+            if (redirectInputOutput && outputHandle != IntPtr.Zero)
+            {
+              const int bufferSize = 0x1000;
+              using (SafeFileHandle safeFileHandle = new SafeFileHandle(outputHandle, false))
+              {
+                StreamReader reader = new StreamReader(new FileStream(safeFileHandle, FileAccess.Read, bufferSize, false), Console.OutputEncoding, true, bufferSize);
+                result = null;
+                char[] buffer = new char[bufferSize];
+                for (;;)
+                {
+                  int read = reader.Read(buffer, 0, bufferSize);
+                  if (read == 0)
+                    break;
+                  result += buffer;
+                }
+              }
+            }
+          }
         }
         else
         {
           TerminateProcess(pi.hProcess, 255);
-          return false;
         }
+        result = null;
+        return false;
       }
       finally
       {
-        ImpersonationHelper.CloseHandle(token);
-        CloseSafeHandle(inputHandle);
-        CloseSafeHandle(outputHandle);
-        CloseSafeHandle(errorHandle);
+        ImpersonationHelper.SafeCloseHandle(token);
+        ImpersonationHelper.SafeCloseHandle(inputHandle);
+        ImpersonationHelper.SafeCloseHandle(outputHandle);
+        ImpersonationHelper.SafeCloseHandle(errorHandle);
       }
     }
 
-    private static bool TryExecute_Impersonated(string executable, string argument, IntPtr token, bool redirectInputOutput, out PROCESS_INFORMATION pi,
+    private static bool StartProcess(string executable, string argument, IntPtr token, bool redirectInputOutput, out PROCESS_INFORMATION pi,
       out IntPtr inputHandle, out IntPtr outputHandle, out IntPtr errorHandle)
     {
       inputHandle = IntPtr.Zero;
@@ -370,21 +411,19 @@ namespace MediaPortal.Utilities.Process
       STARTUPINFO si = new STARTUPINFO();
       si.cb = (uint) Marshal.SizeOf(si);
 
-      si.lpDesktop = @"WinSta0\Default"; // Modify as needed
+      //si.lpDesktop = @"WinSta0\Default"; // Modify as needed
       si.wShowWindow = SW_HIDE;
 
       if (redirectInputOutput)
       {
-        si.dwFlags = STARTF_USESTDHANDLES;
-        CreatePipe(out inputHandle, out si.hStdInput, true);
+        si.dwFlags |= STARTF_USESTDHANDLES;
         CreatePipe(out outputHandle, out si.hStdOutput, false);
-        CreatePipe(out errorHandle, out si.hStdError, false);
       }
 
       return CreateProcessAsUser(
         token,
-        executable,
-        argument,
+        null,
+        executable + " " + argument,
         ref saProcess,
         ref saThread,
         false,
@@ -403,37 +442,26 @@ namespace MediaPortal.Utilities.Process
     public static void CreatePipe(out IntPtr parentHandle, out IntPtr childHandle, bool parentInputs)
     {
       SECURITY_ATTRIBUTES lpPipeAttributes = new SECURITY_ATTRIBUTES { bInheritHandle = true };
+      lpPipeAttributes.nLength =  (uint) Marshal.SizeOf(lpPipeAttributes);
       IntPtr hWritePipe = IntPtr.Zero;
       try
       {
         if (parentInputs)
-          CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, lpPipeAttributes, 0);
+          CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, ref lpPipeAttributes, 4096);
         else
-          CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, lpPipeAttributes, 0);
+          CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, ref lpPipeAttributes, 4096);
         if (!DuplicateHandle(GetCurrentProcess(), hWritePipe, GetCurrentProcess(), out parentHandle, 0, false, 2))
           throw new Exception();
       }
       finally
       {
-        CloseSafeHandle(hWritePipe);
+        ImpersonationHelper.SafeCloseHandle(hWritePipe);
       }
     }
 
-    private static void CloseSafeHandle(IntPtr handle)
+    internal static void CreatePipeWithSecurityAttributes(out IntPtr hReadPipe, out IntPtr hWritePipe, ref SECURITY_ATTRIBUTES lpPipeAttributes, int nSize)
     {
-      if (handle != IntPtr.Zero)
-        ImpersonationHelper.CloseHandle(handle);
-    }
-
-    private static void CloseSafeHandle(SafeFileHandle handle)
-    {
-      if (handle != null && !handle.IsInvalid)
-        handle.Close();
-    }
-
-    internal static void CreatePipeWithSecurityAttributes(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize)
-    {
-      if ((!CreatePipe(out hReadPipe, out hWritePipe, lpPipeAttributes, nSize) || hReadPipe == IntPtr.Zero) || hWritePipe == IntPtr.Zero)
+      if ((!CreatePipe(out hReadPipe, out hWritePipe, ref lpPipeAttributes, nSize) || hReadPipe == IntPtr.Zero) || hWritePipe == IntPtr.Zero)
         throw new Exception();
     }
 

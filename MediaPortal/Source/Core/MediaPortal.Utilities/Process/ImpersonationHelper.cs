@@ -180,6 +180,15 @@ namespace MediaPortal.Utilities.Process
     [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     internal extern static bool DuplicateToken(IntPtr existingTokenHandle, SecurityImpersonationLevel impersonationLevel, ref IntPtr duplicateTokenHandle);
 
+    [DllImport("advapi32.dll", EntryPoint = "DuplicateTokenEx", SetLastError = true)]
+    private static extern bool DuplicateTokenEx(
+        IntPtr hExistingToken,
+        int dwDesiredAccess,
+        ref ProcessUtils.SECURITY_ATTRIBUTES lpThreadAttributes,
+        SecurityImpersonationLevel impersonationLevel,
+        ProcessUtils.TOKEN_TYPE dwTokenType,
+        ref IntPtr phNewToken);
+
     [DllImport("advapi32")]
     internal static extern bool OpenProcessToken(
         IntPtr processHandle, // handle to process
@@ -247,8 +256,7 @@ namespace MediaPortal.Utilities.Process
       finally
       {
         // Close handle.
-        if (userToken != IntPtr.Zero)
-          CloseHandle(userToken);
+        SafeCloseHandle(userToken);
       }
     }
 
@@ -275,19 +283,30 @@ namespace MediaPortal.Utilities.Process
       finally
       {
         // Close handle(s)
-        if (userToken != IntPtr.Zero)
-          CloseHandle(userToken);
+        SafeCloseHandle(userToken);
       }
     }
 
     /// <summary>
-    /// Tries to get an existing user token from the given <paramref name="processName"/>. Caller must call <see cref="CloseHandle"/> for the returned <paramref name="existingTokenHandle"/>
-    /// when it is no longer required.
+    /// Tries to get an existing user token running <c>explorer.exe</c>. If <paramref name="duplicate"/> is set to <c>true</c>, the caller must call <see cref="CloseHandle"/> 
+    /// for the returned <paramref name="existingTokenHandle"/>  when it is no longer required.
+    /// </summary>
+    /// <param name="existingTokenHandle">Outputs an existing token.</param>
+    /// <param name="duplicate"><c>true</c> to duplicate handle.</param>
+    public static bool GetTokenByProcess(out IntPtr existingTokenHandle, bool duplicate = false)
+    {
+      return GetTokenByProcess("explorer", out existingTokenHandle, duplicate);
+    }
+
+    /// <summary>
+    /// Tries to get an existing user token from the given <paramref name="processName"/>. If <paramref name="duplicate"/> is set to <c>true</c>, the caller must call <see cref="CloseHandle"/> 
+    /// for the returned <paramref name="existingTokenHandle"/>  when it is no longer required.
     /// </summary>
     /// <param name="processName">Process name to take user account from (without .exe).</param>
     /// <param name="existingTokenHandle">Outputs an existing token.</param>
-    /// <returns></returns>
-    public static bool GetTokenByProcess(string processName, out IntPtr existingTokenHandle)
+    /// <param name="duplicate"><c>true</c> to duplicate handle.</param>
+    /// <returns><c>true</c> if successful.</returns>
+    public static bool GetTokenByProcess(string processName, out IntPtr existingTokenHandle, bool duplicate = false)
     {
       // Try to find a process for given processName. There can be multiple processes, we will take the first one.
       // Attention: when working on a RemoteDesktop/Terminal session, there can be multiple user logged in. The result of finding the first process
@@ -299,12 +318,36 @@ namespace MediaPortal.Utilities.Process
 
       try
       {
-        return OpenProcessToken(process.Handle, TOKEN_QUERY | TOKEN_IMPERSONATE | TOKEN_DUPLICATE, ref existingTokenHandle);
+        if (!OpenProcessToken(process.Handle, TOKEN_QUERY | TOKEN_IMPERSONATE | TOKEN_DUPLICATE, ref existingTokenHandle))
+          return false;
+
+        IntPtr impersonationToken = existingTokenHandle;
+        return !duplicate || CreatePrimaryToken(impersonationToken, out existingTokenHandle);
       }
       catch
-      {
-        return false;
-      }
+      { }
+      return false;
+    }
+
+    private static bool CreatePrimaryToken(IntPtr impersonationToken, out IntPtr primaryToken)
+    {
+      primaryToken = impersonationToken;
+
+      // Convert the impersonation token into Primary token
+      ProcessUtils.SECURITY_ATTRIBUTES sa = new ProcessUtils.SECURITY_ATTRIBUTES();
+      sa.nLength = (uint) Marshal.SizeOf(sa);
+      
+      bool retVal = DuplicateTokenEx(
+        impersonationToken,
+        TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY,
+        ref sa,
+        SecurityImpersonationLevel.SecurityIdentification,
+        ProcessUtils.TOKEN_TYPE.TokenPrimary,
+        ref primaryToken);
+
+      // Close the Token that was previously opened.
+      CloseHandle(impersonationToken);
+      return retVal;
     }
 
     /// <summary>
@@ -337,9 +380,14 @@ namespace MediaPortal.Utilities.Process
       finally
       {
         // Close handle(s)
-        if (existingTokenHandle != IntPtr.Zero)
-          CloseHandle(existingTokenHandle);
+        SafeCloseHandle(existingTokenHandle);
       }
+    }
+
+    internal static void SafeCloseHandle(IntPtr handle)
+    {
+      if (handle != IntPtr.Zero)
+        CloseHandle(handle);
     }
   }
 }

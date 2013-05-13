@@ -51,15 +51,20 @@ namespace MediaPortal.Utilities.Process
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct SECURITY_ATTRIBUTES
+    internal class SECURITY_ATTRIBUTES
     {
       public uint nLength;
       public IntPtr lpSecurityDescriptor;
       public bool bInheritHandle;
+      public SECURITY_ATTRIBUTES()
+      {
+        nLength = 12;
+        lpSecurityDescriptor = IntPtr.Zero;
+      }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct STARTUPINFO
+    internal class STARTUPINFO
     {
       public uint cb;
       public string lpReserved;
@@ -76,9 +81,17 @@ namespace MediaPortal.Utilities.Process
       public short wShowWindow;
       public short cbReserved2;
       public IntPtr lpReserved2;
-      public IntPtr hStdInput;
-      public IntPtr hStdOutput;
-      public IntPtr hStdError;
+      public SafeFileHandle hStdInput;
+      public SafeFileHandle hStdOutput;
+      public SafeFileHandle hStdError;
+
+      public STARTUPINFO()
+      {
+        cb = (uint) Marshal.SizeOf(this);
+        hStdInput = new SafeFileHandle(new IntPtr(0), false);
+        hStdOutput = new SafeFileHandle(new IntPtr(0), false);
+        hStdError = new SafeFileHandle(new IntPtr(0), false);
+      }
     }
 
     internal enum SECURITY_IMPERSONATION_LEVEL
@@ -100,13 +113,13 @@ namespace MediaPortal.Utilities.Process
         IntPtr hToken,
         string lpApplicationName,
         string lpCommandLine,
-        ref SECURITY_ATTRIBUTES lpProcessAttributes,
-        ref SECURITY_ATTRIBUTES lpThreadAttributes,
+        SECURITY_ATTRIBUTES lpProcessAttributes,
+        SECURITY_ATTRIBUTES lpThreadAttributes,
         bool bInheritHandles,
         uint dwCreationFlags,
         IntPtr lpEnvironment,
         string lpCurrentDirectory,
-        ref STARTUPINFO lpStartupInfo,
+        STARTUPINFO lpStartupInfo,
         out PROCESS_INFORMATION lpProcessInformation);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -121,10 +134,10 @@ namespace MediaPortal.Utilities.Process
     internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    internal static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, ref SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
+    internal static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-    internal static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, IntPtr hSourceHandle, IntPtr hTargetProcess, out IntPtr targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);
+    internal static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeFileHandle hSourceHandle, IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
     internal static extern IntPtr GetCurrentProcess();
@@ -342,9 +355,10 @@ namespace MediaPortal.Utilities.Process
     /// <returns><c>true</c> if process was executed and finished correctly</returns>
     private static bool TryExecute_Impersonated(string executable, string arguments, IntPtr token, bool redirectInputOutput, out string result, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
-      IntPtr inputHandle = IntPtr.Zero;
-      IntPtr outputHandle = IntPtr.Zero;
-      IntPtr errorHandle = IntPtr.Zero;
+      SafeFileHandle inputHandle = null;
+      SafeFileHandle outputHandle = null;
+      SafeFileHandle errorHandle = null;
+      result = null;
       try
       {
         PROCESS_INFORMATION pi;
@@ -356,63 +370,51 @@ namespace MediaPortal.Utilities.Process
 
         SetProcessPriority(pi.hProcess, priorityClass);
 
+
         ProcessWaitHandle waitable = new ProcessWaitHandle(pi.hProcess);
         if (waitable.WaitOne(maxWaitMs))
         {
           uint exitCode;
-          if (GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0)
+          if (redirectInputOutput && IsValid(outputHandle))
           {
-            if (redirectInputOutput && outputHandle != IntPtr.Zero)
+            const int bufferSize = 0x1000;
+            using (StreamReader reader = new StreamReader(new FileStream(outputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
             {
-              const int bufferSize = 0x1000;
-              using (SafeFileHandle safeFileHandle = new SafeFileHandle(outputHandle, false))
-              {
-                StreamReader reader = new StreamReader(new FileStream(safeFileHandle, FileAccess.Read, bufferSize, false), Console.OutputEncoding, true, bufferSize);
-                result = null;
-                char[] buffer = new char[bufferSize];
-                for (;;)
-                {
-                  int read = reader.Read(buffer, 0, bufferSize);
-                  if (read == 0)
-                    break;
-                  result += buffer;
-                }
-              }
+              while (!reader.EndOfStream)
+                result = reader.ReadLine();
             }
           }
+          return GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0;
         }
         else
         {
           TerminateProcess(pi.hProcess, 255);
         }
-        result = null;
         return false;
       }
       finally
       {
         ImpersonationHelper.SafeCloseHandle(token);
-        ImpersonationHelper.SafeCloseHandle(inputHandle);
-        ImpersonationHelper.SafeCloseHandle(outputHandle);
-        ImpersonationHelper.SafeCloseHandle(errorHandle);
+        SafeCloseHandle(inputHandle);
+        SafeCloseHandle(outputHandle);
+        SafeCloseHandle(errorHandle);
       }
     }
 
     private static bool StartProcess(string executable, string argument, IntPtr token, bool redirectInputOutput, out PROCESS_INFORMATION pi,
-      out IntPtr inputHandle, out IntPtr outputHandle, out IntPtr errorHandle)
+      out SafeFileHandle inputHandle, out SafeFileHandle outputHandle, out SafeFileHandle errorHandle)
     {
-      inputHandle = IntPtr.Zero;
-      outputHandle = IntPtr.Zero;
-      errorHandle = IntPtr.Zero;
+      inputHandle = null;
+      outputHandle = null;
+      errorHandle = null;
       SECURITY_ATTRIBUTES saProcess = new SECURITY_ATTRIBUTES();
       SECURITY_ATTRIBUTES saThread = new SECURITY_ATTRIBUTES();
-      saProcess.nLength = (uint) Marshal.SizeOf(saProcess);
-      saThread.nLength = (uint) Marshal.SizeOf(saThread);
 
-      STARTUPINFO si = new STARTUPINFO();
-      si.cb = (uint) Marshal.SizeOf(si);
-
-      //si.lpDesktop = @"WinSta0\Default"; // Modify as needed
-      si.wShowWindow = SW_HIDE;
+      STARTUPINFO si = new STARTUPINFO
+        {
+          // lpDesktop = @"WinSta0\Default", // Modify as needed
+          wShowWindow = SW_HIDE
+        };
 
       if (redirectInputOutput)
       {
@@ -424,13 +426,13 @@ namespace MediaPortal.Utilities.Process
         token,
         null,
         executable + " " + argument,
-        ref saProcess,
-        ref saThread,
+        saProcess,
+        saThread,
         false,
         CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
         IntPtr.Zero,
         null,
-        ref si,
+        si,
         out pi);
     }
 
@@ -439,32 +441,41 @@ namespace MediaPortal.Utilities.Process
       return SetPriorityClass(processHandle, (uint) priority); // Note: Enum values are equal to unmanaged constants.
     }
 
-    public static void CreatePipe(out IntPtr parentHandle, out IntPtr childHandle, bool parentInputs)
+    public static void CreatePipe(out SafeFileHandle parentHandle, out SafeFileHandle childHandle, bool parentInputs)
     {
       SECURITY_ATTRIBUTES lpPipeAttributes = new SECURITY_ATTRIBUTES { bInheritHandle = true };
-      lpPipeAttributes.nLength =  (uint) Marshal.SizeOf(lpPipeAttributes);
-      IntPtr hWritePipe = IntPtr.Zero;
+      SafeFileHandle hWritePipe = null;
       try
       {
         if (parentInputs)
-          CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, ref lpPipeAttributes, 4096);
+          CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, lpPipeAttributes, 4096);
         else
-          CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, ref lpPipeAttributes, 4096);
+          CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, lpPipeAttributes, 4096);
         if (!DuplicateHandle(GetCurrentProcess(), hWritePipe, GetCurrentProcess(), out parentHandle, 0, false, 2))
           throw new Exception();
       }
       finally
       {
-        ImpersonationHelper.SafeCloseHandle(hWritePipe);
+        SafeCloseHandle(hWritePipe);
       }
     }
 
-    internal static void CreatePipeWithSecurityAttributes(out IntPtr hReadPipe, out IntPtr hWritePipe, ref SECURITY_ATTRIBUTES lpPipeAttributes, int nSize)
+    internal static void CreatePipeWithSecurityAttributes(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize)
     {
-      if ((!CreatePipe(out hReadPipe, out hWritePipe, ref lpPipeAttributes, nSize) || hReadPipe == IntPtr.Zero) || hWritePipe == IntPtr.Zero)
+      if ((!CreatePipe(out hReadPipe, out hWritePipe, lpPipeAttributes, nSize) || !IsValid(hReadPipe) || !IsValid(hWritePipe)))
         throw new Exception();
     }
 
+    internal static bool IsValid(SafeFileHandle handle)
+    {
+      return handle != null && !handle.IsInvalid;
+    }
+
+    internal static void SafeCloseHandle(SafeFileHandle handle)
+    {
+      if (IsValid(handle))
+        handle.Close();
+    }
     #endregion
   }
 }

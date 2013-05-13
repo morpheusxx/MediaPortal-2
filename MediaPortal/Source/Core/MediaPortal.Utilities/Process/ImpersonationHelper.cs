@@ -184,7 +184,7 @@ namespace MediaPortal.Utilities.Process
     private static extern bool DuplicateTokenEx(
         IntPtr hExistingToken,
         int dwDesiredAccess,
-        ref ProcessUtils.SECURITY_ATTRIBUTES lpThreadAttributes,
+        ProcessUtils.SECURITY_ATTRIBUTES lpThreadAttributes,
         SecurityImpersonationLevel impersonationLevel,
         ProcessUtils.TOKEN_TYPE dwTokenType,
         ref IntPtr phNewToken);
@@ -340,7 +340,7 @@ namespace MediaPortal.Utilities.Process
       bool retVal = DuplicateTokenEx(
         impersonationToken,
         TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY,
-        ref sa,
+        sa,
         SecurityImpersonationLevel.SecurityIdentification,
         ProcessUtils.TOKEN_TYPE.TokenPrimary,
         ref primaryToken);

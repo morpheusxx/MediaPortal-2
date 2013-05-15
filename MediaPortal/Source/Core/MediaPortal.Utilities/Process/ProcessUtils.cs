@@ -88,9 +88,9 @@ namespace MediaPortal.Utilities.Process
       public STARTUPINFO()
       {
         cb = (uint) Marshal.SizeOf(this);
-        hStdInput = new SafeFileHandle(new IntPtr(0), false);
-        hStdOutput = new SafeFileHandle(new IntPtr(0), false);
-        hStdError = new SafeFileHandle(new IntPtr(0), false);
+        hStdInput = new SafeFileHandle(IntPtr.Zero, false);
+        hStdOutput = new SafeFileHandle(IntPtr.Zero, false);
+        hStdError = new SafeFileHandle(IntPtr.Zero, false);
       }
     }
 
@@ -145,6 +145,7 @@ namespace MediaPortal.Utilities.Process
     private const int INFINITE = -1;
 
     private const short SW_HIDE = 0;
+    private const short SW_SHOW = 5;
 
     private const uint STARTF_USESTDHANDLES = 0x00000100;
 
@@ -176,7 +177,7 @@ namespace MediaPortal.Utilities.Process
     /// <param name="priorityClass">Process priority</param>
     /// <param name="maxWaitMs">Maximum time to wait for completion</param>
     /// <returns><c>true</c> if process was executed and finished correctly</returns>
-    public static bool TryExecute(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+    public static bool TryExecute(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
       string unused;
       return TryExecute(executable, arguments, false, out unused, priorityClass, maxWaitMs);
@@ -192,7 +193,7 @@ namespace MediaPortal.Utilities.Process
     /// <param name="priorityClass">Process priority</param>
     /// <param name="maxWaitMs">Maximum time to wait for completion</param>
     /// <returns><c>true</c> if process was executed and finished correctly</returns>
-    public static bool TryExecute_AutoImpersonate(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = 1000)
+    public static bool TryExecute_AutoImpersonate(string executable, string arguments, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
       return IsImpersonated ?
         TryExecute_Impersonated(executable, arguments, priorityClass, maxWaitMs) :
@@ -359,6 +360,9 @@ namespace MediaPortal.Utilities.Process
       SafeFileHandle outputHandle = null;
       SafeFileHandle errorHandle = null;
       result = null;
+      StringBuilder resultSb = null;
+      Thread outputThread = null;
+
       try
       {
         PROCESS_INFORMATION pi;
@@ -369,21 +373,29 @@ namespace MediaPortal.Utilities.Process
         }
 
         SetProcessPriority(pi.hProcess, priorityClass);
-
+        if (redirectInputOutput && IsValid(outputHandle))
+        {
+          resultSb = new StringBuilder();
+          outputThread = new Thread(OutputThread);
+          outputThread.SetApartmentState(ApartmentState.STA);
+          outputThread.Start(new ThreadArgs { OutputHandle = outputHandle, OutputString = resultSb });
+        }
 
         ProcessWaitHandle waitable = new ProcessWaitHandle(pi.hProcess);
         if (waitable.WaitOne(maxWaitMs))
         {
           uint exitCode;
-          if (redirectInputOutput && IsValid(outputHandle))
-          {
-            const int bufferSize = 0x1000;
-            using (StreamReader reader = new StreamReader(new FileStream(outputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
-            {
-              while (!reader.EndOfStream)
-                result = reader.ReadLine();
-            }
-          }
+          if (resultSb != null)
+            result = resultSb.ToString();
+          //if (redirectInputOutput && IsValid(outputHandle))
+          //{
+          //  const int bufferSize = 0x1000;
+          //  using (StreamReader reader = new StreamReader(new FileStream(outputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
+          //  {
+          //    while (!reader.EndOfStream)
+          //      result = reader.ReadLine();
+          //  }
+          //}
           return GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0;
         }
         else
@@ -394,10 +406,46 @@ namespace MediaPortal.Utilities.Process
       }
       finally
       {
+        if (outputThread != null) 
+          outputThread.Abort();
         ImpersonationHelper.SafeCloseHandle(token);
         SafeCloseHandle(inputHandle);
-        SafeCloseHandle(outputHandle);
+        //SafeCloseHandle(outputHandle);
         SafeCloseHandle(errorHandle);
+      }
+    }
+
+    class ThreadArgs
+    {
+      public SafeFileHandle OutputHandle;
+      public StringBuilder OutputString;
+    }
+
+    /// <summary>
+    /// The OutputThread ThreadStart delegate
+    /// </summary>
+    private static void OutputThread(object threadArgs)
+    {
+      ThreadArgs args = threadArgs as ThreadArgs;
+      if (args == null)
+        throw new ArgumentException("Invalid thread arguments.");
+
+      const int bufferSize = 0x1000;
+      try
+      {
+        using (StreamReader reader = new StreamReader(new FileStream(args.OutputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
+        {
+          args.OutputString.Append(reader.ReadToEnd());
+        }
+      }
+      catch (ThreadAbortException) { }
+      catch (Exception e)
+      {
+
+      }
+      finally
+      {
+        SafeCloseHandle(args.OutputHandle);
       }
     }
 
@@ -451,7 +499,9 @@ namespace MediaPortal.Utilities.Process
           CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, lpPipeAttributes, 4096);
         else
           CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, lpPipeAttributes, 4096);
-        if (!DuplicateHandle(GetCurrentProcess(), hWritePipe, GetCurrentProcess(), out parentHandle, 0, false, 2))
+
+        IntPtr hSourceProcessHandle = GetCurrentProcess();
+        if (!DuplicateHandle(hSourceProcessHandle, hWritePipe, hSourceProcessHandle, out parentHandle, 0, false, 2))
           throw new Exception();
       }
       finally

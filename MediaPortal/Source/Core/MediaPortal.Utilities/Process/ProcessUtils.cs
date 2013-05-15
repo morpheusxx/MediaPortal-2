@@ -24,10 +24,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
-using Microsoft.Win32.SafeHandles;
 
 namespace MediaPortal.Utilities.Process
 {
@@ -36,118 +34,7 @@ namespace MediaPortal.Utilities.Process
     private static readonly Encoding CONSOLE_ENCODING = Encoding.UTF8;
     private static readonly string CONSOLE_ENCODING_PREAMBLE = CONSOLE_ENCODING.GetString(CONSOLE_ENCODING.GetPreamble());
 
-    #region Imports and consts
-
-    // ReSharper disable InconsistentNaming
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct PROCESS_INFORMATION
-    {
-      public IntPtr hProcess;
-      public IntPtr hThread;
-      public uint dwProcessId;
-      public uint dwThreadId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal class SECURITY_ATTRIBUTES
-    {
-      public uint nLength;
-      public IntPtr lpSecurityDescriptor;
-      public bool bInheritHandle;
-      public SECURITY_ATTRIBUTES()
-      {
-        nLength = 12;
-        lpSecurityDescriptor = IntPtr.Zero;
-      }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal class STARTUPINFO
-    {
-      public uint cb;
-      public string lpReserved;
-      public string lpDesktop;
-      public string lpTitle;
-      public uint dwX;
-      public uint dwY;
-      public uint dwXSize;
-      public uint dwYSize;
-      public uint dwXCountChars;
-      public uint dwYCountChars;
-      public uint dwFillAttribute;
-      public uint dwFlags;
-      public short wShowWindow;
-      public short cbReserved2;
-      public IntPtr lpReserved2;
-      public SafeFileHandle hStdInput;
-      public SafeFileHandle hStdOutput;
-      public SafeFileHandle hStdError;
-
-      public STARTUPINFO()
-      {
-        cb = (uint) Marshal.SizeOf(this);
-        hStdInput = new SafeFileHandle(IntPtr.Zero, false);
-        hStdOutput = new SafeFileHandle(IntPtr.Zero, false);
-        hStdError = new SafeFileHandle(IntPtr.Zero, false);
-      }
-    }
-
-    internal enum SECURITY_IMPERSONATION_LEVEL
-    {
-      SecurityAnonymous,
-      SecurityIdentification,
-      SecurityImpersonation,
-      SecurityDelegation
-    }
-
-    internal enum TOKEN_TYPE
-    {
-      TokenPrimary = 1,
-      TokenImpersonation
-    }
-
-    [DllImport("advapi32.dll", SetLastError = true)]
-    internal static extern bool CreateProcessAsUser(
-        IntPtr hToken,
-        string lpApplicationName,
-        string lpCommandLine,
-        SECURITY_ATTRIBUTES lpProcessAttributes,
-        SECURITY_ATTRIBUTES lpThreadAttributes,
-        bool bInheritHandles,
-        uint dwCreationFlags,
-        IntPtr lpEnvironment,
-        string lpCurrentDirectory,
-        STARTUPINFO lpStartupInfo,
-        out PROCESS_INFORMATION lpProcessInformation);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-    public static extern uint GetPriorityClass(IntPtr handle);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    public static extern bool SetPriorityClass(IntPtr handle, uint priorityClass);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    internal static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-    internal static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeFileHandle hSourceHandle, IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-    internal static extern IntPtr GetCurrentProcess();
-
     private const int INFINITE = -1;
-
-    // ReSharper restore InconsistentNaming
-
-    #endregion
 
     /// <summary>
     /// Executes the <paramref name="executable"/> and waits a maximum time of <paramref name="maxWaitMs"/> for completion. If the process doesn't end in 

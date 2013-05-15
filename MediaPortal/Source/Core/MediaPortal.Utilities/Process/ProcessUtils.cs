@@ -24,11 +24,9 @@
 
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
-using System.Threading;
 using Microsoft.Win32.SafeHandles;
 
 namespace MediaPortal.Utilities.Process
@@ -122,6 +120,9 @@ namespace MediaPortal.Utilities.Process
         STARTUPINFO lpStartupInfo,
         out PROCESS_INFORMATION lpProcessInformation);
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+    public static extern uint GetPriorityClass(IntPtr handle);
+
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     public static extern bool SetPriorityClass(IntPtr handle, uint priorityClass);
 
@@ -144,27 +145,7 @@ namespace MediaPortal.Utilities.Process
 
     private const int INFINITE = -1;
 
-    private const short SW_HIDE = 0;
-    private const short SW_SHOW = 5;
-
-    private const uint STARTF_USESTDHANDLES = 0x00000100;
-
-    private const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
-    private const uint CREATE_NO_WINDOW = 0x08000000;
-
     // ReSharper restore InconsistentNaming
-
-    #endregion
-
-    #region Internal classes
-
-    class ProcessWaitHandle : WaitHandle
-    {
-      public ProcessWaitHandle(IntPtr processHandle)
-      {
-        SafeWaitHandle = new SafeWaitHandle(processHandle, false);
-      }
-    }
 
     #endregion
 
@@ -331,18 +312,6 @@ namespace MediaPortal.Utilities.Process
     }
 
     /// <summary>
-    /// Helper method to remove an existing encoding preamble (<see cref="Encoding.GetPreamble"/>) from the given <paramref name="rawString"/>.
-    /// </summary>
-    /// <param name="rawString">Raw string that might include the preamble (BOM).</param>
-    /// <returns>String without preamble.</returns>
-    private static string RemoveEncodingPreamble(string rawString)
-    {
-      if (!string.IsNullOrWhiteSpace(rawString) && rawString.StartsWith(CONSOLE_ENCODING_PREAMBLE))
-        return rawString.Substring(CONSOLE_ENCODING_PREAMBLE.Length);
-      return rawString;
-    }
-
-    /// <summary>
     /// Executes the <paramref name="executable"/> and waits a maximum time of <paramref name="maxWaitMs"/> for completion. If the process doesn't end in 
     /// this time, it gets aborted. This method tries to impersonate the interactive user and run the process under its identity.
     /// </summary>
@@ -356,176 +325,49 @@ namespace MediaPortal.Utilities.Process
     /// <returns><c>true</c> if process was executed and finished correctly</returns>
     private static bool TryExecute_Impersonated(string executable, string arguments, IntPtr token, bool redirectInputOutput, out string result, ProcessPriorityClass priorityClass = ProcessPriorityClass.Normal, int maxWaitMs = INFINITE)
     {
-      SafeFileHandle inputHandle = null;
-      SafeFileHandle outputHandle = null;
-      SafeFileHandle errorHandle = null;
+      // TODO: code is 99% redundant to TryExecute, refactor Process/ImpersonationProcess and Start/StartAsUser!
+      StringBuilder outputBuilder = new StringBuilder();
+      using (ImpersonationProcess process = new ImpersonationProcess { StartInfo = new ProcessStartInfo(executable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = redirectInputOutput } })
+      {
+        if (redirectInputOutput)
+        {
+          // Set UTF-8 encoding for standard output.
+          process.StartInfo.StandardOutputEncoding = CONSOLE_ENCODING;
+          // Enable raising events because Process does not raise events by default.
+          process.EnableRaisingEvents = true;
+          // Attach the event handler for OutputDataReceived before starting the process.
+          process.OutputDataReceived += (sender, e) => outputBuilder.Append(e.Data);
+        }
+        process.StartAsUser(token);
+        process.PriorityClass = priorityClass;
+
+        if (redirectInputOutput)
+          process.BeginOutputReadLine();
+
+        if (process.WaitForExit(maxWaitMs))
+        {
+          result = RemoveEncodingPreamble(outputBuilder.ToString());
+          return process.ExitCode == 0;
+        }
+        if (!process.HasExited)
+          process.Kill();
+      }
       result = null;
-      StringBuilder resultSb = null;
-      Thread outputThread = null;
-
-      try
-      {
-        PROCESS_INFORMATION pi;
-        if (!StartProcess(executable, arguments, token, redirectInputOutput, out pi, out inputHandle, out outputHandle, out errorHandle))
-        {
-          int hr = Marshal.GetLastWin32Error();
-          throw new InvalidOperationException(string.Format("Failed to start process! hr: 0x{0:x08}", hr));
-        }
-
-        SetProcessPriority(pi.hProcess, priorityClass);
-        if (redirectInputOutput && IsValid(outputHandle))
-        {
-          resultSb = new StringBuilder();
-          outputThread = new Thread(OutputThread);
-          outputThread.SetApartmentState(ApartmentState.STA);
-          outputThread.Start(new ThreadArgs { OutputHandle = outputHandle, OutputString = resultSb });
-        }
-
-        ProcessWaitHandle waitable = new ProcessWaitHandle(pi.hProcess);
-        if (waitable.WaitOne(maxWaitMs))
-        {
-          uint exitCode;
-          if (resultSb != null)
-            result = resultSb.ToString();
-          //if (redirectInputOutput && IsValid(outputHandle))
-          //{
-          //  const int bufferSize = 0x1000;
-          //  using (StreamReader reader = new StreamReader(new FileStream(outputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
-          //  {
-          //    while (!reader.EndOfStream)
-          //      result = reader.ReadLine();
-          //  }
-          //}
-          return GetExitCodeProcess(pi.hProcess, out exitCode) && exitCode == 0;
-        }
-        else
-        {
-          TerminateProcess(pi.hProcess, 255);
-        }
-        return false;
-      }
-      finally
-      {
-        if (outputThread != null) 
-          outputThread.Abort();
-        ImpersonationHelper.SafeCloseHandle(token);
-        SafeCloseHandle(inputHandle);
-        //SafeCloseHandle(outputHandle);
-        SafeCloseHandle(errorHandle);
-      }
-    }
-
-    class ThreadArgs
-    {
-      public SafeFileHandle OutputHandle;
-      public StringBuilder OutputString;
+      return false;
     }
 
     /// <summary>
-    /// The OutputThread ThreadStart delegate
+    /// Helper method to remove an existing encoding preamble (<see cref="Encoding.GetPreamble"/>) from the given <paramref name="rawString"/>.
     /// </summary>
-    private static void OutputThread(object threadArgs)
+    /// <param name="rawString">Raw string that might include the preamble (BOM).</param>
+    /// <returns>String without preamble.</returns>
+    private static string RemoveEncodingPreamble(string rawString)
     {
-      ThreadArgs args = threadArgs as ThreadArgs;
-      if (args == null)
-        throw new ArgumentException("Invalid thread arguments.");
-
-      const int bufferSize = 0x1000;
-      try
-      {
-        using (StreamReader reader = new StreamReader(new FileStream(args.OutputHandle, FileAccess.Read, bufferSize, false), CONSOLE_ENCODING, true, bufferSize))
-        {
-          args.OutputString.Append(reader.ReadToEnd());
-        }
-      }
-      catch (ThreadAbortException) { }
-      catch (Exception e)
-      {
-
-      }
-      finally
-      {
-        SafeCloseHandle(args.OutputHandle);
-      }
+      if (!string.IsNullOrWhiteSpace(rawString) && rawString.StartsWith(CONSOLE_ENCODING_PREAMBLE))
+        return rawString.Substring(CONSOLE_ENCODING_PREAMBLE.Length);
+      return rawString;
     }
 
-    private static bool StartProcess(string executable, string argument, IntPtr token, bool redirectInputOutput, out PROCESS_INFORMATION pi,
-      out SafeFileHandle inputHandle, out SafeFileHandle outputHandle, out SafeFileHandle errorHandle)
-    {
-      inputHandle = null;
-      outputHandle = null;
-      errorHandle = null;
-      SECURITY_ATTRIBUTES saProcess = new SECURITY_ATTRIBUTES();
-      SECURITY_ATTRIBUTES saThread = new SECURITY_ATTRIBUTES();
-
-      STARTUPINFO si = new STARTUPINFO
-        {
-          // lpDesktop = @"WinSta0\Default", // Modify as needed
-          wShowWindow = SW_HIDE
-        };
-
-      if (redirectInputOutput)
-      {
-        si.dwFlags |= STARTF_USESTDHANDLES;
-        CreatePipe(out outputHandle, out si.hStdOutput, false);
-      }
-
-      return CreateProcessAsUser(
-        token,
-        null,
-        executable + " " + argument,
-        saProcess,
-        saThread,
-        false,
-        CREATE_UNICODE_ENVIRONMENT | CREATE_NO_WINDOW,
-        IntPtr.Zero,
-        null,
-        si,
-        out pi);
-    }
-
-    private static bool SetProcessPriority(IntPtr processHandle, ProcessPriorityClass priority)
-    {
-      return SetPriorityClass(processHandle, (uint) priority); // Note: Enum values are equal to unmanaged constants.
-    }
-
-    public static void CreatePipe(out SafeFileHandle parentHandle, out SafeFileHandle childHandle, bool parentInputs)
-    {
-      SECURITY_ATTRIBUTES lpPipeAttributes = new SECURITY_ATTRIBUTES { bInheritHandle = true };
-      SafeFileHandle hWritePipe = null;
-      try
-      {
-        if (parentInputs)
-          CreatePipeWithSecurityAttributes(out childHandle, out hWritePipe, lpPipeAttributes, 4096);
-        else
-          CreatePipeWithSecurityAttributes(out hWritePipe, out childHandle, lpPipeAttributes, 4096);
-
-        IntPtr hSourceProcessHandle = GetCurrentProcess();
-        if (!DuplicateHandle(hSourceProcessHandle, hWritePipe, hSourceProcessHandle, out parentHandle, 0, false, 2))
-          throw new Exception();
-      }
-      finally
-      {
-        SafeCloseHandle(hWritePipe);
-      }
-    }
-
-    internal static void CreatePipeWithSecurityAttributes(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize)
-    {
-      if ((!CreatePipe(out hReadPipe, out hWritePipe, lpPipeAttributes, nSize) || !IsValid(hReadPipe) || !IsValid(hWritePipe)))
-        throw new Exception();
-    }
-
-    internal static bool IsValid(SafeFileHandle handle)
-    {
-      return handle != null && !handle.IsInvalid;
-    }
-
-    internal static void SafeCloseHandle(SafeFileHandle handle)
-    {
-      if (IsValid(handle))
-        handle.Close();
-    }
     #endregion
   }
 }

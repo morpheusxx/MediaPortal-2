@@ -43,12 +43,12 @@ namespace MediaPortal.Utilities.Process
     private const int SW_MINIMIZE = 6;
     private const int SW_SHOW = 5;
 
-    private IntPtr _stdinReadHandle;
-    private IntPtr _stdinWriteHandle;
-    private IntPtr _stdoutWriteHandle;
-    private IntPtr _stderrWriteHandle;
-    private IntPtr _stdoutReadHandle;
-    private IntPtr _stderrReadHandle;
+    private SafeFileHandle _stdinReadHandle;
+    private SafeFileHandle _stdinWriteHandle;
+    private SafeFileHandle _stdoutWriteHandle;
+    private SafeFileHandle _stderrWriteHandle;
+    private SafeFileHandle _stdoutReadHandle;
+    private SafeFileHandle _stderrReadHandle;
     private NativeMethods.ProcessInformation _processInformation;
 
     private string GetCommandLine()
@@ -178,21 +178,21 @@ namespace MediaPortal.Utilities.Process
       if (StartInfo.RedirectStandardInput)
       {
         ImpersonationHelper.SafeCloseHandle(ref _stdinReadHandle);
-        StreamWriter standardInput = new StreamWriter(new FileStream(new SafeFileHandle(_stdinWriteHandle, true), FileAccess.Write, 4096), Console.Out.Encoding) { AutoFlush = true };
+        StreamWriter standardInput = new StreamWriter(new FileStream(_stdinWriteHandle, FileAccess.Write, 4096), Console.Out.Encoding) { AutoFlush = true };
         SetField("standardInput", standardInput);
       }
 
       if (StartInfo.RedirectStandardOutput)
       {
         ImpersonationHelper.SafeCloseHandle(ref _stdoutWriteHandle);
-        StreamReader standardOutput = new StreamReader(new FileStream(new SafeFileHandle(_stdoutReadHandle, true), FileAccess.Read, 4096), StartInfo.StandardOutputEncoding);
+        StreamReader standardOutput = new StreamReader(new FileStream(_stdoutReadHandle, FileAccess.Read, 4096), StartInfo.StandardOutputEncoding);
         SetField("standardOutput", standardOutput);
       }
 
       if (StartInfo.RedirectStandardError)
       {
         ImpersonationHelper.SafeCloseHandle(ref _stderrWriteHandle);
-        StreamReader standardError = new StreamReader(new FileStream(new SafeFileHandle(_stderrReadHandle, true), FileAccess.Read, 4096), StartInfo.StandardErrorEncoding);
+        StreamReader standardError = new StreamReader(new FileStream(_stderrReadHandle, FileAccess.Read, 4096), StartInfo.StandardErrorEncoding);
         SetField("standardError", standardError);
       }
 
@@ -214,7 +214,7 @@ namespace MediaPortal.Utilities.Process
       base.Dispose(disposing);
     }
 
-    private void CreateStandardPipe(out IntPtr readHandle, out IntPtr writeHandle, int standardHandle, bool isInput, bool redirect)
+    private void CreateStandardPipe(out SafeFileHandle readHandle, out SafeFileHandle writeHandle, int standardHandle, bool isInput, bool redirect)
     {
       if (redirect)
       {
@@ -232,12 +232,12 @@ namespace MediaPortal.Utilities.Process
       {
         if (isInput)
         {
-          writeHandle = IntPtr.Zero;
+          writeHandle = new SafeFileHandle(IntPtr.Zero, false);
           readHandle = NativeMethods.GetStdHandle(standardHandle);
         }
         else
         {
-          readHandle = IntPtr.Zero;
+          readHandle = new SafeFileHandle(IntPtr.Zero, false);
           writeHandle = NativeMethods.GetStdHandle(standardHandle);
         }
       }

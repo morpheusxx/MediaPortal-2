@@ -24,8 +24,10 @@
 
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using MediaPortal.Utilities.SystemAPI;
+using Microsoft.Win32.SafeHandles;
 
 namespace MediaPortal.Utilities.Process
 {
@@ -263,9 +265,20 @@ namespace MediaPortal.Utilities.Process
 
     internal static void SafeCloseHandle(ref IntPtr handle)
     {
-      if (handle != IntPtr.Zero)
-        NativeMethods.CloseHandle(handle);
+      SafeCloseHandle(handle);
       handle = IntPtr.Zero;
+    }
+
+    internal static void SafeCloseHandle(SafeFileHandle handle)
+    {
+      if (handle != null && !handle.IsInvalid)
+        handle.Close();
+    }
+
+    internal static void SafeCloseHandle(ref SafeFileHandle handle)
+    {
+      SafeCloseHandle(handle);
+      handle = null;
     }
   }
 }

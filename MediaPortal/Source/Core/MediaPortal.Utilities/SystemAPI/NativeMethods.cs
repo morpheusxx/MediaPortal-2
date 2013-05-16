@@ -215,13 +215,16 @@ namespace MediaPortal.Utilities.SystemAPI
       public short wShowWindow;
       public short cbReserved2;
       public IntPtr lpReserved2;
-      public IntPtr hStdInput;
-      public IntPtr hStdOutput;
-      public IntPtr hStdError;
+      public SafeFileHandle hStdInput;
+      public SafeFileHandle hStdOutput;
+      public SafeFileHandle hStdError;
 
       public StartupInfo()
       {
         cb = Marshal.SizeOf(typeof(StartupInfo));
+        hStdInput = new SafeFileHandle(IntPtr.Zero, false);
+        hStdOutput = new SafeFileHandle(IntPtr.Zero, false);
+        hStdError = new SafeFileHandle(IntPtr.Zero, false);
       }
     }
 
@@ -290,10 +293,10 @@ namespace MediaPortal.Utilities.SystemAPI
     public extern static bool CloseHandle(IntPtr handle);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern bool SetHandleInformation(IntPtr hObject, int dwMask, uint dwFlags);
+    public static extern bool SetHandleInformation(SafeFileHandle hObject, int dwMask, uint dwFlags);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern IntPtr GetStdHandle(int nStdHandle);
+    public static extern SafeFileHandle GetStdHandle(int nStdHandle);
 
     // Creates duplicate token handle.
     [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -336,7 +339,7 @@ namespace MediaPortal.Utilities.SystemAPI
     public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SecurityAttributes lpPipeAttributes, int nSize);
+    public static extern bool CreatePipe(out SafeFileHandle hReadPipe, out SafeFileHandle hWritePipe, SecurityAttributes lpPipeAttributes, int nSize);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
     public static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeFileHandle hSourceHandle, IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);

@@ -226,7 +226,7 @@ namespace MediaPortal.Utilities.Process
       {
         NativeMethods.SECURITY_ATTRIBUTES security = new NativeMethods.SECURITY_ATTRIBUTES { bInheritHandle = true };
 
-        bool success = NativeMethods.CreatePipe(out readHandle, out writeHandle, ref security, 4096);
+        bool success = NativeMethods.CreatePipe(out readHandle, out writeHandle, security, 4096);
 
         if (success)
           success = NativeMethods.SetHandleInformation(isInput ? writeHandle : readHandle, HANDLE_FLAG_INHERIT, 0);

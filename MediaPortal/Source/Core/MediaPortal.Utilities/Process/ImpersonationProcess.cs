@@ -118,7 +118,7 @@ namespace MediaPortal.Utilities.Process
         if (!NativeMethods.LogonUser(username, domain, password, NativeMethods.LogonType.Interactive, NativeMethods.LogonProvider.Default, out token))
           throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("ImpersonationProcess: LogonUser {0}\\{1} failed", domain, username));
 
-        if (!NativeMethods.DuplicateTokenEx(token, NativeMethods.TokenAccess.AssignPrimary | NativeMethods.TokenAccess.Duplicate| NativeMethods.TokenAccess.Query, null, NativeMethods.SecurityImpersonationLevel.Impersonation, NativeMethods.TokenType.Primary, out userToken))
+        if (!NativeMethods.DuplicateTokenEx(token, NativeMethods.TokenAccess.AssignPrimary | NativeMethods.TokenAccess.Duplicate | NativeMethods.TokenAccess.Query, null, NativeMethods.SecurityImpersonationLevel.Impersonation, NativeMethods.TokenType.Primary, out userToken))
           throw new Win32Exception(Marshal.GetLastWin32Error(), "ImpersonationProcess: DuplicateToken failed");
 
         return StartAsUser(userToken);
@@ -171,29 +171,29 @@ namespace MediaPortal.Utilities.Process
 
       if (_processInformation.hThread != (IntPtr) (-1))
       {
-        NativeMethods.CloseHandle(_processInformation.hThread);
+        ImpersonationHelper.SafeCloseHandle(ref _processInformation.hThread);
         _processInformation.hThread = IntPtr.Zero;
       }
 
       if (StartInfo.RedirectStandardInput)
       {
-        NativeMethods.CloseHandle(_stdinReadHandle);
+        ImpersonationHelper.SafeCloseHandle(ref _stdinReadHandle);
         StreamWriter standardInput = new StreamWriter(new FileStream(new SafeFileHandle(_stdinWriteHandle, true), FileAccess.Write, 4096), Console.Out.Encoding) { AutoFlush = true };
-        this.SetField("standardInput", standardInput);
+        SetField("standardInput", standardInput);
       }
 
       if (StartInfo.RedirectStandardOutput)
       {
-        NativeMethods.CloseHandle(_stdoutWriteHandle);
+        ImpersonationHelper.SafeCloseHandle(ref _stdoutWriteHandle);
         StreamReader standardOutput = new StreamReader(new FileStream(new SafeFileHandle(_stdoutReadHandle, true), FileAccess.Read, 4096), StartInfo.StandardOutputEncoding);
-        this.SetField("standardOutput", standardOutput);
+        SetField("standardOutput", standardOutput);
       }
 
       if (StartInfo.RedirectStandardError)
       {
-        NativeMethods.CloseHandle(_stderrWriteHandle);
+        ImpersonationHelper.SafeCloseHandle(ref _stderrWriteHandle);
         StreamReader standardError = new StreamReader(new FileStream(new SafeFileHandle(_stderrReadHandle, true), FileAccess.Read, 4096), StartInfo.StandardErrorEncoding);
-        this.SetField("standardError", standardError);
+        SetField("standardError", standardError);
       }
 
       // Workaround to get process handle as non-public SafeProcessHandle
@@ -201,19 +201,16 @@ namespace MediaPortal.Utilities.Process
       Type processManager = processAssembly.GetType("System.Diagnostics.ProcessManager");
       object safeProcessHandle = processManager.InvokeMember("OpenProcess", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, this, new object[] { _processInformation.dwProcessId, 0x100000, false });
 
-      this.InvokeMethod("SetProcessHandle", safeProcessHandle);
-      this.InvokeMethod("SetProcessId", _processInformation.dwProcessId);
+      InvokeMethod("SetProcessHandle", safeProcessHandle);
+      InvokeMethod("SetProcessId", _processInformation.dwProcessId);
 
       return true;
     }
 
     protected override void Dispose(bool disposing)
     {
-      if (disposing)
-      {
-        ImpersonationHelper.SafeCloseHandle(_processInformation.hProcess);
-        ImpersonationHelper.SafeCloseHandle(_processInformation.hThread);
-      }
+      ImpersonationHelper.SafeCloseHandle(ref _processInformation.hProcess);
+      ImpersonationHelper.SafeCloseHandle(ref _processInformation.hThread);
       base.Dispose(disposing);
     }
 
@@ -245,17 +242,15 @@ namespace MediaPortal.Utilities.Process
         }
       }
     }
-  }
 
-  static class ReflectionExtensions
-  {
-    public static object InvokeMethod(this object instance, string member, params object[] args)
+    private object InvokeMethod(string member, params object[] args)
     {
-      return typeof(System.Diagnostics.Process).InvokeMember(member, BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance, null, instance, args);
+      return typeof(System.Diagnostics.Process).InvokeMember(member, BindingFlags.InvokeMethod | BindingFlags.NonPublic | BindingFlags.Instance, null, this, args);
     }
-    public static object SetField(this object instance, string member, params object[] args)
+
+    private object SetField(string member, params object[] args)
     {
-      return typeof(System.Diagnostics.Process).InvokeMember(member, BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Instance, null, instance, args);
+      return typeof(System.Diagnostics.Process).InvokeMember(member, BindingFlags.SetField | BindingFlags.NonPublic | BindingFlags.Instance, null, this, args);
     }
   }
 }

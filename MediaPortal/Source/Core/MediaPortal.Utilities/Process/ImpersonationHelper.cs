@@ -260,5 +260,12 @@ namespace MediaPortal.Utilities.Process
       if (handle != IntPtr.Zero)
         NativeMethods.CloseHandle(handle);
     }
+
+    internal static void SafeCloseHandle(ref IntPtr handle)
+    {
+      if (handle != IntPtr.Zero)
+        NativeMethods.CloseHandle(handle);
+      handle = IntPtr.Zero;
+    }
   }
 }

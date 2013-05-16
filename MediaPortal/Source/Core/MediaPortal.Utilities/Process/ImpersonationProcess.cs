@@ -49,7 +49,7 @@ namespace MediaPortal.Utilities.Process
     private IntPtr _stderrWriteHandle;
     private IntPtr _stdoutReadHandle;
     private IntPtr _stderrReadHandle;
-    private NativeMethods.PROCESS_INFORMATION _processInformation;
+    private NativeMethods.ProcessInformation _processInformation;
 
     private string GetCommandLine()
     {
@@ -81,7 +81,7 @@ namespace MediaPortal.Utilities.Process
       try
       {
         int id = Id;
-        hProcess = NativeMethods.OpenProcess(NativeMethods.ProcessAccess.PROCESS_TERMINATE, false, id);
+        hProcess = NativeMethods.OpenProcess(NativeMethods.ProcessAccess.Terminate, false, id);
         if (hProcess == IntPtr.Zero)
           throw new Win32Exception(Marshal.GetLastWin32Error(), "ImpersonationProcess: OpenProcess failed");
         NativeMethods.TerminateProcess(hProcess, 0);
@@ -115,10 +115,10 @@ namespace MediaPortal.Utilities.Process
       IntPtr token = IntPtr.Zero;
       try
       {
-        if (!NativeMethods.LogonUser(username, domain, password, NativeMethods.LogonType.LOGON32_LOGON_INTERACTIVE, NativeMethods.LogonProvider.LOGON32_PROVIDER_DEFAULT, out token))
+        if (!NativeMethods.LogonUser(username, domain, password, NativeMethods.LogonType.Interactive, NativeMethods.LogonProvider.Default, out token))
           throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("ImpersonationProcess: LogonUser {0}\\{1} failed", domain, username));
 
-        if (!NativeMethods.DuplicateTokenEx(token, NativeMethods.TOKEN_ASSIGN_PRIMARY | NativeMethods.TOKEN_DUPLICATE | NativeMethods.TOKEN_QUERY, null, NativeMethods.SecurityImpersonationLevel.SecurityImpersonation, NativeMethods.TOKEN_TYPE.TokenPrimary, out userToken))
+        if (!NativeMethods.DuplicateTokenEx(token, NativeMethods.TokenAccess.AssignPrimary | NativeMethods.TokenAccess.Duplicate| NativeMethods.TokenAccess.Query, null, NativeMethods.SecurityImpersonationLevel.Impersonation, NativeMethods.TokenType.Primary, out userToken))
           throw new Win32Exception(Marshal.GetLastWin32Error(), "ImpersonationProcess: DuplicateToken failed");
 
         return StartAsUser(userToken);
@@ -132,8 +132,8 @@ namespace MediaPortal.Utilities.Process
 
     public bool StartAsUser(IntPtr userToken)
     {
-      _processInformation = new NativeMethods.PROCESS_INFORMATION();
-      NativeMethods.STARTUPINFO startupInfo = new NativeMethods.STARTUPINFO();
+      _processInformation = new NativeMethods.ProcessInformation();
+      NativeMethods.StartupInfo startupInfo = new NativeMethods.StartupInfo();
       switch (StartInfo.WindowStyle)
       {
         case ProcessWindowStyle.Hidden:
@@ -158,11 +158,11 @@ namespace MediaPortal.Utilities.Process
       startupInfo.hStdOutput = _stdoutWriteHandle;
       startupInfo.hStdError = _stderrWriteHandle;
 
-      NativeMethods.CreateProcessFlags createFlags = NativeMethods.CreateProcessFlags.CREATE_NEW_CONSOLE | NativeMethods.CreateProcessFlags.CREATE_NEW_PROCESS_GROUP | NativeMethods.CreateProcessFlags.CREATE_DEFAULT_ERROR_MODE;
+      NativeMethods.CreateProcessFlags createFlags = NativeMethods.CreateProcessFlags.CreateNewConsole | NativeMethods.CreateProcessFlags.CreateNewProcessGroup | NativeMethods.CreateProcessFlags.CreateDefaultErrorMode;
       if (StartInfo.CreateNoWindow)
       {
         startupInfo.wShowWindow = SW_HIDE;
-        createFlags |= NativeMethods.CreateProcessFlags.CREATE_NO_WINDOW;
+        createFlags |= NativeMethods.CreateProcessFlags.CreateNoWindow;
       }
 
       // Create process as user, fail hard if this is unsuccessful so it can be caught in EncoderUnit
@@ -199,8 +199,6 @@ namespace MediaPortal.Utilities.Process
       // Workaround to get process handle as non-public SafeProcessHandle
       Assembly processAssembly = typeof(System.Diagnostics.Process).Assembly;
       Type processManager = processAssembly.GetType("System.Diagnostics.ProcessManager");
-      //MethodInfo openProcess = processManager.GetMethod("OpenProcess", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static);
-      //object safeProcessHandle = openProcess.Invoke(this, new object[] { _processInformation.dwProcessId, 0x100000, false });
       object safeProcessHandle = processManager.InvokeMember("OpenProcess", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, this, new object[] { _processInformation.dwProcessId, 0x100000, false });
 
       this.InvokeMethod("SetProcessHandle", safeProcessHandle);
@@ -223,7 +221,7 @@ namespace MediaPortal.Utilities.Process
     {
       if (redirect)
       {
-        NativeMethods.SECURITY_ATTRIBUTES security = new NativeMethods.SECURITY_ATTRIBUTES { bInheritHandle = true };
+        NativeMethods.SecurityAttributes security = new NativeMethods.SecurityAttributes { bInheritHandle = true };
 
         bool success = NativeMethods.CreatePipe(out readHandle, out writeHandle, security, 4096);
 

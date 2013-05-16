@@ -192,7 +192,7 @@ namespace MediaPortal.Utilities.Process
 
       try
       {
-        if (!NativeMethods.OpenProcessToken(process.Handle, NativeMethods.TOKEN_QUERY | NativeMethods.TOKEN_IMPERSONATE | NativeMethods.TOKEN_DUPLICATE, ref existingTokenHandle))
+        if (!NativeMethods.OpenProcessToken(process.Handle, NativeMethods.TokenAccess.AssignPrimary | NativeMethods.TokenAccess.Duplicate | NativeMethods.TokenAccess.Query, ref existingTokenHandle))
           return false;
 
         IntPtr impersonationToken = existingTokenHandle;
@@ -206,14 +206,14 @@ namespace MediaPortal.Utilities.Process
     private static bool CreatePrimaryToken(IntPtr impersonationToken, out IntPtr primaryToken)
     {
       // Convert the impersonation token into Primary token
-      NativeMethods.SECURITY_ATTRIBUTES sa = new NativeMethods.SECURITY_ATTRIBUTES();
+      NativeMethods.SecurityAttributes sa = new NativeMethods.SecurityAttributes();
 
       bool retVal = NativeMethods.DuplicateTokenEx(
         impersonationToken,
-        NativeMethods.TOKEN_ASSIGN_PRIMARY | NativeMethods.TOKEN_DUPLICATE | NativeMethods.TOKEN_QUERY,
+        NativeMethods.TokenAccess.AssignPrimary | NativeMethods.TokenAccess.Duplicate| NativeMethods.TokenAccess.Query,
         sa,
-        NativeMethods.SecurityImpersonationLevel.SecurityIdentification,
-        NativeMethods.TOKEN_TYPE.TokenPrimary,
+        NativeMethods.SecurityImpersonationLevel.Identification,
+        NativeMethods.TokenType.Primary,
         out primaryToken);
 
       // Close the Token that was previously opened.
@@ -243,10 +243,10 @@ namespace MediaPortal.Utilities.Process
       try
       {
         // Get handle to token
-        if (!NativeMethods.LogonUser(uername, domain, password, NativeMethods.LogonType.LOGON32_LOGON_INTERACTIVE, NativeMethods.LogonProvider.LOGON32_PROVIDER_DEFAULT, out existingTokenHandle))
+        if (!NativeMethods.LogonUser(uername, domain, password, NativeMethods.LogonType.Interactive, NativeMethods.LogonProvider.Default, out existingTokenHandle))
           return false;
 
-        return NativeMethods.DuplicateToken(existingTokenHandle, NativeMethods.SecurityImpersonationLevel.SecurityImpersonation, ref duplicateTokenHandle);
+        return NativeMethods.DuplicateToken(existingTokenHandle, NativeMethods.SecurityImpersonationLevel.Impersonation, ref duplicateTokenHandle);
       }
       finally
       {

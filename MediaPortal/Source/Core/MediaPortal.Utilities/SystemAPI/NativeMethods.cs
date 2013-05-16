@@ -91,14 +91,14 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <returns>If the function succeeds, the return value is nonzero.<br></br><br>If the function fails, the return value is zero. To get extended error information, call Marshal.GetLastWin32Error.</br></returns>
     [DllImport("kernel32.dll", EntryPoint = "FreeLibrary", CharSet = CharSet.Ansi)]
     public static extern int FreeLibrary(IntPtr hLibModule);
-    
+
     // Group type enum
     public enum SecurityImpersonationLevel
     {
-      SecurityAnonymous = 0,
-      SecurityIdentification = 1,
-      SecurityImpersonation = 2,
-      SecurityDelegation = 3
+      Anonymous = 0,
+      Identification = 1,
+      Impersonation = 2,
+      Delegation = 3
     }
 
     public enum LogonType
@@ -110,14 +110,14 @@ namespace MediaPortal.Utilities.SystemAPI
       /// therefore, it is inappropriate for some client/server applications,
       /// such as a mail server.
       /// </summary>
-      LOGON32_LOGON_INTERACTIVE = 2,
+      Interactive = 2,
 
       /// <summary>
       /// This logon type is intended for high performance servers to authenticate plaintext passwords.
 
       /// The LogonUser function does not cache credentials for this logon type.
       /// </summary>
-      LOGON32_LOGON_NETWORK = 3,
+      Network = 3,
 
       /// <summary>
       /// This logon type is intended for batch servers, where processes may be executing on behalf of a user without
@@ -125,18 +125,18 @@ namespace MediaPortal.Utilities.SystemAPI
       /// authentication attempts at a time, such as mail or Web servers.
       /// The LogonUser function does not cache credentials for this logon type.
       /// </summary>
-      LOGON32_LOGON_BATCH = 4,
+      Batch = 4,
 
       /// <summary>
       /// Indicates a service-type logon. The account provided must have the service privilege enabled.
       /// </summary>
-      LOGON32_LOGON_SERVICE = 5,
+      Service = 5,
 
       /// <summary>
       /// This logon type is for GINA DLLs that log on users who will be interactively using the computer.
       /// This logon type can generate a unique audit record that shows when the workstation was unlocked.
       /// </summary>
-      LOGON32_LOGON_UNLOCK = 7,
+      Unlock = 7,
 
       /// <summary>
       /// This logon type preserves the name and password in the authentication package, which allows the server to make
@@ -145,7 +145,7 @@ namespace MediaPortal.Utilities.SystemAPI
       /// communicate with other servers.
       /// NOTE: Windows NT:  This value is not supported.
       /// </summary>
-      LOGON32_LOGON_NETWORK_CLEARTEXT = 8,
+      NetworkCleartext = 8,
 
       /// <summary>
       /// This logon type allows the caller to clone its current token and specify new credentials for outbound connections.
@@ -153,7 +153,7 @@ namespace MediaPortal.Utilities.SystemAPI
       /// NOTE: This logon type is supported only by the LOGON32_PROVIDER_WINNT50 logon provider.
       /// NOTE: Windows NT:  This value is not supported.
       /// </summary>
-      LOGON32_LOGON_NEW_CREDENTIALS = 9,
+      NewCredentials = 9,
     }
 
     public enum LogonProvider
@@ -164,31 +164,32 @@ namespace MediaPortal.Utilities.SystemAPI
       /// is not in UPN format. In this case, the default provider is NTLM.
       /// NOTE: Windows 2000/NT:   The default security provider is NTLM.
       /// </summary>
-      LOGON32_PROVIDER_DEFAULT = 0,
-      LOGON32_PROVIDER_WINNT35 = 1,
-      LOGON32_PROVIDER_WINNT40 = 2,
-      LOGON32_PROVIDER_WINNT50 = 3
+      Default = 0,
+      WinNt35 = 1,
+      WinNt40 = 2,
+      WinNt50 = 3
     }
 
-    public static int STANDARD_RIGHTS_REQUIRED = 0x000F0000;
-    public static int STANDARD_RIGHTS_READ = 0x00020000;
-    public static int TOKEN_ASSIGN_PRIMARY = 0x0001;
-    public static int TOKEN_DUPLICATE = 0x0002;
-    public static int TOKEN_IMPERSONATE = 0x0004;
-    public static int TOKEN_QUERY = 0x0008;
-    public static int TOKEN_QUERY_SOURCE = 0x0010;
-    public static int TOKEN_ADJUST_PRIVILEGES = 0x0020;
-    public static int TOKEN_ADJUST_GROUPS = 0x0040;
-    public static int TOKEN_ADJUST_DEFAULT = 0x0080;
-    public static int TOKEN_ADJUST_SESSIONID = 0x0100;
-    public static int TOKEN_READ = (STANDARD_RIGHTS_READ | TOKEN_QUERY);
-    public static int TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY |
-        TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE |
-        TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT |
-        TOKEN_ADJUST_SESSIONID);
+    [Flags]
+    public enum TokenAccess
+    {
+      StandardRightsRequired = 0x000F0000,
+      StandardRightsRead = 0x00020000,
+      AssignPrimary = 0x0001,
+      Duplicate = 0x0002,
+      Impersonate = 0x0004,
+      Query = 0x0008,
+      QuerySource = 0x0010,
+      AdjustPrivileges = 0x0020,
+      AdjustGroups = 0x0040,
+      AdjustDefault = 0x0080,
+      AdjustSessionId = 0x0100,
+      Read = (StandardRightsRead | Query),
+      AllAccess = (StandardRightsRequired | AssignPrimary | Duplicate | Impersonate | Query | QuerySource | AdjustPrivileges | AdjustGroups | AdjustDefault | AdjustSessionId)
+    }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct PROCESS_INFORMATION
+    public struct ProcessInformation
     {
       public IntPtr hProcess;
       public IntPtr hThread;
@@ -197,7 +198,7 @@ namespace MediaPortal.Utilities.SystemAPI
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public class STARTUPINFO
+    public class StartupInfo
     {
       public int cb;
       public string lpReserved;
@@ -218,66 +219,66 @@ namespace MediaPortal.Utilities.SystemAPI
       public IntPtr hStdOutput;
       public IntPtr hStdError;
 
-      public STARTUPINFO()
+      public StartupInfo()
       {
-        cb = Marshal.SizeOf(typeof(STARTUPINFO));
+        cb = Marshal.SizeOf(typeof(StartupInfo));
       }
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public class SECURITY_ATTRIBUTES
+    public class SecurityAttributes
     {
       public uint nLength;
       public IntPtr lpSecurityDescriptor;
       public bool bInheritHandle;
-      public SECURITY_ATTRIBUTES()
+      public SecurityAttributes()
       {
-        nLength = (uint) Marshal.SizeOf(typeof(SECURITY_ATTRIBUTES));
+        nLength = (uint) Marshal.SizeOf(typeof(SecurityAttributes));
         lpSecurityDescriptor = IntPtr.Zero;
       }
     }
 
-    public enum TOKEN_TYPE
+    public enum TokenType
     {
-      TokenPrimary = 1,
-      TokenImpersonation
+      Primary = 1,
+      Impersonation
     }
 
     [Flags]
     public enum CreateProcessFlags : uint
     {
-      NONE = 0,
-      CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
-      CREATE_DEFAULT_ERROR_MODE = 0x04000000,
-      CREATE_NEW_CONSOLE = 0x00000010,
-      CREATE_NEW_PROCESS_GROUP = 0x00000200,
-      CREATE_NO_WINDOW = 0x08000000,
-      CREATE_PROTECTED_PROCESS = 0x00040000,
-      CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
-      CREATE_SEPARATE_WOW_VDM = 0x00000800,
-      CREATE_SHARED_WOW_VDM = 0x00001000,
-      CREATE_SUSPENDED = 0x00000004,
-      CREATE_UNICODE_ENVIRONMENT = 0x00000400,
-      DEBUG_ONLY_THIS_PROCESS = 0x00000002,
-      DEBUG_PROCESS = 0x00000001,
-      DETACHED_PROCESS = 0x00000008,
-      EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
-      INHERIT_PARENT_AFFINITY = 0x00010000
+      None = 0,
+      CreateBreakawayFromJob = 0x01000000,
+      CreateDefaultErrorMode = 0x04000000,
+      CreateNewConsole = 0x00000010,
+      CreateNewProcessGroup = 0x00000200,
+      CreateNoWindow = 0x08000000,
+      CreateProtectedProcess = 0x00040000,
+      CreatePreserveCodeAuthzLevel = 0x02000000,
+      CreateSeparateWowVdm = 0x00000800,
+      CreateSharedWowVdm = 0x00001000,
+      CreateSuspended = 0x00000004,
+      CreateUnicodeEnvironment = 0x00000400,
+      DebugOnlyThisProcess = 0x00000002,
+      DebugProcess = 0x00000001,
+      DetachedProcess = 0x00000008,
+      ExtendedStartupInfoPresent = 0x00080000,
+      InheritParentAffinity = 0x00010000
     }
 
     [Flags]
     public enum ProcessAccess
     {
-      PROCESS_ALL_ACCESS = PROCESS_CREATE_THREAD | PROCESS_DUPLICATE_HANDLE | PROCESS_QUERY_INFORMATION | PROCESS_SET_INFORMATION | PROCESS_TERMINATE | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_SYNCHRONIZE,
-      PROCESS_CREATE_THREAD = 0x2,
-      PROCESS_DUPLICATE_HANDLE = 0x40,
-      PROCESS_QUERY_INFORMATION = 0x400,
-      PROCESS_SET_INFORMATION = 0x200,
-      PROCESS_TERMINATE = 0x1,
-      PROCESS_VM_OPERATION = 0x8,
-      PROCESS_VM_READ = 0x10,
-      PROCESS_VM_WRITE = 0x20,
-      PROCESS_SYNCHRONIZE = 0x100000
+      AllAccess = CreateThread | DuplicateHandle | QueryInformation | SetInformation | Terminate | VmOperation | VmRead | VmWrite | Synchronize,
+      CreateThread = 0x2,
+      DuplicateHandle = 0x40,
+      QueryInformation = 0x400,
+      SetInformation = 0x200,
+      Terminate = 0x1,
+      VmOperation = 0x8,
+      VmRead = 0x10,
+      VmWrite = 0x20,
+      Synchronize = 0x100000
     }
 
     // Obtains user token
@@ -301,16 +302,16 @@ namespace MediaPortal.Utilities.SystemAPI
     [DllImport("advapi32.dll", EntryPoint = "DuplicateTokenEx", SetLastError = true)]
     public static extern bool DuplicateTokenEx(
         IntPtr hExistingToken,
-        int dwDesiredAccess,
-        SECURITY_ATTRIBUTES lpThreadAttributes,
+        TokenAccess dwDesiredAccess,
+        SecurityAttributes lpThreadAttributes,
         SecurityImpersonationLevel impersonationLevel,
-        TOKEN_TYPE dwTokenType,
+        TokenType dwTokenType,
         out IntPtr phNewToken);
 
     [DllImport("advapi32")]
     public static extern bool OpenProcessToken(
         IntPtr processHandle, // handle to process
-        int desiredAccess, // desired access to process
+        TokenAccess desiredAccess, // desired access to process
         ref IntPtr tokenHandle // handle to open access token
     );
 
@@ -318,7 +319,7 @@ namespace MediaPortal.Utilities.SystemAPI
     public static extern bool ImpersonateLoggedOnUser(IntPtr hToken); // handle to token for logged-on user
 
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern bool CreateProcessAsUserW(IntPtr token, [MarshalAs(UnmanagedType.LPTStr)] string lpApplicationName, [MarshalAs(UnmanagedType.LPTStr)] string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, bool bInheritHandles, CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, [MarshalAs(UnmanagedType.LPTStr)] string lpCurrentDirectory, [In] STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+    public static extern bool CreateProcessAsUserW(IntPtr token, [MarshalAs(UnmanagedType.LPTStr)] string lpApplicationName, [MarshalAs(UnmanagedType.LPTStr)] string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, bool bInheritHandles, CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, [MarshalAs(UnmanagedType.LPTStr)] string lpCurrentDirectory, [In] StartupInfo lpStartupInfo, out ProcessInformation lpProcessInformation);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
     public static extern uint GetPriorityClass(IntPtr handle);
@@ -335,7 +336,7 @@ namespace MediaPortal.Utilities.SystemAPI
     public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SECURITY_ATTRIBUTES lpPipeAttributes, int nSize);
+    public static extern bool CreatePipe(out IntPtr hReadPipe, out IntPtr hWritePipe, SecurityAttributes lpPipeAttributes, int nSize);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
     public static extern bool DuplicateHandle(IntPtr hSourceProcessHandle, SafeFileHandle hSourceHandle, IntPtr hTargetProcess, out SafeFileHandle targetHandle, int dwDesiredAccess, bool bInheritHandle, int dwOptions);

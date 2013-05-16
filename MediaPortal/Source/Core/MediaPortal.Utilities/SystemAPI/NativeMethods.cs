@@ -91,8 +91,7 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <returns>If the function succeeds, the return value is nonzero.<br></br><br>If the function fails, the return value is zero. To get extended error information, call Marshal.GetLastWin32Error.</br></returns>
     [DllImport("kernel32.dll", EntryPoint = "FreeLibrary", CharSet = CharSet.Ansi)]
     public static extern int FreeLibrary(IntPtr hLibModule);
-
-
+    
     // Group type enum
     public enum SecurityImpersonationLevel
     {
@@ -171,19 +170,19 @@ namespace MediaPortal.Utilities.SystemAPI
       LOGON32_PROVIDER_WINNT50 = 3
     }
 
-    private static int STANDARD_RIGHTS_REQUIRED = 0x000F0000;
-    private static int STANDARD_RIGHTS_READ = 0x00020000;
+    public static int STANDARD_RIGHTS_REQUIRED = 0x000F0000;
+    public static int STANDARD_RIGHTS_READ = 0x00020000;
     public static int TOKEN_ASSIGN_PRIMARY = 0x0001;
     public static int TOKEN_DUPLICATE = 0x0002;
     public static int TOKEN_IMPERSONATE = 0x0004;
     public static int TOKEN_QUERY = 0x0008;
-    private static int TOKEN_QUERY_SOURCE = 0x0010;
-    private static int TOKEN_ADJUST_PRIVILEGES = 0x0020;
-    private static int TOKEN_ADJUST_GROUPS = 0x0040;
-    private static int TOKEN_ADJUST_DEFAULT = 0x0080;
-    private static int TOKEN_ADJUST_SESSIONID = 0x0100;
-    private static int TOKEN_READ = (STANDARD_RIGHTS_READ | TOKEN_QUERY);
-    private static int TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY |
+    public static int TOKEN_QUERY_SOURCE = 0x0010;
+    public static int TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    public static int TOKEN_ADJUST_GROUPS = 0x0040;
+    public static int TOKEN_ADJUST_DEFAULT = 0x0080;
+    public static int TOKEN_ADJUST_SESSIONID = 0x0100;
+    public static int TOKEN_READ = (STANDARD_RIGHTS_READ | TOKEN_QUERY);
+    public static int TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY |
         TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE |
         TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT |
         TOKEN_ADJUST_SESSIONID);
@@ -193,12 +192,12 @@ namespace MediaPortal.Utilities.SystemAPI
     {
       public IntPtr hProcess;
       public IntPtr hThread;
-      public uint dwProcessId;
-      public uint dwThreadId;
+      public int dwProcessId;
+      public int dwThreadId;
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct STARTUPINFO
+    public class STARTUPINFO
     {
       public int cb;
       public string lpReserved;
@@ -218,6 +217,11 @@ namespace MediaPortal.Utilities.SystemAPI
       public IntPtr hStdInput;
       public IntPtr hStdOutput;
       public IntPtr hStdError;
+
+      public STARTUPINFO()
+      {
+        cb = Marshal.SizeOf(typeof(STARTUPINFO));
+      }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -314,8 +318,7 @@ namespace MediaPortal.Utilities.SystemAPI
     public static extern bool ImpersonateLoggedOnUser(IntPtr hToken); // handle to token for logged-on user
 
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern bool CreateProcessAsUserW(IntPtr token, [MarshalAs(UnmanagedType.LPTStr)] string lpApplicationName, [MarshalAs(UnmanagedType.LPTStr)] string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, bool bInheritHandles, CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, [MarshalAs(UnmanagedType.LPTStr)] string lpCurrentDirectory, [In] ref NativeMethods.STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
-
+    public static extern bool CreateProcessAsUserW(IntPtr token, [MarshalAs(UnmanagedType.LPTStr)] string lpApplicationName, [MarshalAs(UnmanagedType.LPTStr)] string lpCommandLine, IntPtr lpProcessAttributes, IntPtr lpThreadAttributes, bool bInheritHandles, CreateProcessFlags dwCreationFlags, IntPtr lpEnvironment, [MarshalAs(UnmanagedType.LPTStr)] string lpCurrentDirectory, [In] STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
     public static extern uint GetPriorityClass(IntPtr handle);
@@ -342,6 +345,5 @@ namespace MediaPortal.Utilities.SystemAPI
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     public static extern IntPtr OpenProcess(ProcessAccess dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, int dwProcessId);
-
   }
 }

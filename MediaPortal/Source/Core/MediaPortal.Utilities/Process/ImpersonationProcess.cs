@@ -29,9 +29,6 @@ namespace MediaPortal.Utilities.Process
 {
   public class ImpersonationProcess : System.Diagnostics.Process
   {
-    private const int MAXIMUM_ALLOWED = 0x2000000;
-    private const int TOKEN_DUPLICATE = 0x0000002;
-    private const int TOKEN_QUERY = 0x00000008;
     private const int HANDLE_FLAG_INHERIT = 1;
 
     private const uint STARTF_USESHOWWINDOW = 0x00000001;
@@ -121,7 +118,7 @@ namespace MediaPortal.Utilities.Process
         if (!NativeMethods.LogonUser(username, domain, password, NativeMethods.LogonType.LOGON32_LOGON_INTERACTIVE, NativeMethods.LogonProvider.LOGON32_PROVIDER_DEFAULT, out token))
           throw new Win32Exception(Marshal.GetLastWin32Error(), String.Format("ImpersonationProcess: LogonUser {0}\\{1} failed", domain, username));
 
-        if (!NativeMethods.DuplicateTokenEx(token, MAXIMUM_ALLOWED | TOKEN_QUERY | TOKEN_DUPLICATE, null, NativeMethods.SecurityImpersonationLevel.SecurityImpersonation, NativeMethods.TOKEN_TYPE.TokenPrimary, out userToken))
+        if (!NativeMethods.DuplicateTokenEx(token, NativeMethods.TOKEN_ASSIGN_PRIMARY | NativeMethods.TOKEN_DUPLICATE | NativeMethods.TOKEN_QUERY, null, NativeMethods.SecurityImpersonationLevel.SecurityImpersonation, NativeMethods.TOKEN_TYPE.TokenPrimary, out userToken))
           throw new Win32Exception(Marshal.GetLastWin32Error(), "ImpersonationProcess: DuplicateToken failed");
 
         return StartAsUser(userToken);
@@ -136,7 +133,7 @@ namespace MediaPortal.Utilities.Process
     public bool StartAsUser(IntPtr userToken)
     {
       _processInformation = new NativeMethods.PROCESS_INFORMATION();
-      NativeMethods.STARTUPINFO startupInfo = new NativeMethods.STARTUPINFO { cb = Marshal.SizeOf(typeof(NativeMethods.STARTUPINFO)) };
+      NativeMethods.STARTUPINFO startupInfo = new NativeMethods.STARTUPINFO();
       switch (StartInfo.WindowStyle)
       {
         case ProcessWindowStyle.Hidden:
@@ -169,7 +166,7 @@ namespace MediaPortal.Utilities.Process
       }
 
       // Create process as user, fail hard if this is unsuccessful so it can be caught in EncoderUnit
-      if (!NativeMethods.CreateProcessAsUserW(userToken, null, GetCommandLine(), IntPtr.Zero, IntPtr.Zero, true, createFlags, IntPtr.Zero, null, ref startupInfo, out _processInformation))
+      if (!NativeMethods.CreateProcessAsUserW(userToken, null, GetCommandLine(), IntPtr.Zero, IntPtr.Zero, true, createFlags, IntPtr.Zero, null, startupInfo, out _processInformation))
         throw new Win32Exception(Marshal.GetLastWin32Error(), "ImpersonationProcess: CreateProcessAsUser failed");
 
       if (_processInformation.hThread != (IntPtr) (-1))
@@ -202,6 +199,8 @@ namespace MediaPortal.Utilities.Process
       // Workaround to get process handle as non-public SafeProcessHandle
       Assembly processAssembly = typeof(System.Diagnostics.Process).Assembly;
       Type processManager = processAssembly.GetType("System.Diagnostics.ProcessManager");
+      //MethodInfo openProcess = processManager.GetMethod("OpenProcess", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static);
+      //object safeProcessHandle = openProcess.Invoke(this, new object[] { _processInformation.dwProcessId, 0x100000, false });
       object safeProcessHandle = processManager.InvokeMember("OpenProcess", BindingFlags.InvokeMethod | BindingFlags.Public | BindingFlags.Static, null, this, new object[] { _processInformation.dwProcessId, 0x100000, false });
 
       this.InvokeMethod("SetProcessHandle", safeProcessHandle);

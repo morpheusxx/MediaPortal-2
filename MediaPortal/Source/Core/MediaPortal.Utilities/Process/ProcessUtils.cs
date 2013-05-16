@@ -82,9 +82,15 @@ namespace MediaPortal.Utilities.Process
       IntPtr userToken;
       if (!ImpersonationHelper.GetTokenByProcess(out userToken, true))
         return false;
-
-      string unused;
-      return TryExecute_Impersonated(executable, arguments, userToken, false, out unused, priorityClass, maxWaitMs);
+      try
+      {
+        string unused;
+        return TryExecute_Impersonated(executable, arguments, userToken, false, out unused, priorityClass, maxWaitMs);
+      }
+      finally
+      {
+        ImpersonationHelper.SafeCloseHandle(userToken);
+      }
     }
 
     /// <summary>
@@ -138,7 +144,14 @@ namespace MediaPortal.Utilities.Process
         result = null;
         return false;
       }
-      return TryExecute_Impersonated(executable, arguments, userToken, true, out result, priorityClass, maxWaitMs);
+      try
+      {
+        return TryExecute_Impersonated(executable, arguments, userToken, true, out result, priorityClass, maxWaitMs);
+      }
+      finally
+      {
+        ImpersonationHelper.SafeCloseHandle(userToken);
+      }
     }
 
     #region Private methods

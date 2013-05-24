@@ -99,7 +99,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.MatroskaLib
     public void ReadTags(IDictionary<string, IList<string>> tagsToExtract)
     {
       String output;
-      if (ProcessUtils.TryExecuteReadString(_mkvExtractPath, string.Format("tags \"{0}\"", _fileName), out output, _priorityClass) && !string.IsNullOrEmpty(output))
+      if (ProcessUtils.TryExecuteReadString_AutoImpersonate(_mkvExtractPath, string.Format("tags \"{0}\"", _fileName), out output, _priorityClass) && !string.IsNullOrEmpty(output))
       {
         XDocument doc = XDocument.Parse(output);
 
@@ -144,7 +144,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.MatroskaLib
       // |  + Mime type: image/jpeg
       // |  + File data, size: 132908
       // |  + File UID: 1495003044
-      if (ProcessUtils.TryExecuteReadString(_mkvInfoPath, string.Format("--ui-language en --output-charset UTF-8 \"{0}\"", _fileName), out output, _priorityClass))
+      if (ProcessUtils.TryExecuteReadString_AutoImpersonate(_mkvInfoPath, string.Format("--ui-language en --output-charset UTF-8 \"{0}\"", _fileName), out output, _priorityClass))
       {
         StringReader reader = new StringReader(output);
         string line;
@@ -225,7 +225,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.MatroskaLib
     {
       binaryData = null;
       string tempFileName = Path.GetTempFileName();
-      if (ProcessUtils.TryExecute(_mkvExtractPath, string.Format("attachments \"{0}\" {1}:\"{2}\"", _fileName, attachmentIndex + 1, tempFileName), _priorityClass))
+      if (ProcessUtils.TryExecute_AutoImpersonate(_mkvExtractPath, string.Format("attachments \"{0}\" {1}:\"{2}\"", _fileName, attachmentIndex + 1, tempFileName), _priorityClass))
       {
         int fileSize = _attachments[attachmentIndex].FileSize;
         FileInfo fileInfo = new FileInfo(tempFileName);

@@ -20,24 +20,17 @@
     along with MediaPortal 2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#endregion
+#endregion Copyright (C) 2007-2013 Team MediaPortal
 
-using MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation.Data;
+using System.Device.Location;
 
-namespace MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation
+namespace MediaPortal.Extensions.OnlineLibraries.Libraries
 {
   /// <summary>
-  /// <see cref="IGeolocationLookup"/> provides features to translate geographic coordinates into location names (city, state, country...)
+  /// Determine a devices location.
   /// </summary>
-  public interface IGeolocationLookup
+  public interface ICoordinateResolver
   {
-    /// <summary>
-    /// Tries to lookup a location based on the <paramref name="latitude"/> and <paramref name="longitude"/>.
-    /// </summary>
-    /// <param name="latitude">Latitude</param>
-    /// <param name="longitude">Longitude</param>
-    /// <param name="locationInfo">Returns the <see cref="LocationInfo"/> if successful</param>
-    /// <returns><c>true</c> if successful</returns>
-    bool TryLookup(double latitude, double longitude, out LocationInfo locationInfo);
+    bool TryResolveCoordinates(out GeoCoordinate coordinates);
   }
 }

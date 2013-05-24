@@ -20,16 +20,24 @@
     along with MediaPortal 2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#endregion
+#endregion Copyright (C) 2007-2013 Team MediaPortal
 
-namespace MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation.Data
+using System.Net;
+
+namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Common.Data
 {
-  public class LocationInfo
+  public class TraceRouteResponse
   {
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public string City { get; set; }
-    public string State { get; set; }
-    public string Country { get; set; }
+    #region Public properties
+
+    public string FirstResponseHostname { get; set; }
+
+    public IPAddress FirstResponseIP { get; set; }
+
+    public int FirstResponseTtl { get; set; }
+
+    public IPAddress RemoteHost { get; set; }
+
+    #endregion Public properties
   }
 }

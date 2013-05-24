@@ -24,14 +24,18 @@
 
 using System;
 using System.Collections.Generic;
+using System.Device.Location;
+using System.Globalization;
 using System.Linq;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Settings;
+using MediaPortal.Extensions.OnlineLibraries;
 using MediaPortal.UI.Presentation.DataObjects;
 using MediaPortal.UI.Presentation.Models;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UiComponents.Weather.Settings;
+using MediaPortal.UI.Presentation.Screens;
 
 
 namespace MediaPortal.UiComponents.Weather.Models
@@ -98,6 +102,9 @@ namespace MediaPortal.UiComponents.Weather.Models
       // Check if preferred location still in list, if not then set the first available
       if (settings.LocationsList.Find(loc => loc.Id == settings.LocationCode) == null && settings.LocationsList.Count > 0)
         settings.LocationCode = settings.LocationsList[0].Id;
+      if(settings.LocationsList.Count == 0)
+        settings.LocationCode = string.Empty;
+
       settingsManager.Save(settings);
     }
 
@@ -138,6 +145,25 @@ namespace MediaPortal.UiComponents.Weather.Models
             return;
           }
         }
+      }
+    }
+
+    public void Detect()
+    {
+      GeoCoordinate coordinates;
+      CivicAddress address;
+
+      if (GeoLocationService.Instance.TryLookup(out coordinates, out address))
+      {
+        SearchLocations(String.Format("{0}, {1}",
+                                      coordinates.Latitude.ToString(CultureInfo.InvariantCulture),
+                                      coordinates.Longitude.ToString(CultureInfo.InvariantCulture)));
+
+        ServiceRegistration.Get<IScreenManager>().ShowDialog("dialogWeatherSearchResult");
+      }
+      else
+      {
+        ServiceRegistration.Get<IScreenManager>().ShowDialog("dialogWeatherSearchDetectionFailed");
       }
     }
 

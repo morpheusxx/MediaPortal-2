@@ -15,6 +15,7 @@
   <DependsOn>
     <PluginReference PluginId="{1AFF4467-64B0-4ca1-AF28-9AEDF3525BCE}"/> <!-- ConfigurationManager -->
     <PluginReference PluginId="{B765A4B6-F455-4941-BDAE-2CE45208BFEB}"/> <!-- Configuration plugin -->
+    <PluginReference PluginId="{B32504F3-4374-4640-94A1-16E1DEE84C3C}"/> <!-- OnlineLibraries -->
   </DependsOn>
 
   <Register Location="/Models">

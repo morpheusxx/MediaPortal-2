@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2013 Team MediaPortal
+﻿#region Copyright (C) 2007-2013 Team MediaPortal
 
 /*
     Copyright (C) 2007-2013 Team MediaPortal
@@ -20,22 +20,29 @@
     along with MediaPortal 2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#endregion
+#endregion Copyright (C) 2007-2013 Team MediaPortal
 
 using System.Collections.Generic;
+using System.Device.Location;
 using System.Runtime.Serialization;
 
-namespace MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation.Data
+namespace MediaPortal.Extensions.OnlineLibraries.Libraries.OpenStreetMap.Data
 {
   [DataContract]
-  public class ReverseGeoCodeResult
+  public class GeocoderResponse
   {
-    const string KEY_CITY = "city";
-    const string KEY_STATE = "state";
-    const string KEY_COUNTRY = "country";
+    #region Consts
 
-    [DataMember(Name = "place_id")]
-    public int PlaceId { get; set; }
+    private const string KEY_CITY = "city";
+    private const string KEY_COUNTRY = "country";
+    private const string KEY_STATE = "state";
+
+    #endregion Consts
+
+    #region Public properties
+
+    [DataMember(Name = "address")]
+    public Dictionary<string, string> AddressInfo { get; internal set; }
 
     [DataMember(Name = "lat")]
     public double Latitude { get; set; }
@@ -43,24 +50,35 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.GeoLocation.Data
     [DataMember(Name = "lon")]
     public double Longitude { get; set; }
 
-    [DataMember(Name = "address")]
-    public Dictionary<string, string> AddressInfo { get; internal set; }
+    [DataMember(Name = "place_id")]
+    public string PlaceId { get; set; }
 
-    public ReverseGeoCodeResult()
+    #endregion Public properties
+
+    #region Ctor
+
+    public GeocoderResponse()
     {
       AddressInfo = new Dictionary<string, string>();
     }
 
-    public LocationInfo ToLocation()
+    #endregion Ctor
+
+    #region Public methods
+
+    public CivicAddress ToCivicAddress()
     {
-      var loc = new LocationInfo { Latitude = Latitude, Longitude = Longitude };
+      CivicAddress result = new CivicAddress();
       if (AddressInfo.ContainsKey(KEY_CITY))
-        loc.City = AddressInfo[KEY_CITY];
+        result.City = AddressInfo[KEY_CITY];
       if (AddressInfo.ContainsKey(KEY_STATE))
-        loc.State = AddressInfo[KEY_STATE];
+        result.StateProvince = AddressInfo[KEY_STATE];
       if (AddressInfo.ContainsKey(KEY_COUNTRY))
-        loc.Country = AddressInfo[KEY_COUNTRY];
-      return loc;
+        result.CountryRegion = AddressInfo[KEY_COUNTRY];
+
+      return result;
     }
+
+    #endregion Public methods
   }
 }

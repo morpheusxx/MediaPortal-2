@@ -163,7 +163,7 @@ namespace MediaPortal.Common.Services.TaskScheduler
       now = now.AddSeconds(-now.Second);
       lock (_syncObj)
       {
-        DateTime nextTaskRun = _settings.TaskCollection.Tasks.Where(task => !task.IsExpired(now)).Min(t => t.NextRun);
+        DateTime nextTaskRun = _settings.TaskCollection.Tasks.Where(task => !task.IsExpired(now) && task.WakeupSystem).Min(t => t.NextRun);
         if (nextTaskRun != DateTime.MinValue)
         {
           double secondsToWait = (nextTaskRun - now).TotalSeconds;
@@ -306,6 +306,7 @@ namespace MediaPortal.Common.Services.TaskScheduler
       lock (_syncObj)
       {
         newTask.ID = Guid.NewGuid();
+        ServiceRegistration.Get<ILogger>().Debug("TaskScheduler: AddTask: {0}", newTask);
         _settings.TaskCollection.Add(newTask);
         SaveChanges(false);
       }
@@ -314,10 +315,10 @@ namespace MediaPortal.Common.Services.TaskScheduler
 
     public void UpdateTask(Guid taskId, Task updatedTask)
     {
-      ServiceRegistration.Get<ILogger>().Debug("TaskScheduler: UpdateTask: {0}", updatedTask);
       lock (_syncObj)
       {
         updatedTask.ID = taskId;
+        ServiceRegistration.Get<ILogger>().Debug("TaskScheduler: UpdateTask: {0}", updatedTask);
         _settings.TaskCollection.Replace(taskId, updatedTask);
         SaveChanges(false);
         TaskSchedulerMessaging.SendTaskSchedulerMessage(TaskSchedulerMessaging.MessageType.CHANGED, updatedTask);
@@ -328,12 +329,7 @@ namespace MediaPortal.Common.Services.TaskScheduler
     {
       lock (_syncObj)
       {
-        Task task = null;
-        foreach (Task t in _settings.TaskCollection.Tasks)
-        {
-          if (t.ID == taskId)
-            task = t;
-        }
+        Task task = GetTask(taskId);
         if (task == null)
           return;
         ServiceRegistration.Get<ILogger>().Debug("TaskScheduler: RemoveTask: {0}", task);

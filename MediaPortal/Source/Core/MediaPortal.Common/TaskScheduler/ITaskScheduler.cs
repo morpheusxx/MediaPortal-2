@@ -47,7 +47,7 @@ namespace MediaPortal.Common.TaskScheduler
     void Startup();
 
     /// <summary>
-    /// Shutts the task scheduler down.
+    /// Shuts the task scheduler down.
     /// </summary>
     void Shutdown();
 

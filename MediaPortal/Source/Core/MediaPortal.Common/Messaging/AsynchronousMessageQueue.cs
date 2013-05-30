@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Remoting.Messaging;
 using System.Threading;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.Runtime;
@@ -105,14 +106,15 @@ namespace MediaPortal.Common.Messaging
     /// <param name="owner">Owner of this queue. Used for setting the queue's default name.</param>
     /// <param name="messageChannels">Message channels this message queue will be registered at the message broker.</param>
     public AsynchronousMessageQueue(object owner, IEnumerable<string> messageChannels) :
-        this(owner == null ? "Unknown" : owner.GetType().Name, messageChannels) { }
+      this(owner == null ? "Unknown" : owner.GetType().Name, messageChannels) { }
 
     /// <summary>
     /// Creates a new asynchronous message queue.
     /// </summary>
     /// <param name="ownerType">Type of the owner of this queue. Used for setting the queue's default name.</param>
     /// <param name="messageChannels">Message channels this message queue will be registered at the message broker.</param>
-    public AsynchronousMessageQueue(string ownerType, IEnumerable<string> messageChannels) : base(messageChannels)
+    public AsynchronousMessageQueue(string ownerType, IEnumerable<string> messageChannels)
+      : base(messageChannels)
     {
       _queueName = ownerType;
     }
@@ -147,7 +149,8 @@ namespace MediaPortal.Common.Messaging
           else
             try
             {
-              handler(this, message);
+              foreach (MessageReceivedHandler action in handler.GetInvocationList())
+                action.BeginInvoke(this, message, EndInvokeHandler, null);
             }
             catch (Exception e)
             {
@@ -159,7 +162,22 @@ namespace MediaPortal.Common.Messaging
             break;
         }
         // Block until messages are available or we are terminated
-        WaitHandle.WaitAny(new WaitHandle[] {_terminatedEvent, _messageAvailableEvent});
+        WaitHandle.WaitAny(new WaitHandle[] { _terminatedEvent, _messageAvailableEvent });
+      }
+    }
+
+    private void EndInvokeHandler(IAsyncResult ar)
+    {
+      MessageReceivedHandler messageReceivedHandler = ((AsyncResult) ar).AsyncDelegate as MessageReceivedHandler;
+      if (messageReceivedHandler == null)
+        return;
+      try
+      {
+        messageReceivedHandler.EndInvoke(ar);
+      }
+      catch (ApplicationException e)
+      {
+        ServiceRegistration.Get<ILogger>().Error("Unhandled exception in message handler of async message queue '{0}' when handling a message.", e, _queueName);
       }
     }
 
@@ -220,7 +238,7 @@ namespace MediaPortal.Common.Messaging
       lock (_syncObj)
         _messageDeliveryThread = thread = new Thread(DoWork)
           {
-              Name = string.Format("AMQ '{0}'", _queueName)
+            Name = string.Format("AMQ '{0}'", _queueName)
           };
       thread.Start();
     }

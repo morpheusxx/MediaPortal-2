@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Messaging;
+using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Models;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Screens;
@@ -183,8 +184,18 @@ namespace MediaPortal.UiComponents.Media.Models
         if (!screenManager.CheckScreen(_screenName, !_backgroundDisabled).HasValue)
           // If the opened screen is not present or erroneous, we cannot update the screen
           return false;
-      screenManager.BackgroundDisabled = _backgroundDisabled;
+
+      // Morpheus_xx, 2013-05-30: Workaround deadlock issue when using VideoBackground: When the background player gets stopped, in this place the
+      // UIContributor and Background should be restored. This will cause issues when called synchronously while holding the ScreenManagers lock.
+      // This is intended as a temporary workaround and should be solved better in ScreenManager(?).
+      ServiceRegistration.Get<IThreadPool>().Add(EnableBackground_Async);
       return true;
+    }
+
+    private void EnableBackground_Async()
+    {
+      IScreenManager screenManager = ServiceRegistration.Get<IScreenManager>();
+      screenManager.BackgroundDisabled = _backgroundDisabled;
     }
 
     protected void RestoreBackground()

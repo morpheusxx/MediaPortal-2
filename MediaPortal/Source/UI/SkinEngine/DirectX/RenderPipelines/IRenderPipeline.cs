@@ -22,8 +22,8 @@
 
 #endregion
 
-using System.Drawing;
-using SlimDX;
+using SharpDX;
+using RectangleF = SharpDX.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
 {

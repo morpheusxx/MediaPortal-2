@@ -29,8 +29,8 @@ using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Controls.Brushes.Animation;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.Rendering;
-using SlimDX;
-using SlimDX.Direct3D9;
+using SharpDX;
+using SharpDX.Direct3D9;
 using MediaPortal.Utilities.DeepCopy;
 using Stretch = MediaPortal.UI.SkinEngine.Controls.Visuals.Stretch;
 

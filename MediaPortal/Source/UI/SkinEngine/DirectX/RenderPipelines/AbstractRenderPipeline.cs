@@ -22,9 +22,10 @@
 
 #endregion
 
-using System.Drawing;
-using SlimDX;
-using SlimDX.Direct3D9;
+using SharpDX;
+using SharpDX.Direct3D9;
+using Color = SharpDX.Color;
+using RectangleF = SharpDX.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
 {
@@ -36,7 +37,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     public virtual void BeginRender()
     {
       GraphicsDevice.RenderPass = RenderPassType.SingleOrFirstPass;
-      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.Black, 1.0f, 0);
+      GraphicsDevice.Device.Clear(ClearFlags.Target, SharpDXHelper.FromArgb(0, Color.Black), 1.0f, 0);
       GraphicsDevice.Device.BeginScene();
     }
 

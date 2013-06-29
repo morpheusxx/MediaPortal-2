@@ -22,9 +22,10 @@
 
 #endregion
 
-using System.Drawing;
 using MediaPortal.UI.SkinEngine.ContentManagement;
-using SlimDX.Direct3D9;
+using SharpDX.Direct3D9;
+using Color = SharpDX.Color;
+using Rectangle = SharpDX.Rectangle;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
 {
@@ -49,7 +50,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
       _renderRect = new Rectangle(0, 0, GraphicsDevice.Width, GraphicsDevice.Height);
       GraphicsDevice.Device.SetRenderTarget(0, _renderTarget.Surface);
       GraphicsDevice.RenderPass = RenderPassType.SingleOrFirstPass;
-      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.Black, 1.0f, 0);
+      GraphicsDevice.Device.Clear(ClearFlags.Target, SharpDXHelper.FromArgb(0, Color.Black), 1.0f, 0);
       GraphicsDevice.Device.BeginScene();
     }
 

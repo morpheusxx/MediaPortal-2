@@ -36,6 +36,8 @@ namespace MediaPortal.UI.Presentation.Players
     // Message channel name
     public const string CHANNEL = "PlayerManager";
 
+    public const string KEY_RESUME_PERCENT = "PlayerResumePercent";
+
     // Message type
     public enum MessageType
     {
@@ -50,6 +52,12 @@ namespace MediaPortal.UI.Presentation.Players
       /// The player state is ready. This message will be sent after the <see cref="PlayerStarted"/> message.
       /// </summary>
       PlayerStateReady,
+
+      /// <summary>
+      /// The player is about to be released (after beeing stopped or ended). This message is immediately sent before <see cref="PlayerStopped"/>
+      /// or <see cref="PlayerEnded"/> and contains the relative playback position as parameter <see cref="PlayerManagerMessaging.KEY_RESUME_PERCENT"/>.
+      /// </summary>
+      PlayerResumeInfo,
 
       /// <summary>
       /// A player was stopped.
@@ -146,6 +154,20 @@ namespace MediaPortal.UI.Presentation.Players
     {
       SystemMessage msg = new SystemMessage(type);
       msg.MessageData[PLAYER_SLOT_CONTROLLER] = psc;
+      ServiceRegistration.Get<IMessageBroker>().Send(CHANNEL, msg);
+    }
+
+    /// <summary>
+    /// Sends a message which announces the position, where the current playback ends. The position concerns a specific player
+    /// slot. The relative position in normalized percent (<c>0</c> to <c>1</c>) is contained as MessageData.
+    /// </summary>
+    /// <param name="psc">Player slot controller of the player which is involved.</param>
+    /// <param name="resumePercent">Normalized progress value.</param>
+    public static void SendPlayerResumeInfoMessage(IPlayerSlotController psc, double resumePercent)
+    {
+      SystemMessage msg = new SystemMessage(MessageType.PlayerResumeInfo);
+      msg.MessageData[PLAYER_SLOT_CONTROLLER] = psc;
+      msg.MessageData[KEY_RESUME_PERCENT] = resumePercent;
       ServiceRegistration.Get<IMessageBroker>().Send(CHANNEL, msg);
     }
 

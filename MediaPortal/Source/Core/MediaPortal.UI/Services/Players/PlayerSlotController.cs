@@ -88,6 +88,9 @@ namespace MediaPortal.UI.Services.Players
       }
       if (player == null)
         return;
+
+      // Handling of resume data
+      NotifyResumeInfo(player);
       ResetPlayerEvents_NoLock(player);
       IPlayer stopPlayer = null;
       IDisposable disposePlayer;
@@ -115,6 +118,18 @@ namespace MediaPortal.UI.Services.Players
         {
           ServiceRegistration.Get<ILogger>().Warn("PlayerSlotController: Error disposing player '{0}'", e, disposePlayer);
         }
+    }
+
+    protected void NotifyResumeInfo(IPlayer player)
+    {
+      IMediaPlaybackControl mpc = player as IMediaPlaybackControl;
+      if (mpc == null)
+        return;
+
+      TimeSpan resumePosition = mpc.CurrentTime;
+      TimeSpan duration = mpc.Duration;
+      double resumePercent = resumePosition.TotalSeconds / duration.TotalSeconds;
+      PlayerManagerMessaging.SendPlayerResumeInfoMessage(this, resumePercent);
     }
 
     protected void CheckActive()
@@ -304,13 +319,13 @@ namespace MediaPortal.UI.Services.Players
         if (vc != null)
         {
           if (mute && !vc.Mute)
-              // If we are switching the audio off, first disable the audio before setting the volume -
-              // perhaps both properties were changed and we want to avoid a short volume change before the audio gets disabled
+            // If we are switching the audio off, first disable the audio before setting the volume -
+            // perhaps both properties were changed and we want to avoid a short volume change before the audio gets disabled
             vc.Mute = true;
           vc.Volume = volume;
           vc.Mute = mute;
         }
-    }
+      }
       catch (Exception e)
       {
         ServiceRegistration.Get<ILogger>().Warn("PlayerSlotController: Error checking the audio state in player '{0}'", e, _player);
@@ -487,6 +502,6 @@ namespace MediaPortal.UI.Services.Players
         _contextVariables.Clear();
     }
 
-   #endregion
+    #endregion
   }
 }

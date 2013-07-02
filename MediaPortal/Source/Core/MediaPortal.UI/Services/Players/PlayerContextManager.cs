@@ -33,9 +33,11 @@ using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.Common.Messaging;
 using MediaPortal.Common.Runtime;
 using MediaPortal.Common.Settings;
+using MediaPortal.Common.SystemCommunication;
 using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Workflow;
+using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy;
 using MediaPortal.UI.Services.Players.Settings;
 using MediaPortal.Utilities;
@@ -152,6 +154,11 @@ namespace MediaPortal.UI.Services.Players
         IPlayerSlotController psc;
         switch (messageType)
         {
+          case PlayerManagerMessaging.MessageType.PlayerResumeInfo:
+            psc = (IPlayerSlotController) message.MessageData[PlayerManagerMessaging.PLAYER_SLOT_CONTROLLER];
+            double resumePercent = (double) message.MessageData[PlayerManagerMessaging.KEY_RESUME_PERCENT];
+            HandleResumeInfo(psc, resumePercent);
+            break;
           case PlayerManagerMessaging.MessageType.PlayerError:
           case PlayerManagerMessaging.MessageType.PlayerEnded:
             psc = (IPlayerSlotController) message.MessageData[PlayerManagerMessaging.PLAYER_SLOT_CONTROLLER];
@@ -220,6 +227,25 @@ namespace MediaPortal.UI.Services.Players
       if (potentialState == stateId)
         lock (SyncObj)
           _playerWfStateInstances.Add(new PlayerWFStateInstance(PlayerWFStateType.FullscreenContent, stateId));
+    }
+
+    protected void HandleResumeInfo(IPlayerSlotController psc, double resumePercent)
+    {
+      IPlayerContext pc = PlayerContext.GetPlayerContext(psc);
+      if (pc == null || !pc.IsActive)
+        return;
+
+      MediaItem currentItem = pc.CurrentMediaItem;
+      // TODO: flexible lookup for aspects that support resuming
+      MediaItemAspect videoAspect;
+      if (currentItem.Aspects.TryGetValue(VideoAspect.ASPECT_ID, out videoAspect))
+      {
+        IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
+        // TODO: notify server
+        //IContentDirectory cd = scm.ContentDirectory;
+        //if (cd != null)
+        //  cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
+      }
     }
 
     protected void HandlePlayerEnded(IPlayerSlotController psc)

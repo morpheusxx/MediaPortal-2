@@ -31,10 +31,12 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
   /// </summary>
   public static class MediaAspect
   {
+    public const double WATCHED_PERCENT_THRESHOLD = 0.90; // Consider media item played more than 90% as "watched".
+
     /// <summary>
     /// Media item aspect id of the media aspect.
     /// </summary>
-    public static readonly Guid ASPECT_ID = new Guid("17AF940C-66CE-4D23-9D06-BF7F21C04201");
+    public static readonly Guid ASPECT_ID = new Guid("6B7C84C6-E7E6-4652-BC1D-97388CBC7A8A");
 
     /// <summary>
     /// Contains a human readable title of the media item.
@@ -74,13 +76,26 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
         MediaItemAspectMetadata.CreateAttributeSpecification("PlayCount", typeof(int), Cardinality.Inline, false);
 
     /// <summary>
+    /// Indicates if the MediaItem was played back more than <see cref="WATCHED_PERCENT_THRESHOLD"/> percent.
+    /// </summary>
+    public static readonly MediaItemAspectMetadata.AttributeSpecification ATTR_WATCHED =
+        MediaItemAspectMetadata.CreateAttributeSpecification("Watched", typeof(bool), Cardinality.Inline, false);
+
+    /// <summary>
+    /// Indicates the playback position of the MediaItem, where it was stopped before. This attribute will be used to 
+    /// resume playback of this item later.
+    /// </summary>
+    public static readonly MediaItemAspectMetadata.AttributeSpecification ATTR_RESUME_PERCENT =
+        MediaItemAspectMetadata.CreateAttributeSpecification("ResumePercent", typeof(double), Cardinality.Inline, false);
+
+    /// <summary>
     /// Contains the date when the media item was last played.
     /// </summary>
     public static readonly MediaItemAspectMetadata.AttributeSpecification ATTR_LASTPLAYED =
         MediaItemAspectMetadata.CreateAttributeSpecification("LastPlayed", typeof(DateTime), Cardinality.Inline, false);
 
     public static readonly MediaItemAspectMetadata Metadata = new MediaItemAspectMetadata(
-        // TODO: Localize name
+      // TODO: Localize name
         ASPECT_ID, "MediaItem", new[] {
             ATTR_TITLE,
             ATTR_MIME_TYPE,
@@ -89,6 +104,8 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
             ATTR_COMMENT,
             ATTR_PLAYCOUNT,
             ATTR_LASTPLAYED,
+            ATTR_WATCHED,
+            ATTR_RESUME_PERCENT
         });
   }
 }

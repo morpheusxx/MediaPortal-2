@@ -953,6 +953,21 @@ namespace MediaPortal.Backend.Services.MediaLibrary
       UpdateMediaItem(mediaItemId, new MediaItemAspect[] {mediaAspect});
     }
 
+    public void NotifyResumeInfo(Guid mediaItemId, double resumePerc)
+    {
+      MediaItem item = Search(new MediaItemQuery(new Guid[] {MediaAspect.ASPECT_ID}, null, new MediaItemIdFilter(mediaItemId)), false).FirstOrDefault();
+      if (item == null)
+        return;
+      MediaItemAspect mediaAspect = item[MediaAspect.ASPECT_ID];
+
+      // Set "watched" flag only if percent is higher than our threshold.
+      if (resumePerc >= MediaAspect.WATCHED_PERCENT_THRESHOLD)
+        mediaAspect.SetAttribute(MediaAspect.ATTR_WATCHED, true);
+
+      mediaAspect.SetAttribute(MediaAspect.ATTR_RESUME_PERCENT, resumePerc);
+      UpdateMediaItem(mediaItemId, new MediaItemAspect[] {mediaAspect});
+    }
+
     #endregion
 
     #region Media item aspect schema management

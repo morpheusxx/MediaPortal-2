@@ -38,7 +38,7 @@ using MediaPortal.Utilities.UPnP;
 using UPnP.Infrastructure.Common;
 using UPnP.Infrastructure.Dv;
 using UPnP.Infrastructure.Dv.DeviceTree;
-using RelocationMode=MediaPortal.Backend.MediaLibrary.RelocationMode;
+using RelocationMode = MediaPortal.Backend.MediaLibrary.RelocationMode;
 
 namespace MediaPortal.Backend.Services.ClientCommunication
 {
@@ -64,7 +64,8 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     protected UInt32 _currentlyImportingSharesChangeCt = 0;
     protected UInt32 _registeredSharesChangeCt = 0;
 
-    public UPnPContentDirectoryServiceImpl() : base(
+    public UPnPContentDirectoryServiceImpl()
+      : base(
         UPnPTypesAndIds.CONTENT_DIRECTORY_SERVICE_TYPE, UPnPTypesAndIds.CONTENT_DIRECTORY_SERVICE_TYPE_VERSION,
         UPnPTypesAndIds.CONTENT_DIRECTORY_SERVICE_ID)
     {
@@ -113,7 +114,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       // Used to transport an enumeration of directories data
       DvStateVariable A_ARG_TYPE_ResourcePaths = new DvStateVariable("A_ARG_TYPE_ResourcePaths", new DvExtendedDataType(UPnPExtendedDataTypes.DtResourcePathMetadataEnumeration))
         {
-            SendEvents = false
+          SendEvents = false
         };
       AddStateVariable(A_ARG_TYPE_ResourcePaths);
 
@@ -156,22 +157,22 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       DvStateVariable A_ARG_TYPE_MediaItemRelocationMode = new DvStateVariable("A_ARG_TYPE_MediaItemRelocationMode", new DvStandardDataType(UPnPStandardDataType.String))
           {
             SendEvents = false,
-            AllowedValueList = new List<string> {"Relocate", "ClearAndReImport"}
+            AllowedValueList = new List<string> { "Relocate", "ClearAndReImport" }
           };
       AddStateVariable(A_ARG_TYPE_MediaItemRelocationMode);
 
       // Used to transport an argument of type MediaItemQuery
       DvStateVariable A_ARG_TYPE_MediaItemQuery = new DvStateVariable("A_ARG_TYPE_MediaItemQuery", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItemQuery))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItemQuery);
 
       // Used to transport a value indicating if only online objects are referred or all.
       DvStateVariable A_ARG_TYPE_OnlineState = new DvStateVariable("A_ARG_TYPE_OnlineState", new DvStandardDataType(UPnPStandardDataType.String))
         {
-            SendEvents = false,
-            AllowedValueList = new List<string> {"All", "OnlyOnline"}
+          SendEvents = false,
+          AllowedValueList = new List<string> { "All", "OnlyOnline" }
         };
       AddStateVariable(A_ARG_TYPE_OnlineState);
 
@@ -186,50 +187,50 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       // Used to transport a single media item with some media item aspects
       DvStateVariable A_ARG_TYPE_MediaItem = new DvStateVariable("A_ARG_TYPE_MediaItem", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItem))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItem);
 
       // Used to transport a collection of media items with some media item aspects
       DvStateVariable A_ARG_TYPE_MediaItems = new DvStateVariable("A_ARG_TYPE_MediaItems", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItemEnumeration))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItems);
 
       // Used to transport a single media item filter
       DvStateVariable A_ARG_TYPE_MediaItemFilter = new DvStateVariable("A_ARG_TYPE_MediaItemFilter", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItemsFilter))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItemFilter);
 
       // Used to transport a collection of media item attribute values
       DvStateVariable A_ARG_TYPE_MediaItemAttributeValues = new DvStateVariable("A_ARG_TYPE_MediaItemAttributeValues", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItemAttributeValues))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItemAttributeValues);
 
       // Used to transport an enumeration of media item aspects for a media item specified elsewhere
       DvStateVariable A_ARG_TYPE_MediaItemAspects = new DvStateVariable("A_ARG_TYPE_MediaItemAspects", new DvExtendedDataType(UPnPExtendedDataTypes.DtMediaItemAspectEnumeration))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_MediaItemAspects);
 
       // Used to transport the text to be used in a simple text search
       DvStateVariable A_ARG_TYPE_SearchText = new DvStateVariable("A_ARG_TYPE_SearchText", new DvStandardDataType(UPnPStandardDataType.String))
         {
-            SendEvents = false,
+          SendEvents = false,
         };
       AddStateVariable(A_ARG_TYPE_SearchText);
 
       // Used to transport a value indicating if only online objects are referred or all.
       DvStateVariable A_ARG_TYPE_TextSearchMode = new DvStateVariable("A_ARG_TYPE_TextSearchMode", new DvStandardDataType(UPnPStandardDataType.String))
         {
-            SendEvents = false,
-            AllowedValueList = new List<string> {"Normal", "ExcludeCLOBs"}
+          SendEvents = false,
+          AllowedValueList = new List<string> { "Normal", "ExcludeCLOBs" }
         };
       AddStateVariable(A_ARG_TYPE_TextSearchMode);
 
@@ -242,15 +243,15 @@ namespace MediaPortal.Backend.Services.ClientCommunication
 
       DvStateVariable A_ARG_TYPE_ProjectionFunction = new DvStateVariable("A_ARG_TYPE_ProjectionFunction", new DvStandardDataType(UPnPStandardDataType.String))
         {
-            SendEvents = false,
-            AllowedValueList = new List<string> {"None", "DateToYear"}
+          SendEvents = false,
+          AllowedValueList = new List<string> { "None", "DateToYear" }
         };
       AddStateVariable(A_ARG_TYPE_ProjectionFunction);
 
       DvStateVariable A_ARG_TYPE_GroupingFunction = new DvStateVariable("A_ARG_TYPE_GroupingFunction", new DvStandardDataType(UPnPStandardDataType.String))
         {
-            SendEvents = false,
-            AllowedValueList = new List<string> {"FirstCharacter"}
+          SendEvents = false,
+          AllowedValueList = new List<string> { "FirstCharacter" }
         };
       AddStateVariable(A_ARG_TYPE_GroupingFunction);
 
@@ -278,34 +279,40 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       // Change event for playlists
       PlaylistsChangeCounter = new DvStateVariable("PlaylistsChangeCounter", new DvStandardDataType(UPnPStandardDataType.Ui4))
         {
-            SendEvents = true,
-            Value = (uint) 0
+          SendEvents = true,
+          Value = (uint) 0
         };
       AddStateVariable(PlaylistsChangeCounter);
 
       // Change event for MIA type registrations
       MIATypeRegistrationsChangeCounter = new DvStateVariable("MIATypeRegistrationsChangeCounter", new DvStandardDataType(UPnPStandardDataType.Ui4))
         {
-            SendEvents = true,
-            Value = (uint) 0
+          SendEvents = true,
+          Value = (uint) 0
         };
       AddStateVariable(MIATypeRegistrationsChangeCounter);
 
       // Change event for registered shares
       RegisteredSharesChangeCounter = new DvStateVariable("RegisteredSharesChangeCounter", new DvStandardDataType(UPnPStandardDataType.Ui4))
         {
-            SendEvents = true,
-            Value = (uint) 0
+          SendEvents = true,
+          Value = (uint) 0
         };
       AddStateVariable(RegisteredSharesChangeCounter);
 
       // Change event for currently importing shares
       CurrentlyImportingSharesChangeCounter = new DvStateVariable("CurrentlyImportingSharesChangeCounter", new DvStandardDataType(UPnPStandardDataType.Ui4))
         {
-            SendEvents = true,
-            Value = (uint) 0
+          SendEvents = true,
+          Value = (uint) 0
         };
       AddStateVariable(CurrentlyImportingSharesChangeCounter);
+
+      DvStateVariable A_ARG_TYPE_Percent = new DvStateVariable("A_ARG_TYPE_Percent", new DvStandardDataType(UPnPStandardDataType.R8))
+        {
+          SendEvents = false
+        };
+      AddStateVariable(A_ARG_TYPE_Percent);
 
       // More state variables go here
 
@@ -591,7 +598,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
           new DvArgument[] {
           },
           new DvArgument[] {
-            new DvArgument("ShareIds", A_ARG_TYPE_UuidEnumeration, ArgumentDirection.Out, true), 
+            new DvArgument("ShareIds", A_ARG_TYPE_UuidEnumeration, ArgumentDirection.Out, true),
           });
       AddAction(getCurrentlyImportingSharesAction);
 
@@ -599,11 +606,21 @@ namespace MediaPortal.Backend.Services.ClientCommunication
 
       DvAction notifyPlaybackAction = new DvAction("NotifyPlayback", OnNotifyPlayback,
           new DvArgument[] {
-            new DvArgument("MediaItemId", A_ARG_TYPE_Uuid, ArgumentDirection.In), 
+            new DvArgument("MediaItemId", A_ARG_TYPE_Uuid, ArgumentDirection.In),
           },
           new DvArgument[] {
           });
       AddAction(notifyPlaybackAction);
+
+
+      DvAction notifyResumeInfo = new DvAction("NotifyResumeInfo", OnNotifyResumeInfo,
+          new DvArgument[] {
+            new DvArgument("MediaItemId", A_ARG_TYPE_Uuid, ArgumentDirection.In),
+            new DvArgument("ResumePercent", A_ARG_TYPE_Percent, ArgumentDirection.In),
+          },
+          new DvArgument[] {
+          });
+      AddAction(notifyResumeInfo);
 
       // More actions go here
 
@@ -794,7 +811,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       }
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>();
       int numAffected = mediaLibrary.UpdateShare(shareId, baseResourcePath, shareName, mediaCategories, relocationMode);
-      outParams = new List<object> {numAffected};
+      outParams = new List<object> { numAffected };
       return null;
     }
 
@@ -823,7 +840,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
           if (connectedClientsIds.Contains(share.SystemId))
             result.Add(share);
       }
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -832,7 +849,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     {
       Guid shareId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
       Share result = ServiceRegistration.Get<IMediaLibrary>().GetShare(shareId);
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -876,7 +893,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
         CallContext context)
     {
       ICollection<Guid> result = ServiceRegistration.Get<IMediaLibrary>().GetManagedMediaItemAspectMetadata().Keys;
-      outParams = new List<object> {MarshallingHelper.SerializeGuidEnumerationToCsv(result)};
+      outParams = new List<object> { MarshallingHelper.SerializeGuidEnumerationToCsv(result) };
       return null;
     }
 
@@ -885,7 +902,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     {
       Guid aspectId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
       MediaItemAspectMetadata miam = ServiceRegistration.Get<IMediaLibrary>().GetManagedMediaItemAspectMetadata(aspectId);
-      outParams = new List<object> {miam};
+      outParams = new List<object> { miam };
       return null;
     }
 
@@ -898,7 +915,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       IEnumerable<Guid> optionalMIATypes = MarshallingHelper.ParseCsvGuidCollection((string) inParams[3]);
       MediaItem mediaItem = ServiceRegistration.Get<IMediaLibrary>().LoadItem(systemId, path,
           necessaryMIATypes, optionalMIATypes);
-      outParams = new List<object> {mediaItem};
+      outParams = new List<object> { mediaItem };
       return null;
     }
 
@@ -910,7 +927,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       IEnumerable<Guid> optionalMIATypes = MarshallingHelper.ParseCsvGuidCollection((string) inParams[2]);
       ICollection<MediaItem> result = ServiceRegistration.Get<IMediaLibrary>().Browse(parentDirectoryId, necessaryMIATypes, optionalMIATypes);
 
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -927,7 +944,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
         return error;
       }
       IList<MediaItem> mediaItems = ServiceRegistration.Get<IMediaLibrary>().Search(query, !all);
-      outParams = new List<object> {mediaItems};
+      outParams = new List<object> { mediaItems };
       return null;
     }
 
@@ -944,7 +961,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       bool excludeCLOBs;
       bool all = false;
       bool caseSensitive = true;
-      UPnPError error = ParseSearchMode("SearchMode", searchModeStr, out excludeCLOBs) ?? 
+      UPnPError error = ParseSearchMode("SearchMode", searchModeStr, out excludeCLOBs) ??
         ParseOnlineState("OnlineState", onlineStateStr, out all) ??
         ParseCapitalizationMode("CapitalizationMode", capitalizationMode, out caseSensitive);
       if (error != null)
@@ -956,7 +973,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       MediaItemQuery query = mediaLibrary.BuildSimpleTextSearchQuery(searchText, necessaryMIATypes, optionalMIATypes,
           filter, !excludeCLOBs, caseSensitive);
       IList<MediaItem> mediaItems = mediaLibrary.Search(query, !all);
-      outParams = new List<object> {mediaItems};
+      outParams = new List<object> { mediaItems };
       return null;
     }
 
@@ -987,7 +1004,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
             aspectId, attributeName));
       HomogenousMap values = ServiceRegistration.Get<IMediaLibrary>().GetValueGroups(attributeType, selectAttributeFilter,
           projectionFunction, necessaryMIATypes, filter, !all);
-      outParams = new List<object> {values};
+      outParams = new List<object> { values };
       return null;
     }
 
@@ -1021,7 +1038,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
             aspectId, attributeName));
       IList<MLQueryResultGroup> values = ServiceRegistration.Get<IMediaLibrary>().GroupValueGroups(attributeType,
           selectAttributeFilter, projectionFunction, necessaryMIATypes, filter, !all, groupingFunction);
-      outParams = new List<object> {values};
+      outParams = new List<object> { values };
       return null;
     }
 
@@ -1037,7 +1054,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       if (error != null)
         return error;
       int numMediaItems = ServiceRegistration.Get<IMediaLibrary>().CountMediaItems(necessaryMIATypes, filter, !all);
-      outParams = new List<object> {numMediaItems};
+      outParams = new List<object> { numMediaItems };
       return null;
     }
 
@@ -1045,7 +1062,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
         CallContext context)
     {
       ICollection<PlaylistInformationData> result = ServiceRegistration.Get<IMediaLibrary>().GetPlaylists();
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -1063,7 +1080,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     {
       Guid playlistId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
       bool result = ServiceRegistration.Get<IMediaLibrary>().DeletePlaylist(playlistId);
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -1072,7 +1089,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     {
       Guid playlistId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
       PlaylistRawData result = ServiceRegistration.Get<IMediaLibrary>().ExportPlaylist(playlistId);
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -1084,7 +1101,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       IEnumerable<Guid> optionalMIATypes = MarshallingHelper.ParseCsvGuidCollection((string) inParams[2]);
       IList<MediaItem> result = ServiceRegistration.Get<IMediaLibrary>().LoadCustomPlaylist(
           mediaItemIds, necessaryMIATypes, optionalMIATypes);
-      outParams = new List<object> {result};
+      outParams = new List<object> { result };
       return null;
     }
 
@@ -1096,7 +1113,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       ResourcePath path = ResourcePath.Deserialize((string) inParams[2]);
       IEnumerable<MediaItemAspect> mediaItemAspects = (IEnumerable<MediaItemAspect>) inParams[3];
       Guid mediaItemId = ServiceRegistration.Get<IMediaLibrary>().AddOrUpdateMediaItem(parentDirectoryId, systemId, path, mediaItemAspects);
-      outParams = new List<object> {MarshallingHelper.SerializeGuid(mediaItemId)};
+      outParams = new List<object> { MarshallingHelper.SerializeGuid(mediaItemId) };
       return null;
     }
 
@@ -1133,7 +1150,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
         CallContext context)
     {
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>();
-      outParams = new List<object> {MarshallingHelper.SerializeGuidEnumerationToCsv(mediaLibrary.GetCurrentlyImportingShareIds())};
+      outParams = new List<object> { MarshallingHelper.SerializeGuidEnumerationToCsv(mediaLibrary.GetCurrentlyImportingShareIds()) };
       return null;
     }
 
@@ -1143,6 +1160,16 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>();
       Guid mediaItemId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
       mediaLibrary.NotifyPlayback(mediaItemId);
+      outParams = null;
+      return null;
+    }
+
+    private UPnPError OnNotifyResumeInfo(DvAction action, IList<object> inParams, out IList<object> outParams, CallContext context)
+    {
+      IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>();
+      Guid mediaItemId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
+      double resumePerc = (double) inParams[1];
+      mediaLibrary.NotifyResumeInfo(mediaItemId, resumePerc);
       outParams = null;
       return null;
     }

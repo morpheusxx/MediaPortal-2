@@ -280,6 +280,8 @@ namespace MediaPortal.Backend.MediaLibrary
 
     void NotifyPlayback(Guid mediaItemId);
 
+    void NotifyResumeInfo(Guid mediaItemId, double resumePerc);
+
     #endregion
 
     #region Media item aspect schema management

@@ -187,9 +187,21 @@ namespace MediaPortal.Common.SystemCommunication
 
     #endregion
 
-    #region Playback
+    #region Playback and resume info
 
+    /// <summary>
+    /// Notifies the MediaLibrary that playback of MediaItem with given <paramref name="mediaItemId"/> has been started.
+    /// </summary>
+    /// <param name="mediaItemId">ID of MediaItem.</param>
     void NotifyPlayback(Guid mediaItemId);
+
+    /// <summary>
+    /// Notifies the MediaLibrary that playback of MediaItem with given <paramref name="mediaItemId"/> is about to end at the given relative position
+    /// <see cref="resumePercent"/>.
+    /// </summary>
+    /// <param name="mediaItemId">ID of MediaItem.</param>
+    /// <param name="resumePercent">Normalized progress value (<c>0</c>...<c>1</c>).</param>
+    void NotifyResumeInfo(Guid mediaItemId, double resumePercent);
 
     #endregion
   }

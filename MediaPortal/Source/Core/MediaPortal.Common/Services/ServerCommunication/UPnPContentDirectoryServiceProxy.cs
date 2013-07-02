@@ -454,6 +454,13 @@ namespace MediaPortal.Common.Services.ServerCommunication
       action.InvokeAction(inParameters);
     }
 
+    public void NotifyResumeInfo(Guid mediaItemId, double resumePercent)
+    {
+      CpAction action = GetAction("NotifyResumeInfo");
+      IList<object> inParameters = new List<object> {MarshallingHelper.SerializeGuid(mediaItemId), resumePercent};
+      action.InvokeAction(inParameters);
+    }
+
     #endregion
 
     // TODO: State variables, if present

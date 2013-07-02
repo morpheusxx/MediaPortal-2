@@ -241,10 +241,9 @@ namespace MediaPortal.UI.Services.Players
       if (currentItem.Aspects.TryGetValue(VideoAspect.ASPECT_ID, out videoAspect))
       {
         IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
-        // TODO: notify server
-        //IContentDirectory cd = scm.ContentDirectory;
-        //if (cd != null)
-        //  cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
+        IContentDirectory cd = scm.ContentDirectory;
+        if (cd != null)
+          cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
       }
     }
 

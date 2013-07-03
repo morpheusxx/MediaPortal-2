@@ -878,10 +878,10 @@
 
       <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -910,10 +910,10 @@
       </Grid.RowDefinitions>
       <Label x:Name="ItemLabel" Grid.Row="1" Grid.Column="0" Content="{Binding SimpleTitle}" HorizontalAlignment="Center" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -925,11 +925,7 @@
         </Image.Source>
       </Image>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding !Watched}" />
     </Grid>
   </ControlTemplate>
 
@@ -958,18 +954,14 @@
         </Control.Resources>
       </Control>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,0,0">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,0,0" IsVisible="{Binding !Watched}"/>
 
       <Label x:Name="ItemLabel" Grid.Row="1" Grid.Column="0" Content="{Binding SimpleTitle}" HorizontalAlignment="Center" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1010,10 +1002,10 @@
       </DockPanel>
       <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1050,17 +1042,14 @@
            Thumbnail="True" Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}"
            FallbackSource="VideoLarge.png"/>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding !Watched}" />
+
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1089,18 +1078,14 @@
         </Control.Resources>
       </Control>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,20,0,0" IsVisible="{Binding !Watched}" />
 
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1140,10 +1125,10 @@
       </DockPanel>
       <Label x:Name="ItemLabel" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1164,17 +1149,14 @@
       <Image x:Name="ItemTypeAudio" Grid.Row="0" Stretch="Uniform" Source="{Binding MediaItem}" FallbackSource="AudioLarge.png"
            Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}"/>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding !Watched}" />
+
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1202,17 +1184,14 @@
         </Control.Resources>
       </Control>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,40,0,0">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,40,0,0" IsVisible="{Binding !Watched}" />
+
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1253,10 +1232,10 @@
       </DockPanel>
       <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1294,17 +1273,14 @@
            Thumbnail="True" Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}"
            FallbackSource="ImageLarge.png"/>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" IsVisible="{Binding !Watched}" />
+
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>
@@ -1333,18 +1309,14 @@
         </Control.Resources>
       </Control>
       <!-- Unwatched indicator -->
-      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,0,0">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
+      <Image Source="unwatched_flag.png" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,20,0,0" IsVisible="{Binding !Watched}" />
 
       <Label x:Name="ItemLabel" Grid.Row="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" HorizontalAlignment="Center">
         <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding Path="Watched"/>
             <Binding Source="{ThemeResource WatchedTextColor}"/>
+            <Binding Source="{ThemeResource TextColor}"/>
           </MultiBinding>
         </Label.Color>
       </Label>

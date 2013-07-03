@@ -54,6 +54,7 @@ namespace MediaPortal.UiComponents.Media.Models.Navigation
         Title = (string) mediaAspect[MediaAspect.ATTR_TITLE];
         Rating = (int?) mediaAspect[MediaAspect.ATTR_RATING] ?? 0;
         PlayCount = (int?) mediaAspect[MediaAspect.ATTR_PLAYCOUNT] ?? 0;
+        Watched = (bool?) mediaAspect[MediaAspect.ATTR_WATCHED] ?? false;
       }
     }
 
@@ -89,6 +90,12 @@ namespace MediaPortal.UiComponents.Media.Models.Navigation
     {
       get { return (int?) AdditionalProperties[Consts.KEY_PLAYCOUNT] ?? 0; }
       set { AdditionalProperties[Consts.KEY_PLAYCOUNT] = value; }
+    }
+
+    public bool Watched
+    {
+      get { return (bool?) AdditionalProperties[Consts.KEY_WATCHED] ?? false; }
+      set { AdditionalProperties[Consts.KEY_WATCHED] = value; }
     }
   }
 }

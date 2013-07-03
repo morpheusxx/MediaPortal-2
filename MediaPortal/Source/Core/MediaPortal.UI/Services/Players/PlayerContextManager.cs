@@ -236,15 +236,28 @@ namespace MediaPortal.UI.Services.Players
         return;
 
       MediaItem currentItem = pc.CurrentMediaItem;
-      // TODO: flexible lookup for aspects that support resuming
+      if (!SupportsResume(currentItem)) 
+        return;
+
+      IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
+      IContentDirectory cd = scm.ContentDirectory;
+      if (cd != null)
+        cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
+    }
+
+    /// <summary>
+    /// Checks if the given <paramref name="mediaItem"/> should support resume feature.
+    /// </summary>
+    /// <param name="mediaItem">MediaItem.</param>
+    /// <returns><c>true</c> if resume feature should be used, otherwise <c>false</c>.</returns>
+    protected bool SupportsResume(MediaItem mediaItem)
+    {
+      // TODO:
+      // Morpheus_xx, 2013-07-03: Currently we support resuming for video items only. If wanted, this method can be 
+      // extended in future for other types as well (i.e. audio). A generic solution is preferred,
+      // i.e. adding an Attribute to the MediaItemAspectMetadata and checking it here.
       MediaItemAspect videoAspect;
-      if (currentItem.Aspects.TryGetValue(VideoAspect.ASPECT_ID, out videoAspect))
-      {
-        IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
-        IContentDirectory cd = scm.ContentDirectory;
-        if (cd != null)
-          cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
-      }
+      return mediaItem.Aspects.TryGetValue(VideoAspect.ASPECT_ID, out videoAspect);
     }
 
     protected void HandlePlayerEnded(IPlayerSlotController psc)

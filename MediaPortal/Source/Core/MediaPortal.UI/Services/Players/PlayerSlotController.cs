@@ -464,7 +464,15 @@ namespace MediaPortal.UI.Services.Players
             disposePlayer.Dispose();
           OnPlayerStarted(player);
           if (mpc != null)
+          {
+            object resumeObject;
+            if (ContextVariables.TryGetValue(PlayerContext.KEY_RESUME_PERCENT, out resumeObject))
+            {
+              double resumePercent = (double) resumeObject;
+              mpc.CurrentTime = TimeSpan.FromSeconds(mpc.Duration.TotalSeconds * resumePercent);
+            }
             mpc.Resume();
+          }
           return true;
         }
         return false;

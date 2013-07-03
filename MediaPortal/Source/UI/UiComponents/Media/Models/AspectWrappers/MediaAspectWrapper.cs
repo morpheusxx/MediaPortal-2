@@ -41,7 +41,7 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
 
     public static readonly ICollection<string> EMPTY_STRING_COLLECTION = new List<string>().AsReadOnly();
 
-    #endregion Constants
+    #endregion
 
     #region Fields
 
@@ -52,9 +52,11 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
     protected AbstractProperty _commentProperty;
     protected AbstractProperty _playCountProperty;
     protected AbstractProperty _lastPlayedProperty;
+    protected AbstractProperty _watchedProperty;
+    protected AbstractProperty _resumePercentProperty;
     protected AbstractProperty _mediaItemProperty;
 
-    #endregion Fields
+    #endregion
 
     #region Properties
 
@@ -135,6 +137,28 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       set { _lastPlayedProperty.SetValue(value); }
     }
 
+    public AbstractProperty WatchedProperty
+    {
+      get { return _watchedProperty; }
+    }
+
+    public bool? Watched
+    {
+      get { return (bool?) _watchedProperty.GetValue(); }
+      set { _watchedProperty.SetValue(value); }
+    }
+
+    public AbstractProperty ResumePercentProperty
+    {
+      get { return _resumePercentProperty; }
+    }
+
+    public double? ResumePercent
+    {
+      get { return (double?) _resumePercentProperty.GetValue(); }
+      set { _resumePercentProperty.SetValue(value); }
+    }
+
     public AbstractProperty MediaItemProperty
     {
       get { return _mediaItemProperty; }
@@ -146,7 +170,7 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       set { _mediaItemProperty.SetValue(value); }
     }
 
-    #endregion Properties
+    #endregion
 
     #region Constructor
 
@@ -159,11 +183,13 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       _commentProperty = new SProperty(typeof(string));
       _playCountProperty = new SProperty(typeof(int?));
       _lastPlayedProperty = new SProperty(typeof(DateTime?));
+      _watchedProperty = new SProperty(typeof(bool?));
+      _resumePercentProperty = new SProperty(typeof(double?));
       _mediaItemProperty = new SProperty(typeof(MediaItem));
       _mediaItemProperty.Attach(MediaItemChanged);
     }
 
-    #endregion Constructor
+    #endregion
 
     #region Members
 
@@ -187,6 +213,8 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       Rating = (int?) aspect[MediaAspect.ATTR_RATING];
       Comment = (string) aspect[MediaAspect.ATTR_COMMENT];
       PlayCount = (int?) aspect[MediaAspect.ATTR_PLAYCOUNT];
+      Watched = (bool?) aspect[MediaAspect.ATTR_WATCHED];
+      ResumePercent = (double?) aspect[MediaAspect.ATTR_RESUME_PERCENT];
       LastPlayed = (DateTime?) aspect[MediaAspect.ATTR_LASTPLAYED];
     }
 
@@ -198,10 +226,11 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       Rating = null;
       Comment = null;
       PlayCount = null;
+      Watched = null;
+      ResumePercent = null;
       LastPlayed = null;
     }
-
-
-    #endregion Members
+    
+    #endregion
   }
 }

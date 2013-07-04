@@ -533,7 +533,7 @@ namespace MediaPortal.UiComponents.Media.Models
       };
       _playMenuItems.Add(playItem);
       IScreenManager screenManager = ServiceRegistration.Get<IScreenManager>();
-      screenManager.ShowDialog(Consts.DIALOG_PLAY_MENU, (dialogName, dialogInstanceId) => LeaveCheckQueryPlayActionSingleItemState());
+      screenManager.ShowDialog(Consts.DIALOG_PLAY_MENU, (dialogName, dialogInstanceId) => LeaveCheckResumePlaybackSingleItemState());
     }
 
     protected void CheckPlayMenuInternal(MediaItem item)

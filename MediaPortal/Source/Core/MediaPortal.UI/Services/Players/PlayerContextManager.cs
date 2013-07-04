@@ -24,8 +24,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Xml.Serialization;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
@@ -36,6 +39,7 @@ using MediaPortal.Common.Settings;
 using MediaPortal.Common.SystemCommunication;
 using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.Presentation.Players.ResumeInfo;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy;
@@ -156,8 +160,8 @@ namespace MediaPortal.UI.Services.Players
         {
           case PlayerManagerMessaging.MessageType.PlayerResumeInfo:
             psc = (IPlayerSlotController) message.MessageData[PlayerManagerMessaging.PLAYER_SLOT_CONTROLLER];
-            double resumePercent = (double) message.MessageData[PlayerManagerMessaging.KEY_RESUME_PERCENT];
-            HandleResumeInfo(psc, resumePercent);
+            IResumeState resumeState = (IResumeState) message.MessageData[PlayerManagerMessaging.KEY_RESUME_INFO];
+            HandleResumeInfo(psc, resumeState);
             break;
           case PlayerManagerMessaging.MessageType.PlayerError:
           case PlayerManagerMessaging.MessageType.PlayerEnded:
@@ -229,35 +233,20 @@ namespace MediaPortal.UI.Services.Players
           _playerWfStateInstances.Add(new PlayerWFStateInstance(PlayerWFStateType.FullscreenContent, stateId));
     }
 
-    protected void HandleResumeInfo(IPlayerSlotController psc, double resumePercent)
+    protected void HandleResumeInfo(IPlayerSlotController psc, IResumeState resumeState)
     {
       IPlayerContext pc = PlayerContext.GetPlayerContext(psc);
       if (pc == null || !pc.IsActive)
         return;
 
+      // Resume info is only sent if the player supports it.
       MediaItem currentItem = pc.CurrentMediaItem;
-      if (!SupportsResume(currentItem)) 
-        return;
+      string serialized = ResumeInfoBase.Serialize(resumeState);
 
       IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
       IContentDirectory cd = scm.ContentDirectory;
       if (cd != null)
-        cd.NotifyResumeInfo(currentItem.MediaItemId, resumePercent);
-    }
-
-    /// <summary>
-    /// Checks if the given <paramref name="mediaItem"/> should support resume feature.
-    /// </summary>
-    /// <param name="mediaItem">MediaItem.</param>
-    /// <returns><c>true</c> if resume feature should be used, otherwise <c>false</c>.</returns>
-    protected bool SupportsResume(MediaItem mediaItem)
-    {
-      // TODO:
-      // Morpheus_xx, 2013-07-03: Currently we support resuming for video items only. If wanted, this method can be 
-      // extended in future for other types as well (i.e. audio). A generic solution is preferred,
-      // i.e. adding an Attribute to the MediaItemAspectMetadata and checking it here.
-      MediaItemAspect videoAspect;
-      return mediaItem.Aspects.TryGetValue(VideoAspect.ASPECT_ID, out videoAspect);
+        cd.NotifyResumeInfo(currentItem.MediaItemId, serialized);
     }
 
     protected void HandlePlayerEnded(IPlayerSlotController psc)

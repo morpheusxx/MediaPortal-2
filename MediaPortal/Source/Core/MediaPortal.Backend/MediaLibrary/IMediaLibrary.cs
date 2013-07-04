@@ -280,7 +280,7 @@ namespace MediaPortal.Backend.MediaLibrary
 
     void NotifyPlayback(Guid mediaItemId);
 
-    void NotifyResumeInfo(Guid mediaItemId, double resumePerc);
+    void NotifyResumeInfo(Guid mediaItemId, string serializedResumeInfo);
 
     #endregion
 

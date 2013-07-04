@@ -196,12 +196,12 @@ namespace MediaPortal.Common.SystemCommunication
     void NotifyPlayback(Guid mediaItemId);
 
     /// <summary>
-    /// Notifies the MediaLibrary that playback of MediaItem with given <paramref name="mediaItemId"/> is about to end at the given relative position
-    /// <see cref="resumePercent"/>.
+    /// Notifies the MediaLibrary that playback of MediaItem with given <paramref name="mediaItemId"/> is about to end. The required resume info 
+    /// is contained in <see cref="serializedResumeState"/> as XML serialized.
     /// </summary>
     /// <param name="mediaItemId">ID of MediaItem.</param>
-    /// <param name="resumePercent">Normalized progress value (<c>0</c>...<c>1</c>).</param>
-    void NotifyResumeInfo(Guid mediaItemId, double resumePercent);
+    /// <param name="serializedResumeState">XML serialized resume object.</param>
+    void NotifyResumeInfo(Guid mediaItemId, string serializedResumeState);
 
     #endregion
   }

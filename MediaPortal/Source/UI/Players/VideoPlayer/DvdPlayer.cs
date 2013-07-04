@@ -43,6 +43,7 @@ using MediaPortal.UI.Players.Video.Interfaces;
 using MediaPortal.UI.Players.Video.Settings;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.Presentation.Players.ResumeInfo;
 using MediaPortal.UI.Presentation.Screens;
 
 namespace MediaPortal.UI.Players.Video
@@ -94,7 +95,7 @@ namespace MediaPortal.UI.Players.Video
     private const string DVD_NAVIGATOR = "DVD Navigator";
 
     protected DvdPreferredDisplayMode _videoPref = DvdPreferredDisplayMode.DisplayContentDefault;
-    protected AspectRatioMode arMode = AspectRatioMode.Stretched;
+    protected AspectRatioMode _arMode = AspectRatioMode.Stretched;
     protected DvdVideoAttributes _videoAttr;
 
     #endregion
@@ -369,7 +370,6 @@ namespace MediaPortal.UI.Players.Video
 
         Marshal.ReleaseComObject(dvdState);
       }
-      return;
     }
 
     /// <summary>
@@ -1138,6 +1138,41 @@ namespace MediaPortal.UI.Players.Video
         lock (SyncObj)
           return ToTimeSpan(_duration);
       }
+    }
+
+    #endregion
+
+    #region Implementation of IResumablePlayer
+
+    /// <summary>
+    /// Gets a <see cref="IResumeState"/> from the player.
+    /// </summary>
+    /// <param name="state">Outputs resume state.</param>
+    /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
+    public override bool GetResumeInfo(out IResumeState state)
+    {
+      byte[] data;
+      if (GetResumeState(out data))
+      {
+        state = new BinaryResumeInfo {ResumeData = data};
+        return true;
+      }
+      state = null;
+      return false;
+    }
+
+    /// <summary>
+    /// Sets a <see cref="IResumeState"/> to the player. The player is responsible to make the required initializations.
+    /// </summary>
+    /// <param name="state">Resume state.</param>
+    /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
+    public override bool SetResumeInfo(IResumeState state)
+    {
+      BinaryResumeInfo binaryResumeInfo = state as BinaryResumeInfo;
+      if (binaryResumeInfo == null)
+        return false;
+      SetResumeState(binaryResumeInfo.ResumeData);
+      return true;
     }
 
     #endregion

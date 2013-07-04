@@ -214,7 +214,7 @@ namespace MediaPortal.UiComponents.Media.Models.AspectWrappers
       Comment = (string) aspect[MediaAspect.ATTR_COMMENT];
       PlayCount = (int?) aspect[MediaAspect.ATTR_PLAYCOUNT];
       Watched = (bool?) aspect[MediaAspect.ATTR_WATCHED];
-      ResumePercent = (double?) aspect[MediaAspect.ATTR_RESUME_PERCENT];
+      //ResumePercent = (double?) aspect[MediaAspect.ATTR_RESUME_INFO];
       LastPlayed = (DateTime?) aspect[MediaAspect.ATTR_LASTPLAYED];
     }
 

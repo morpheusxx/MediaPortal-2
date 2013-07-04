@@ -36,7 +36,7 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
     /// <summary>
     /// Media item aspect id of the media aspect.
     /// </summary>
-    public static readonly Guid ASPECT_ID = new Guid("6B7C84C6-E7E6-4652-BC1D-97388CBC7A8A");
+    public static readonly Guid ASPECT_ID = new Guid("FAA54E88-B705-413C-A823-C838F1C84BE2");
 
     /// <summary>
     /// Contains a human readable title of the media item.
@@ -82,11 +82,11 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
         MediaItemAspectMetadata.CreateAttributeSpecification("Watched", typeof(bool), Cardinality.Inline, false);
 
     /// <summary>
-    /// Indicates the playback position of the MediaItem, where it was stopped before. This attribute will be used to 
-    /// resume playback of this item later.
+    /// Contains information that are required to resume playback on a defined position. The content is a XML serialized object type,
+    /// depending on the player that created it.
     /// </summary>
-    public static readonly MediaItemAspectMetadata.AttributeSpecification ATTR_RESUME_PERCENT =
-        MediaItemAspectMetadata.CreateAttributeSpecification("ResumePercent", typeof(double), Cardinality.Inline, false);
+    public static readonly MediaItemAspectMetadata.AttributeSpecification ATTR_RESUME_INFO =
+        MediaItemAspectMetadata.CreateStringAttributeSpecification("ResumeInfo", 2000, Cardinality.Inline, false);
 
     /// <summary>
     /// Contains the date when the media item was last played.
@@ -105,7 +105,7 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
             ATTR_PLAYCOUNT,
             ATTR_LASTPLAYED,
             ATTR_WATCHED,
-            ATTR_RESUME_PERCENT
+            ATTR_RESUME_INFO
         });
   }
 }

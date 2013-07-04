@@ -122,14 +122,13 @@ namespace MediaPortal.UI.Services.Players
 
     protected void NotifyResumeInfo(IPlayer player)
     {
-      IMediaPlaybackControl mpc = player as IMediaPlaybackControl;
-      if (mpc == null)
+      IResumablePlayer resumablePlayer = player as IResumablePlayer;
+      if (resumablePlayer == null)
         return;
 
-      TimeSpan resumePosition = mpc.CurrentTime;
-      TimeSpan duration = mpc.Duration;
-      double resumePercent = resumePosition.TotalSeconds / duration.TotalSeconds;
-      PlayerManagerMessaging.SendPlayerResumeInfoMessage(this, resumePercent);
+      IResumeState resumeInfo;
+      if (resumablePlayer.GetResumeInfo(out resumeInfo))
+        PlayerManagerMessaging.SendPlayerResumeInfoMessage(this, resumeInfo);
     }
 
     protected void CheckActive()
@@ -463,16 +462,19 @@ namespace MediaPortal.UI.Services.Players
           if (disposePlayer != null)
             disposePlayer.Dispose();
           OnPlayerStarted(player);
-          if (mpc != null)
+          
+          // Handling of resume info.
+          object resumeObject;
+          if (ContextVariables.TryGetValue(PlayerContext.KEY_RESUME_STATE, out resumeObject))
           {
-            object resumeObject;
-            if (ContextVariables.TryGetValue(PlayerContext.KEY_RESUME_PERCENT, out resumeObject))
-            {
-              double resumePercent = (double) resumeObject;
-              mpc.CurrentTime = TimeSpan.FromSeconds(mpc.Duration.TotalSeconds * resumePercent);
-            }
-            mpc.Resume();
+            IResumeState resumeState = (IResumeState) resumeObject;
+            IResumablePlayer resumablePlayer = player as IResumablePlayer;
+            if (resumablePlayer != null)
+              resumablePlayer.SetResumeInfo(resumeState);
           }
+
+          if (mpc != null)
+            mpc.Resume();
           return true;
         }
         return false;

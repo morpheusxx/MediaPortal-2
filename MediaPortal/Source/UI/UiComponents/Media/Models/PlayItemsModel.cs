@@ -36,6 +36,7 @@ using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.DataObjects;
 using MediaPortal.UI.Presentation.Models;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.Presentation.Players.ResumeInfo;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Services.Players;
@@ -232,11 +233,11 @@ namespace MediaPortal.UiComponents.Media.Models
     /// Discards any current player and plays the specified media <paramref name="item"/>.
     /// </summary>
     /// <param name="item">Media item to be played.</param>
-    /// <param name="resumePercent">Contains the normalized relative resume position or <c>null</c>.</param>
-    public static void PlayItem(MediaItem item, double? resumePercent = null)
+    /// <param name="resumeState">Contains optional information for players to resume playback.</param>
+    public static void PlayItem(MediaItem item, IResumeState resumeState = null)
     {
       CloseSecondaryPlayerContext();
-      PlayOrEnqueueItem(item, true, PlayerContextConcurrencyMode.None, resumePercent);
+      PlayOrEnqueueItem(item, true, PlayerContextConcurrencyMode.None, resumeState);
     }
 
     /// <summary>
@@ -245,8 +246,8 @@ namespace MediaPortal.UiComponents.Media.Models
     /// <param name="item">Media item to be played.</param>
     /// <param name="play">If <c>true</c>, plays the specified <paramref name="item"/>, else enqueues it.</param>
     /// <param name="concurrencyMode">Determines if the media item will be played or enqueued in concurrency mode.</param>
-    /// <param name="resumePercent">Contains the normalized relative resume position or <c>null</c>.</param>
-    public static void PlayOrEnqueueItem(MediaItem item, bool play, PlayerContextConcurrencyMode concurrencyMode, double? resumePercent = null)
+    /// <param name="resumeState">Contains optional information for players to resume playback.</param>
+    public static void PlayOrEnqueueItem(MediaItem item, bool play, PlayerContextConcurrencyMode concurrencyMode, IResumeState resumeState = null)
     {
       IPlayerContextManager pcm = ServiceRegistration.Get<IPlayerContextManager>();
       AVType avType = pcm.GetTypeOfMediaItem(item);
@@ -257,7 +258,7 @@ namespace MediaPortal.UiComponents.Media.Models
       // Always add items to playlist. This allows audio playlists as well as video/image playlists.
       pc.Playlist.Add(item);
 
-      ServiceRegistration.Get<IThreadPool>().Add(() => CompletePlayOrEnqueue(pc, play, resumePercent));
+      ServiceRegistration.Get<IThreadPool>().Add(() => CompletePlayOrEnqueue(pc, play, resumeState));
     }
 
     /// <summary>
@@ -309,15 +310,15 @@ namespace MediaPortal.UiComponents.Media.Models
         pcSecondary.Close();
     }
 
-    protected static void CompletePlayOrEnqueue(IPlayerContext pc, bool play, double? resumePercent = null)
+    protected static void CompletePlayOrEnqueue(IPlayerContext pc, bool play, IResumeState resumeState = null)
     {
       IPlayerContextManager pcm = ServiceRegistration.Get<IPlayerContextManager>();
       MediaModelSettings settings = ServiceRegistration.Get<ISettingsManager>().Load<MediaModelSettings>();
       pc.CloseWhenFinished = settings.ClosePlayerWhenFinished; // Has to be done before starting the media item, else the slot will not close in case of an error / when the media item cannot be played
       if (play)
       {
-        if (resumePercent != null)
-          pc.SetContextVariable(PlayerContext.KEY_RESUME_PERCENT, resumePercent);
+        if (resumeState != null)
+          pc.SetContextVariable(PlayerContext.KEY_RESUME_STATE, resumeState);
         pc.Play();
         if (pc.AVType == AVType.Video)
           pcm.ShowFullscreenContent(true);
@@ -501,8 +502,12 @@ namespace MediaPortal.UiComponents.Media.Models
 
     protected void CheckResumeMenuInternal(MediaItem item)
     {
-      double resumePercent;
-      if (!MediaItemAspect.TryGetAttribute(item.Aspects, MediaAspect.ATTR_RESUME_PERCENT, out resumePercent) || resumePercent == 0.0d)
+      string resumeStateString;
+      IResumeState resumeState = null;
+      if (MediaItemAspect.TryGetAttribute(item.Aspects, MediaAspect.ATTR_RESUME_INFO, out resumeStateString))
+        resumeState = ResumeInfoBase.Deserialize(resumeStateString);
+
+      if (resumeState == null)
       {
         // Asynchronously leave the current workflow state because we're called from a workflow model method
         IThreadPool threadPool = ServiceRegistration.Get<IThreadPool>();
@@ -519,7 +524,7 @@ namespace MediaPortal.UiComponents.Media.Models
         Command = new MethodDelegateCommand(() =>
         {
           LeaveCheckResumePlaybackSingleItemState();
-          PlayItem(item, resumePercent);
+          PlayItem(item, resumeState);
         })
       };
       _playMenuItems.Add(resumeItem);

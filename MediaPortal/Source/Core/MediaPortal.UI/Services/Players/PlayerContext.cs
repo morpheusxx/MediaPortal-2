@@ -41,7 +41,7 @@ namespace MediaPortal.UI.Services.Players
     public const double MAX_SEEK_RATE = 100;
 
     protected const string KEY_PLAYER_CONTEXT = "PlayerContext: Assigned PlayerContext";
-    public const string KEY_RESUME_PERCENT = "PlayerContext: ResumePercent";
+    public const string KEY_RESUME_STATE = "PlayerContext: ResumeState";
 
     #endregion
 

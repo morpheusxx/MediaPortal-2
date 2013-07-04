@@ -308,11 +308,11 @@ namespace MediaPortal.Backend.Services.ClientCommunication
         };
       AddStateVariable(CurrentlyImportingSharesChangeCounter);
 
-      DvStateVariable A_ARG_TYPE_Percent = new DvStateVariable("A_ARG_TYPE_Percent", new DvStandardDataType(UPnPStandardDataType.R8))
+      DvStateVariable A_ARG_TYPE_SerializedObject = new DvStateVariable("A_ARG_TYPE_SerializedObject", new DvStandardDataType(UPnPStandardDataType.String))
         {
           SendEvents = false
         };
-      AddStateVariable(A_ARG_TYPE_Percent);
+      AddStateVariable(A_ARG_TYPE_SerializedObject);
 
       // More state variables go here
 
@@ -616,7 +616,7 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       DvAction notifyResumeInfo = new DvAction("NotifyResumeInfo", OnNotifyResumeInfo,
           new DvArgument[] {
             new DvArgument("MediaItemId", A_ARG_TYPE_Uuid, ArgumentDirection.In),
-            new DvArgument("ResumePercent", A_ARG_TYPE_Percent, ArgumentDirection.In),
+            new DvArgument("ResumePercent", A_ARG_TYPE_SerializedObject, ArgumentDirection.In),
           },
           new DvArgument[] {
           });
@@ -1168,8 +1168,8 @@ namespace MediaPortal.Backend.Services.ClientCommunication
     {
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>();
       Guid mediaItemId = MarshallingHelper.DeserializeGuid((string) inParams[0]);
-      double resumePerc = (double) inParams[1];
-      mediaLibrary.NotifyResumeInfo(mediaItemId, resumePerc);
+      string serializedResumeInfo = (string) inParams[1];
+      mediaLibrary.NotifyResumeInfo(mediaItemId, serializedResumeInfo);
       outParams = null;
       return null;
     }

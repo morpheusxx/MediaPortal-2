@@ -78,9 +78,14 @@
       <Name>MediaPortal.UI</Name>
       <Private>False</Private>
     </ProjectReference>
+    <ProjectReference Include="..\..\Source\UI\UiComponents\SkinBase\SkinBase.csproj">
+      <Project>{4EFED5BE-2F6A-4944-BB96-053D5945BA1F}</Project>
+      <Name>SkinBase</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="plugin.xml" />
+    <Content Include="Skin\default\workflow\login-actions.xml" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -99,6 +104,14 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Skin\default\themes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\Login.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -108,8 +121,11 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>
-xcopy /Y "$(ProjectDir)plugin.xml" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
-xcopy /Y "$(TargetDir)$(ProjectName).dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"</PostBuildEvent>
+    <PostBuildEvent>xcopy /Y "$(ProjectDir)plugin.xml" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
+xcopy /Y "$(TargetDir)$(ProjectName).dll"  "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\"
+robocopy "$(ProjectDir)Language" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Language" /MIR /NP
+robocopy "$(ProjectDir)Skin" "$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Skin" /MIR /NP
+@REM Reset RoboCopy's exit code which is different from 0
+IF %25ERRORLEVEL%25 LSS 8 SET ERRORLEVEL=0</PostBuildEvent>
   </PropertyGroup>
 </Project>

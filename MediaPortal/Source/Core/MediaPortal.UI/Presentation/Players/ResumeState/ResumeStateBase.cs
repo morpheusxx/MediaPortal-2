@@ -35,27 +35,33 @@ namespace MediaPortal.UI.Presentation.Players.ResumeInfo
   /// <summary>
   /// Base class for all resume states.
   /// </summary>
-  [KnownType(typeof(PositionResumeInfo))]
-  [KnownType(typeof(BinaryResumeInfo))]
-  public abstract class ResumeInfoBase : IXmlSerializable, IResumeState
+  [KnownType(typeof(PositionResumeState))]
+  [KnownType(typeof(BinaryResumeState))]
+  public abstract class ResumeStateBase : IXmlSerializable, IResumeState
   {
+    public static string KEY_RESUME_STATE = "ResumeState";
+
     #region Static methods
 
     public static string Serialize(IResumeState resumeState)
     {
-      DataContractSerializer serializer = new DataContractSerializer(typeof(ResumeInfoBase));
+      if (resumeState == null)
+        return null;
+      DataContractSerializer serializer = new DataContractSerializer(typeof(ResumeStateBase));
       StringBuilder serialized = new StringBuilder();
       using (XmlWriter writer = XmlWriter.Create(serialized))
         serializer.WriteObject(writer, resumeState);
       return serialized.ToString();
     }
 
-    public static ResumeInfoBase Deserialize(string serialized)
+    public static ResumeStateBase Deserialize(string serialized)
     {
-      DataContractSerializer serializer = new DataContractSerializer(typeof(ResumeInfoBase));
+      if (string.IsNullOrEmpty(serialized))
+        return null;
+      DataContractSerializer serializer = new DataContractSerializer(typeof(ResumeStateBase));
       using (StringReader reader = new StringReader(serialized))
       using (XmlReader xmlReader = XmlReader.Create(reader))
-        return serializer.ReadObject(xmlReader) as ResumeInfoBase;
+        return serializer.ReadObject(xmlReader) as ResumeStateBase;
     }
 
     #endregion

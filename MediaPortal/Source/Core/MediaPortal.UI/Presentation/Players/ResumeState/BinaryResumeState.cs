@@ -23,28 +23,23 @@
 #endregion
 
 using System;
-using System.Globalization;
 
 namespace MediaPortal.UI.Presentation.Players.ResumeInfo
 {
   /// <summary>
-  /// Holds the required information to resume playback based on a <see cref="TimeSpan"/>.
+  /// Holds the required information to resume playback based on binary data.
   /// </summary>
-  public class PositionResumeInfo : ResumeInfoBase
+  public class BinaryResumeState : ResumeStateBase
   {
-    public TimeSpan ResumePosition { get; set; }
+    public byte[] ResumeData { get; set; }
 
     public override void InitFromString(string value)
     {
-      double totalSeconds;
-      if (!double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out totalSeconds))
-        return;
-      ResumePosition = TimeSpan.FromSeconds(totalSeconds);
+      ResumeData = Convert.FromBase64String(value);
     }
-
     public override string ToString()
     {
-      return ResumePosition.TotalSeconds.ToString(CultureInfo.InvariantCulture);
+      return Convert.ToBase64String(ResumeData);
     }
   }
 }

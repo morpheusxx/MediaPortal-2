@@ -1154,7 +1154,7 @@ namespace MediaPortal.UI.Players.Video
       byte[] data;
       if (GetResumeState(out data))
       {
-        state = new BinaryResumeInfo {ResumeData = data};
+        state = new BinaryResumeState {ResumeData = data};
         return true;
       }
       state = null;
@@ -1168,10 +1168,10 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public override bool SetResumeInfo(IResumeState state)
     {
-      BinaryResumeInfo binaryResumeInfo = state as BinaryResumeInfo;
-      if (binaryResumeInfo == null)
+      BinaryResumeState binaryResumeState = state as BinaryResumeState;
+      if (binaryResumeState == null)
         return false;
-      SetResumeState(binaryResumeInfo.ResumeData);
+      SetResumeState(binaryResumeState.ResumeData);
       return true;
     }
 

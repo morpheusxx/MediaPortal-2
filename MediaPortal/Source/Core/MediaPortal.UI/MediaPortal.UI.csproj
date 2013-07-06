@@ -79,9 +79,9 @@
     <Compile Include="Presentation\Players\IResumablePlayer.cs" />
     <Compile Include="Presentation\Players\ISpectrumPlayer.cs" />
     <Compile Include="Presentation\Players\ITitlePlayer.cs" />
-    <Compile Include="Presentation\Players\ResumeInfo\ResumeInfoBase.cs" />
-    <Compile Include="Presentation\Players\ResumeInfo\BinaryResumeInfo.cs" />
-    <Compile Include="Presentation\Players\ResumeInfo\PositionResumeInfo.cs" />
+    <Compile Include="Presentation\Players\ResumeState\ResumeStateBase.cs" />
+    <Compile Include="Presentation\Players\ResumeState\BinaryResumeState.cs" />
+    <Compile Include="Presentation\Players\ResumeState\PositionResumeState.cs" />
     <Compile Include="Presentation\Screens\IVideoPlayerSynchronizationStrategy.cs" />
     <Compile Include="Presentation\Utilities\PathBrowserCloseWatcher.cs" />
     <Compile Include="Presentation\Utilities\PathBrowserMessaging.cs" />

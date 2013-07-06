@@ -963,7 +963,7 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public virtual bool GetResumeInfo(out IResumeState state)
     {
-      state = new PositionResumeInfo { ResumePosition = CurrentTime };
+      state = new PositionResumeState { ResumePosition = CurrentTime };
       return true;
     }
 
@@ -974,7 +974,7 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public virtual bool SetResumeInfo(IResumeState state)
     {
-      PositionResumeInfo pos = state as PositionResumeInfo;
+      PositionResumeState pos = state as PositionResumeState;
       if (pos == null)
         return false;
       CurrentTime = pos.ResumePosition;

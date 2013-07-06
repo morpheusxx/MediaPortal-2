@@ -24,11 +24,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Xml.Serialization;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
@@ -36,14 +33,13 @@ using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.Common.Messaging;
 using MediaPortal.Common.Runtime;
 using MediaPortal.Common.Settings;
-using MediaPortal.Common.SystemCommunication;
 using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeInfo;
 using MediaPortal.UI.Presentation.Workflow;
-using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy;
 using MediaPortal.UI.Services.Players.Settings;
+using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.Utilities;
 
 namespace MediaPortal.UI.Services.Players
@@ -241,12 +237,11 @@ namespace MediaPortal.UI.Services.Players
 
       // Resume info is only sent if the player supports it.
       MediaItem currentItem = pc.CurrentMediaItem;
-      string serialized = ResumeInfoBase.Serialize(resumeState);
+      string serialized = ResumeStateBase.Serialize(resumeState);
 
-      IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();
-      IContentDirectory cd = scm.ContentDirectory;
-      if (cd != null)
-        cd.NotifyResumeInfo(currentItem.MediaItemId, serialized);
+      IUserManagement userProfileDataManagement = ServiceRegistration.Get<IUserManagement>();
+      if (userProfileDataManagement.IsValidUser)
+        userProfileDataManagement.UserProfileDataManagement.SetUserMediaItemData(userProfileDataManagement.CurrentUser.ProfileId, currentItem.MediaItemId, PlayerContext.KEY_RESUME_STATE, serialized);
     }
 
     protected void HandlePlayerEnded(IPlayerSlotController psc)

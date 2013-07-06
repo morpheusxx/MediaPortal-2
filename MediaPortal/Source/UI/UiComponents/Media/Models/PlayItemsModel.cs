@@ -40,6 +40,7 @@ using MediaPortal.UI.Presentation.Players.ResumeInfo;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Services.Players;
+using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.UiComponents.Media.General;
 using MediaPortal.UiComponents.Media.Settings;
 
@@ -502,10 +503,14 @@ namespace MediaPortal.UiComponents.Media.Models
 
     protected void CheckResumeMenuInternal(MediaItem item)
     {
-      string resumeStateString;
       IResumeState resumeState = null;
-      if (MediaItemAspect.TryGetAttribute(item.Aspects, MediaAspect.ATTR_RESUME_INFO, out resumeStateString))
-        resumeState = ResumeInfoBase.Deserialize(resumeStateString);
+      IUserManagement userProfileDataManagement = ServiceRegistration.Get<IUserManagement>();
+      if (userProfileDataManagement.IsValidUser)
+      {
+        string resumeStateString;
+        if (userProfileDataManagement.UserProfileDataManagement.GetUserMediaItemData(userProfileDataManagement.CurrentUser.ProfileId, item.MediaItemId, PlayerContext.KEY_RESUME_STATE, out resumeStateString))
+          resumeState = ResumeStateBase.Deserialize(resumeStateString);
+      }
 
       if (resumeState == null)
       {

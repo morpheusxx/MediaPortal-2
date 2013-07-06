@@ -90,7 +90,7 @@ namespace MediaPortal.UI.Services.Players
         return;
 
       // Handling of resume data
-      NotifyResumeInfo(player);
+      NotifyResumeState(player);
       ResetPlayerEvents_NoLock(player);
       IPlayer stopPlayer = null;
       IDisposable disposePlayer;
@@ -120,15 +120,15 @@ namespace MediaPortal.UI.Services.Players
         }
     }
 
-    protected void NotifyResumeInfo(IPlayer player)
+    protected void NotifyResumeState(IPlayer player)
     {
       IResumablePlayer resumablePlayer = player as IResumablePlayer;
       if (resumablePlayer == null)
         return;
 
-      IResumeState resumeInfo;
-      if (resumablePlayer.GetResumeInfo(out resumeInfo))
-        PlayerManagerMessaging.SendPlayerResumeInfoMessage(this, resumeInfo);
+      IResumeState resumeState;
+      if (resumablePlayer.GetResumeState(out resumeState))
+        PlayerManagerMessaging.SendPlayerResumeStateMessage(this, resumeState);
     }
 
     protected void CheckActive()
@@ -470,7 +470,7 @@ namespace MediaPortal.UI.Services.Players
             IResumeState resumeState = (IResumeState) resumeObject;
             IResumablePlayer resumablePlayer = player as IResumablePlayer;
             if (resumablePlayer != null)
-              resumablePlayer.SetResumeInfo(resumeState);
+              resumablePlayer.SetResumeState(resumeState);
           }
 
           if (mpc != null)

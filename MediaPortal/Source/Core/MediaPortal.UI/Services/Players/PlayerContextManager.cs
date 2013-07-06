@@ -35,7 +35,7 @@ using MediaPortal.Common.Runtime;
 using MediaPortal.Common.Settings;
 using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Players;
-using MediaPortal.UI.Presentation.Players.ResumeInfo;
+using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy;
 using MediaPortal.UI.Services.Players.Settings;
@@ -154,7 +154,7 @@ namespace MediaPortal.UI.Services.Players
         IPlayerSlotController psc;
         switch (messageType)
         {
-          case PlayerManagerMessaging.MessageType.PlayerResumeInfo:
+          case PlayerManagerMessaging.MessageType.PlayerResumeState:
             psc = (IPlayerSlotController) message.MessageData[PlayerManagerMessaging.PLAYER_SLOT_CONTROLLER];
             IResumeState resumeState = (IResumeState) message.MessageData[PlayerManagerMessaging.KEY_RESUME_INFO];
             HandleResumeInfo(psc, resumeState);

@@ -34,14 +34,14 @@ namespace MediaPortal.UI.Presentation.Players
     /// </summary>
     /// <param name="state">Outputs resume state.</param>
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
-    bool GetResumeInfo(out IResumeState state);
+    bool GetResumeState(out IResumeState state);
 
     /// <summary>
     /// Sets a <see cref="IResumeState"/> to the player. The player is responsible to make the required initializations.
     /// </summary>
     /// <param name="state">Resume state.</param>
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
-    bool SetResumeInfo(IResumeState state);
+    bool SetResumeState(IResumeState state);
   }
 
   /// <summary>

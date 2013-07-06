@@ -24,7 +24,7 @@
 
 using System;
 
-namespace MediaPortal.UI.Presentation.Players.ResumeInfo
+namespace MediaPortal.UI.Presentation.Players.ResumeState
 {
   /// <summary>
   /// Holds the required information to resume playback based on binary data.

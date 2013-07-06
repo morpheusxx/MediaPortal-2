@@ -38,7 +38,7 @@ using MediaPortal.UI.Players.Video.Settings;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.Presentation.Geometries;
 using MediaPortal.UI.Presentation.Players;
-using MediaPortal.UI.Presentation.Players.ResumeInfo;
+using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
@@ -961,7 +961,7 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     /// <param name="state">Outputs resume state.</param>
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
-    public virtual bool GetResumeInfo(out IResumeState state)
+    public virtual bool GetResumeState(out IResumeState state)
     {
       state = new PositionResumeState { ResumePosition = CurrentTime };
       return true;
@@ -972,7 +972,7 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     /// <param name="state">Resume state.</param>
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
-    public virtual bool SetResumeInfo(IResumeState state)
+    public virtual bool SetResumeState(IResumeState state)
     {
       PositionResumeState pos = state as PositionResumeState;
       if (pos == null)

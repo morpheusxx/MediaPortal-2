@@ -30,7 +30,7 @@ using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace MediaPortal.UI.Presentation.Players.ResumeInfo
+namespace MediaPortal.UI.Presentation.Players.ResumeState
 {
   /// <summary>
   /// Base class for all resume states.
@@ -39,8 +39,6 @@ namespace MediaPortal.UI.Presentation.Players.ResumeInfo
   [KnownType(typeof(BinaryResumeState))]
   public abstract class ResumeStateBase : IXmlSerializable, IResumeState
   {
-    public static string KEY_RESUME_STATE = "ResumeState";
-
     #region Static methods
 
     public static string Serialize(IResumeState resumeState)

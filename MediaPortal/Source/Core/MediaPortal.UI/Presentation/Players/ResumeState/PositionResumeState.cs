@@ -25,7 +25,7 @@
 using System;
 using System.Globalization;
 
-namespace MediaPortal.UI.Presentation.Players.ResumeInfo
+namespace MediaPortal.UI.Presentation.Players.ResumeState
 {
   /// <summary>
   /// Holds the required information to resume playback based on a <see cref="TimeSpan"/>.

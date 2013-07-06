@@ -57,7 +57,7 @@ namespace MediaPortal.UI.Presentation.Players
       /// The player is about to be released (after beeing stopped or ended). This message is immediately sent before <see cref="PlayerStopped"/>
       /// or <see cref="PlayerEnded"/> and contains resume information as parameter <see cref="PlayerManagerMessaging.KEY_RESUME_INFO"/>.
       /// </summary>
-      PlayerResumeInfo,
+      PlayerResumeState,
 
       /// <summary>
       /// A player was stopped.
@@ -161,12 +161,12 @@ namespace MediaPortal.UI.Presentation.Players
     /// Sends a message which contains information for resuming playback. The contained data can be specific for each player (can be position or some binary data).
     /// </summary>
     /// <param name="psc">Player slot controller of the player which is involved.</param>
-    /// <param name="resumeInfo">Resume info.</param>
-    public static void SendPlayerResumeInfoMessage(IPlayerSlotController psc, IResumeState resumeInfo)
+    /// <param name="resumeState">Resume state.</param>
+    public static void SendPlayerResumeStateMessage(IPlayerSlotController psc, IResumeState resumeState)
     {
-      SystemMessage msg = new SystemMessage(MessageType.PlayerResumeInfo);
+      SystemMessage msg = new SystemMessage(MessageType.PlayerResumeState);
       msg.MessageData[PLAYER_SLOT_CONTROLLER] = psc;
-      msg.MessageData[KEY_RESUME_INFO] = resumeInfo;
+      msg.MessageData[KEY_RESUME_INFO] = resumeState;
       ServiceRegistration.Get<IMessageBroker>().Send(CHANNEL, msg);
     }
 

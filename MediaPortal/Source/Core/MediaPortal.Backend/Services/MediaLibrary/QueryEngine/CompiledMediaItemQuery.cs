@@ -49,6 +49,9 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
     protected readonly IDictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute> _mainSelectAttributes;
     protected readonly ICollection<MediaItemAspectMetadata.AttributeSpecification> _explicitSelectAttributes;
     protected readonly IFilter _filter;
+    protected readonly int? _offset;
+    protected readonly int? _limit;
+
     protected readonly IList<SortInformation> _sortInformation;
 
     public CompiledMediaItemQuery(
@@ -57,7 +60,9 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         ICollection<MediaItemAspectMetadata> optionalRequestedMIAs,
         IDictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute> mainSelectedAttributes,
         ICollection<MediaItemAspectMetadata.AttributeSpecification> explicitSelectedAttributes,
-        IFilter filter, IList<SortInformation> sortInformation)
+        IFilter filter, IList<SortInformation> sortInformation,
+        int? limit = null,
+        int? offset = null)
     {
       _miaManagement = miaManagement;
       _necessaryRequestedMIAs = necessaryRequestedMIAs;
@@ -66,6 +71,8 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       _explicitSelectAttributes = explicitSelectedAttributes;
       _filter = filter;
       _sortInformation = sortInformation;
+      _limit = limit;
+      _offset = offset;
     }
 
     public IDictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute> MainSelectAttributes
@@ -86,6 +93,22 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
     public ICollection<SortInformation> SortInformation
     {
       get { return _sortInformation; }
+    }
+
+    /// <summary>
+    /// Optional offset to return items from a specific starting position from query.
+    /// </summary>
+    public int? Offset
+    {
+      get { return _offset; }
+    }
+
+    /// <summary>
+    /// Optional limit to return only a specific number of items from query.
+    /// </summary>
+    public int? Limit
+    {
+      get { return _limit; }
     }
 
     public static CompiledMediaItemQuery Compile(MIA_Management miaManagement, MediaItemQuery query)
@@ -111,16 +134,13 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       }
 
       // Maps (all selected main) MIAM.Attributes to QueryAttributes
-      IDictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute> mainSelectedAttributes =
-          new Dictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute>();
+      IDictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute> mainSelectedAttributes = new Dictionary<MediaItemAspectMetadata.AttributeSpecification, QueryAttribute>();
 
       // Attributes selected in explicit queries
-      ICollection<MediaItemAspectMetadata.AttributeSpecification> explicitSelectAttributes =
-          new List<MediaItemAspectMetadata.AttributeSpecification>();
+      ICollection<MediaItemAspectMetadata.AttributeSpecification> explicitSelectAttributes = new List<MediaItemAspectMetadata.AttributeSpecification>();
 
       // Allocate selected attributes to main query and explicit selects
-      ICollection<Guid> requestedMIATypeIDs = CollectionUtils.UnionSet(
-          query.NecessaryRequestedMIATypeIDs, query.OptionalRequestedMIATypeIDs);
+      ICollection<Guid> requestedMIATypeIDs = CollectionUtils.UnionSet(query.NecessaryRequestedMIATypeIDs, query.OptionalRequestedMIATypeIDs);
       foreach (Guid miaTypeID in requestedMIATypeIDs)
       {
         MediaItemAspectMetadata miam;
@@ -137,8 +157,8 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         }
       }
 
-      return new CompiledMediaItemQuery(miaManagement, necessaryMIATypes, optionalMIATypes,
-          mainSelectedAttributes, explicitSelectAttributes, query.Filter, query.SortInformation);
+      return new CompiledMediaItemQuery(miaManagement, necessaryMIATypes, optionalMIATypes, mainSelectedAttributes, explicitSelectAttributes,
+        query.Filter, query.SortInformation, query.Limit, query.Offset);
     }
 
     public IList<MediaItem> QueryList()
@@ -189,7 +209,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
 
         // 2. Main query
         MainQueryBuilder mainQueryBuilder = new MainQueryBuilder(_miaManagement,
-            _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation);
+            _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation, _limit, _offset);
 
         using (IDbCommand command = transaction.CreateCommand())
         {
@@ -218,7 +238,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
               mediaItems.Add(mediaItemId);
               IDictionary<MediaItemAspectMetadata.AttributeSpecification, ICollection<object>> attributeValues;
               if (!complexAttributeValues.TryGetValue(mediaItemId, out attributeValues))
-                  attributeValues = null;
+                attributeValues = null;
               MediaItem mediaItem = new MediaItem(mediaItemId);
               foreach (MediaItemAspectMetadata miam in selectedMIAs)
               {
@@ -372,7 +392,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       }
       result.Append("Main query:\r\n");
       MainQueryBuilder mainQueryBuilder = new MainQueryBuilder(_miaManagement,
-          _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation);
+          _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation, _limit, _offset);
       result.Append(mainQueryBuilder.ToString());
       return result.ToString();
     }

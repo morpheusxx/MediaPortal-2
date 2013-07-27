@@ -226,10 +226,16 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
           IEnumerable<MediaItemAspectMetadata> selectedMIAs = _necessaryRequestedMIAs.Union(_optionalRequestedMIAs);
 
           ICollection<Guid> mediaItems = new HashSet<Guid>();
-          using (IDataReader reader = command.ExecuteReader())
+          using (IDataReader fullReader = command.ExecuteReader())
           {
             IList<MediaItem> result = new List<MediaItem>();
-            while (reader.Read())
+
+            var records = fullReader.AsEnumerable();
+            if (_offset.HasValue)
+              records = records.Skip(_offset.Value);
+            if (_limit.HasValue)
+              records = records.Take(_limit.Value);
+            foreach (var reader in records)
             {
               Guid mediaItemId = database.ReadDBValue<Guid>(reader, reader.GetOrdinal(mediaItemIdAlias2));
               if (mediaItems.Contains(mediaItemId))
@@ -395,6 +401,15 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
           _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation, _limit, _offset);
       result.Append(mainQueryBuilder.ToString());
       return result.ToString();
+    }
+  }
+
+  public static class DataReaderExtensions
+  {
+    public static IEnumerable<IDataReader> AsEnumerable(this IDataReader reader)
+    {
+      while(reader.Read())
+        yield return reader;
     }
   }
 }

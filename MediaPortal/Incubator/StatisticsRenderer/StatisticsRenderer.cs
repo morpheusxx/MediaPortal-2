@@ -265,27 +265,29 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     private void DrawTearingTest()
     {
-      Surface surface = _device.GetRenderTarget(0);
-      int left = _tearingPos;
-      int width = surface.Description.Width;
-      int height = surface.Description.Height;
-      Size size = new Size(4, height);
-      Point topLeft = new Point(left, 0);
-      if (topLeft.X + size.Width >= width)
-        topLeft.X = 0;
+      using (Surface surface = _device.GetRenderTarget(0))
+      {
+        int left = _tearingPos;
+        int width = surface.Description.Width;
+        int height = surface.Description.Height;
+        Size size = new Size(4, height);
+        Point topLeft = new Point(left, 0);
+        if (topLeft.X + size.Width >= width)
+          topLeft.X = 0;
 
         Rectangle rcTearing = SharpDXHelper.CreateRectangle(topLeft, size);
 
         _device.ColorFill(surface, rcTearing, new ColorBGRA(255, 255, 255, 255));
 
-      topLeft = new Point((rcTearing.Right + 15) % width, 0);
-      if (topLeft.X + size.Width >= width)
-        topLeft.X = 0;
+        topLeft = new Point((rcTearing.Right + 15) % width, 0);
+        if (topLeft.X + size.Width >= width)
+          topLeft.X = 0;
 
         rcTearing = SharpDXHelper.CreateRectangle(topLeft, size);
         _device.ColorFill(surface, rcTearing, new ColorBGRA(100, 100, 100, 255));
 
-      _tearingPos = (_tearingPos + 7) % width;
+        _tearingPos = (_tearingPos + 7) % width;
+      }
     }
 
     private void DrawText(string text)
@@ -503,6 +505,9 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     public void Shutdown()
     {
+      DisableStats();
+      UnregisterKeyBindings();
+      DropMessageQueue();
     }
   }
 }

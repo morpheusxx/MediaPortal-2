@@ -36,14 +36,14 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     {
       base.BeginRender();
       _firstFrameTargetRect = new Rectangle(0, 0, _renderTarget.Width, _renderTarget.Height / 2);
-      _secondFrameTargetRect = new Rectangle(0, _renderTarget.Height / 2, _renderTarget.Width, _renderTarget.Height / 2);
+      _secondFrameTargetRect = new Rectangle(0, _renderTarget.Height / 2, _renderTarget.Width, _renderTarget.Height);
     }
 
     public override void GetVideoClip(RectangleF fullVideoClip, out RectangleF tranformedRect)
     {
       tranformedRect = GraphicsDevice.RenderPass == RenderPassType.SingleOrFirstPass ?
         new RectangleF(0.0f, 0.0f, fullVideoClip.Width, fullVideoClip.Height * 0.5f) : // TAB first pass, upper side
-        new RectangleF(0.0f, fullVideoClip.Height * 0.5f, fullVideoClip.Width, fullVideoClip.Height * 0.5f); // TAB second pass, lower side
+        new RectangleF(0.0f, fullVideoClip.Height * 0.5f, fullVideoClip.Width, fullVideoClip.Height); // TAB second pass, lower side
     }
 
     public override Matrix GetRenderPassTransform(Matrix initialScreenTransform)

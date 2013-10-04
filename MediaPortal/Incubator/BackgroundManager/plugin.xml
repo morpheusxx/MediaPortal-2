@@ -5,7 +5,8 @@
     Author="Morpheus_xx"
     Copyright="GPL"
     Description="Automatic exchange of backgrounds according to selected menu item"
-    PluginVersion="1.0">
+    PluginVersion="1.0"
+    AutoActivate="True">
 
   <DependsOn>
     <PluginReference PluginId="{5D239050-02B8-4f58-8301-7630A1C4CF85}"/> <!-- SkinBase -->

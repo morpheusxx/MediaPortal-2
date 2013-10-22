@@ -47,8 +47,8 @@ using MediaPortal.Common.Settings;
 using MediaPortal.Common.SystemResolver;
 using MediaPortal.UI.ServerCommunication.Settings;
 using MediaPortal.Utilities;
-using Microsoft.Deployment.WindowsInstaller;
 using Microsoft.Win32;
+using WixToolset.Dtf.WindowsInstaller;
 
 namespace CustomActions
 {

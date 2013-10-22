@@ -26,8 +26,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
-using Microsoft.Deployment.WindowsInstaller;
 using Microsoft.Win32;
+using WixToolset.Dtf.WindowsInstaller;
 
 namespace CustomActions
 {

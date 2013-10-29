@@ -32,6 +32,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
 using SharpDX.Direct3D9;
 using MediaPortal.Utilities.DeepCopy;
+using RectangleF = SharpDX.RectangleF;
 using Stretch = MediaPortal.UI.SkinEngine.Controls.Visuals.Stretch;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes

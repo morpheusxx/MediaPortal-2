@@ -27,7 +27,8 @@ using System.Windows.Forms;
 using MediaPortal.UI.Control.InputManager;
 using MediaPortal.Common.General;
 using MediaPortal.Utilities.DeepCopy;
-using Screen=MediaPortal.UI.SkinEngine.ScreenManagement.Screen;
+using Screen = MediaPortal.UI.SkinEngine.ScreenManagement.Screen;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {
@@ -106,7 +107,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     {
       Detach();
       base.DeepCopy(source, copyManager);
-      ScrollViewer sv = (ScrollViewer) source;
+      ScrollViewer sv = (ScrollViewer)source;
       ScrollBarXKnobPos = sv.ScrollBarXKnobPos;
       ScrollBarXKnobWidth = sv.ScrollBarXKnobWidth;
       ScrollBarYKnobPos = sv.ScrollBarYKnobPos;
@@ -176,7 +177,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       float scrollAreaWidth = ScrollBarXSize;
       float w = Math.Min(scrollAreaWidth, Math.Max(
           scrollInfo.ViewPortWidth / totalWidthNN * scrollAreaWidth, SCROLLBAR_MINLENGTH));
-      float x = Math.Min(scrollAreaWidth-w,
+      float x = Math.Min(scrollAreaWidth - w,
           scrollInfo.ViewPortStartX / totalWidthNN * scrollAreaWidth);
 
       ScrollBarXKnobWidth = w;
@@ -249,7 +250,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       UpdateScrollBars();
     }
 
-    protected override System.Drawing.SizeF CalculateInnerDesiredSize(System.Drawing.SizeF totalSize)
+    protected override SizeF CalculateInnerDesiredSize(SizeF totalSize)
     {
       ConfigureContentScrollFacility();
       return base.CalculateInnerDesiredSize(totalSize);
@@ -266,10 +267,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     {
       get { return _verticalScrollBarVisibilityProperty; }
     }
-    
+
     public ScrollBarVisibility VerticalScrollBarVisibility
     {
-      get { return (ScrollBarVisibility) _verticalScrollBarVisibilityProperty.GetValue(); }
+      get { return (ScrollBarVisibility)_verticalScrollBarVisibilityProperty.GetValue(); }
       set { _verticalScrollBarVisibilityProperty.SetValue(value); }
     }
 
@@ -277,10 +278,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     {
       get { return _horizontalScrollBarVisibilityProperty; }
     }
-    
+
     public ScrollBarVisibility HorizontalScrollBarVisibility
     {
-      get { return (ScrollBarVisibility) _horizontalScrollBarVisibilityProperty.GetValue(); }
+      get { return (ScrollBarVisibility)_horizontalScrollBarVisibilityProperty.GetValue(); }
       set { _horizontalScrollBarVisibilityProperty.SetValue(value); }
     }
 
@@ -291,7 +292,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarXSize
     {
-      get { return (float) _scrollBarXSizeProperty.GetValue(); }
+      get { return (float)_scrollBarXSizeProperty.GetValue(); }
       set { _scrollBarXSizeProperty.SetValue(value); }
     }
 
@@ -302,7 +303,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarYSize
     {
-      get { return (float) _scrollBarYSizeProperty.GetValue(); }
+      get { return (float)_scrollBarYSizeProperty.GetValue(); }
       set { _scrollBarYSizeProperty.SetValue(value); }
     }
 
@@ -313,7 +314,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarXKnobPos
     {
-      get { return (float) _scrollBarXKnobPosProperty.GetValue(); }
+      get { return (float)_scrollBarXKnobPosProperty.GetValue(); }
       set { _scrollBarXKnobPosProperty.SetValue(value); }
     }
 
@@ -324,13 +325,13 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarXKnobWidth
     {
-      get { return (float) _scrollBarXKnobWidthProperty.GetValue(); }
+      get { return (float)_scrollBarXKnobWidthProperty.GetValue(); }
       set { _scrollBarXKnobWidthProperty.SetValue(value); }
     }
 
     public bool ScrollBarXVisible
     {
-      get { return (bool) _scrollBarXVisibleProperty.GetValue(); }
+      get { return (bool)_scrollBarXVisibleProperty.GetValue(); }
       set { _scrollBarXVisibleProperty.SetValue(value); }
     }
 
@@ -346,7 +347,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarYKnobPos
     {
-      get { return (float) _scrollBarYKnobPosProperty.GetValue(); }
+      get { return (float)_scrollBarYKnobPosProperty.GetValue(); }
       set { _scrollBarYKnobPosProperty.SetValue(value); }
     }
 
@@ -357,7 +358,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public float ScrollBarYKnobHeight
     {
-      get { return (float) _scrollBarYKnobHeightProperty.GetValue(); }
+      get { return (float)_scrollBarYKnobHeightProperty.GetValue(); }
       set { _scrollBarYKnobHeightProperty.SetValue(value); }
     }
 
@@ -368,7 +369,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public bool ScrollBarYVisible
     {
-      get { return (bool) _scrollBarYVisibleProperty.GetValue(); }
+      get { return (bool)_scrollBarYVisibleProperty.GetValue(); }
       set { _scrollBarYVisibleProperty.SetValue(value); }
     }
 
@@ -379,7 +380,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public bool CanContentScroll
     {
-      get { return (bool) _canContentScrollProperty.GetValue(); }
+      get { return (bool)_canContentScrollProperty.GetValue(); }
       set { _canContentScrollProperty.SetValue(value); }
     }
 
@@ -395,15 +396,15 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         return;
 
       int scrollByLines = SystemInformation.MouseWheelScrollLines; // Use the system setting as default.
-      
+
       IScrollInfo scrollInfo = svfs as IScrollInfo;
       if (scrollInfo != null && scrollInfo.NumberOfVisibleLines != 0) // If ScrollControl can shown less items, use this as limit.
         scrollByLines = scrollInfo.NumberOfVisibleLines;
 
       int numLines = numDetents * scrollByLines;
-      
+
       if (numLines < 0)
-        svfs.ScrollDown(-1*numLines);
+        svfs.ScrollDown(-1 * numLines);
       else if (numLines > 0)
         svfs.ScrollUp(numLines);
     }

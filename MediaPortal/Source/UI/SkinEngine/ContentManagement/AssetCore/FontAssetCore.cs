@@ -34,6 +34,7 @@ using SharpDX.Direct3D9;
 using Tao.FreeType;
 using FontFamily = MediaPortal.UI.SkinEngine.Fonts.FontFamily;
 using Rectangle = SharpDX.Rectangle;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 {

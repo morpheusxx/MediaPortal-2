@@ -45,6 +45,7 @@ using MediaPortal.UI.SkinEngine.MpfElements.Resources;
 using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using MediaPortal.Utilities.DeepCopy;
 using MediaPortal.UI.SkinEngine.SkinManagement;
+using SizeF = SharpDX.Size2F;
 using RectangleF = SharpDX.RectangleF;
 using Screen = MediaPortal.UI.SkinEngine.ScreenManagement.Screen;
 
@@ -673,7 +674,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     /// </remarks>
     /// <param name="size">Size parameter where the margin will be removed.</param>
     /// <param name="margin">Margin to be removed.</param>
-    public static void RemoveMargin(ref SizeF size, Thickness margin)
+    public static void RemoveMargin(ref Size2F size, Thickness margin)
     {
       if (!float.IsNaN(size.Width))
         size.Width -= margin.Left + margin.Right;

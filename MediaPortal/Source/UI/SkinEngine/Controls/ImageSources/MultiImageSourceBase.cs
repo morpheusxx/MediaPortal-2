@@ -23,16 +23,17 @@
 #endregion
 
 using System;
-using System.Drawing;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX;
 using SharpDX.Direct3D9;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 {
@@ -137,7 +138,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       {
         SizeF currentRotatedSourceSize = _imageContext.GetRotatedSize(CurrentRawSourceSize);
         SizeF lastRotatedSourceSize = _lastImageContext.GetRotatedSize(LastRawSourceSize);
-        return (_transitionActive && !lastRotatedSourceSize.IsEmpty) ?
+        return (_transitionActive && !lastRotatedSourceSize.IsEmpty()) ?
             MaxSizeF(lastRotatedSourceSize, currentRotatedSourceSize) : currentRotatedSourceSize;
       }
     }
@@ -261,7 +262,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected override SizeF RawSourceSize
     {
-      get { return SizeF.Empty; }
+      get { return SharpDXHelper.EmptySizeF; }
     }
 
     protected override RectangleF  TextureClip

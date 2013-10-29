@@ -32,6 +32,7 @@ using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.Utilities.DeepCopy;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.SpecialElements.Controls
 {
@@ -168,7 +169,7 @@ namespace MediaPortal.UI.SkinEngine.SpecialElements.Controls
         float availableSize = Orientation == Orientation.Vertical ? actualHeight : actualWidth;
         FrameworkElement firstChild = visibleChildren[0];
         SizeF firstChildDesiredSize = firstChild.DesiredSize;
-        SizeF desiredEllipsisSize = _ellipsisControl == null ? SizeF.Empty : _ellipsisControl.DesiredSize;
+        SizeF desiredEllipsisSize = _ellipsisControl == null ? SharpDXHelper.EmptySizeF : _ellipsisControl.DesiredSize;
         // The first element is always shown
         availableSize -= Orientation == Orientation.Vertical ? firstChildDesiredSize.Height : firstChildDesiredSize.Width;
         List<FrameworkElement> reversedChildren = new List<FrameworkElement>(visibleChildren);
@@ -195,7 +196,7 @@ namespace MediaPortal.UI.SkinEngine.SpecialElements.Controls
         if (numShownChildrenAfterEllipsis < visibleChildren.Count - 1)
         { // Ellipsis necessary
           // Lay out first (home) element
-          SizeF childSize = new SizeF(firstChild.DesiredSize);
+          SizeF childSize = new SizeF(firstChild.DesiredSize.Width, firstChild.DesiredSize.Height);
           PointF position = new PointF(ActualPosition.X + startPositionX, ActualPosition.Y + startPositionY);
 
           if (Orientation == Orientation.Vertical)
@@ -216,7 +217,7 @@ namespace MediaPortal.UI.SkinEngine.SpecialElements.Controls
           // Lay out ellipsis
           if (_ellipsisControl != null)
           {
-            childSize = new SizeF(desiredEllipsisSize);
+            childSize = new SizeF(desiredEllipsisSize.Width, desiredEllipsisSize.Height);
             position = new PointF(ActualPosition.X + startPositionX, ActualPosition.Y + startPositionY);
 
             if (Orientation == Orientation.Vertical)
@@ -247,7 +248,7 @@ namespace MediaPortal.UI.SkinEngine.SpecialElements.Controls
         // Lay out all other elements after ellipsis
         foreach (FrameworkElement child in childrenAfterEllipsis)
         {
-          SizeF childSize = new SizeF(child.DesiredSize);
+          SizeF childSize = new SizeF(child.DesiredSize.Width, child.DesiredSize.Height);
           PointF position = new PointF(ActualPosition.X + startPositionX, ActualPosition.Y + startPositionY);
 
           if (Orientation == Orientation.Vertical)

@@ -32,6 +32,7 @@ using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Utils;
 using MediaPortal.Utilities.DeepCopy;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels
 {
@@ -304,7 +305,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Panels
           _totalHeight = actualExtendsInNonOrientationDirection;
         foreach (FrameworkElement child in visibleChildren)
         {
-          SizeF childSize = new SizeF(child.DesiredSize);
+          SizeF childSize = new SizeF(child.DesiredSize.Width, child.DesiredSize.Height);
           // For Orientation == vertical, this is childSize.Height, for horizontal it is childSize.Width
           float desiredExtendsInOrientationDirection = GetExtendsInOrientationDirection(Orientation, childSize);
           if (Orientation == Orientation.Vertical)

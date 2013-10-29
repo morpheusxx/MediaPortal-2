@@ -31,6 +31,7 @@ using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.Utilities;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.Utilities.DeepCopy;
+using SizeF = SharpDX.Size2F;
 using RectangleF = SharpDX.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels

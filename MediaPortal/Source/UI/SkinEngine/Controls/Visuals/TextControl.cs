@@ -42,6 +42,7 @@ using SharpDX.Direct3D9;
 using Brush = MediaPortal.UI.SkinEngine.Controls.Brushes.Brush;
 using Color = SharpDX.Color;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {
@@ -497,7 +498,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       base.CalculateInnerDesiredSize(totalSize); // Needs to be called in each sub class of Control, see comment in Control.CalculateInnerDesiredSize()
       AllocFont();
 
-      SizeF childSize = _asset == null ? SizeF.Empty : new SizeF(_asset.TextWidth(VisibleText ?? string.Empty), _asset.TextHeight(1));
+      SizeF childSize = _asset == null ? SharpDXHelper.EmptySizeF : new SizeF(_asset.TextWidth(VisibleText ?? string.Empty), _asset.TextHeight(1));
 
       if (PreferredTextLength.HasValue && _asset != null)
         // We use the "W" character as the character which needs the most space in X-direction

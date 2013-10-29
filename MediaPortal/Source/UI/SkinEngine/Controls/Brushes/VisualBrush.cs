@@ -34,6 +34,7 @@ using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX;
 using SharpDX.Direct3D9;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 {
@@ -46,7 +47,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
     protected RenderTextureAsset _visualTexture = null;
     protected RenderTargetAsset _visualSurface = null;
     protected Screen _screen = null;
-    protected SizeF _visualSize = Size.Empty;
+    protected SizeF _visualSize = SharpDXHelper.EmptySizeF;
     protected FrameworkElement _preparedVisual = null;
     protected String _renderTextureKey;
     protected String _renderSurfaceKey;
@@ -93,7 +94,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
     {
       Detach();
       base.DeepCopy(source, copyManager);
-      VisualBrush b = (VisualBrush) source;
+      VisualBrush b = (VisualBrush)source;
       Visual = b.Visual; // Use the original Visual, copying isn't necessary
       AutoLayoutContent = b.AutoLayoutContent;
       Attach();
@@ -112,8 +113,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
       // Unfortunately, brushes/brush effects are based on textures and cannot work with surfaces, so we need this additional copy step
       GraphicsDevice.Device.StretchRectangle(
-          _visualSurface.Surface, SharpDXHelper.CreateRectangle(Point.Empty, _visualSurface.Size),
-          _visualTexture.Surface0, SharpDXHelper.CreateRectangle(Point.Empty, _visualTexture.Size),
+          _visualSurface.Surface, SharpDXHelper.CreateRectangle(new PointF(0, 0), new SizeF(_visualSurface.Size.Width, _visualSurface.Size.Height)),
+          _visualTexture.Surface0, SharpDXHelper.CreateRectangle(new PointF(0, 0), new SizeF(_visualTexture.Size.Width, _visualTexture.Size.Height)),
           TextureFilter.None);
     }
 
@@ -138,7 +139,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
           visual.SetElementState(ElementState.Running);
         // Here is _screen != null, which means we are allocated
         visual.Allocate();
-        SizeF size = _vertsBounds.SizeF();
+        SizeF size = _vertsBounds.Size;
         visual.Measure(ref size);
         visual.Arrange(SharpDXHelper.CreateRectangleF(PointF.Empty, _vertsBounds.SizeF()));
       }
@@ -154,7 +155,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     public FrameworkElement Visual
     {
-      get { return (FrameworkElement) _visualProperty.GetValue(); }
+      get { return (FrameworkElement)_visualProperty.GetValue(); }
       set { _visualProperty.SetValue(value); }
     }
 
@@ -165,7 +166,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     public bool AutoLayoutContent
     {
-      get { return (bool) _autoLayoutContentProperty.GetValue(); }
+      get { return (bool)_autoLayoutContentProperty.GetValue(); }
       set { _autoLayoutContentProperty.SetValue(value); }
     }
 
@@ -199,8 +200,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
     {
       FrameworkElement fe = _preparedVisual;
       if (fe == null) return false;
-      _visualTexture.AllocateRenderTarget((int) _vertsBounds.Width, (int) _vertsBounds.Height);
-      _visualSurface.AllocateRenderTarget((int) _vertsBounds.Width, (int) _vertsBounds.Height);
+      _visualTexture.AllocateRenderTarget((int)_vertsBounds.Width, (int)_vertsBounds.Height);
+      _visualSurface.AllocateRenderTarget((int)_vertsBounds.Width, (int)_vertsBounds.Height);
 
       UpdateRenderTarget(fe);
       return base.BeginRenderBrushOverride(primitiveContext, renderContext);

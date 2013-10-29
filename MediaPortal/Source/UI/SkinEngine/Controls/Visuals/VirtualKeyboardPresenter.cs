@@ -23,9 +23,10 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Drawing;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.UI.SkinEngine.Rendering;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {
@@ -76,7 +77,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     {
       FrameworkElement keyboardControl = _keyboardLayoutControl;
       if (keyboardControl == null)
-        return SizeF.Empty;
+        return SharpDXHelper.EmptySizeF;
       keyboardControl.Measure(ref totalSize);
       return totalSize;
     }

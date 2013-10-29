@@ -26,6 +26,8 @@ using System;
 using System.Drawing;
 using MediaPortal.UI.SkinEngine.DirectX;
 using SharpDX;
+using SizeF = SharpDX.Size2F;
+using Point = SharpDX.Point;
 using RectangleF = SharpDX.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine

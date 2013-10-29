@@ -32,7 +32,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.Xaml;
 using SharpDX;
 using SharpDX.Direct3D9;
-using SizeF = System.Drawing.SizeF;
+using SizeF = SharpDX.Size2F;
 using MediaPortal.Utilities.DeepCopy;
 using Brush=MediaPortal.UI.SkinEngine.Controls.Brushes.Brush;
 using RectangleF = SharpDX.RectangleF;
@@ -313,7 +313,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     {
       FrameworkElement templateControl = _initializedTemplateControl;
       if (templateControl == null)
-        return SizeF.Empty;
+        return SharpDXHelper.EmptySizeF;
       templateControl.Measure(ref totalSize);
       return totalSize;
     }

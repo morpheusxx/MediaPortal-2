@@ -28,6 +28,8 @@ using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.MpfElements;
+using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels
 {
@@ -117,7 +119,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Panels
         float left = GetLeft(child, true);
         float top = GetTop(child, true);
 
-        rect = RectangleF.Union(rect, new RectangleF(new PointF(left, top), new SizeF(childSize.Width, childSize.Height)));
+        rect = RectangleF.Union(rect, new RectangleF(left, top, childSize.Width, childSize.Height));
       }
 
       return new SizeF(rect.Right, rect.Bottom);

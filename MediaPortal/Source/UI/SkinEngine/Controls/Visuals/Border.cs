@@ -35,7 +35,7 @@ using SharpDX.Direct3D9;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.DirectX;
 using PointF = System.Drawing.PointF;
-using SizeF = System.Drawing.SizeF;
+using SizeF = SharpDX.Size2F;
 using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using MediaPortal.Utilities.DeepCopy;
 
@@ -272,7 +272,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       if (content != null && content.IsVisible)
         content.Measure(ref totalSize);
       else
-        totalSize = SizeF.Empty;
+        totalSize = SharpDXHelper.EmptySizeF;
 
       AddMargin(ref totalSize, enclosingMargin);
 

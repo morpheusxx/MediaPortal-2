@@ -46,6 +46,7 @@ using TypeConverter = MediaPortal.UI.SkinEngine.Xaml.TypeConverter;
 using MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes;
 using Brush=MediaPortal.UI.SkinEngine.Controls.Brushes.Brush;
 using Color = SharpDX.Color;
+using Point = SharpDX.Point;
 
 namespace MediaPortal.UI.SkinEngine.MpfElements
 {                            

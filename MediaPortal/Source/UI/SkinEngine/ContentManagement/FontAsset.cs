@@ -26,6 +26,7 @@ using System.Drawing;
 using MediaPortal.UI.SkinEngine.ContentManagement.AssetCore;
 using SharpDX.Direct3D9;
 using MediaPortal.UI.SkinEngine.DirectX;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement
 {

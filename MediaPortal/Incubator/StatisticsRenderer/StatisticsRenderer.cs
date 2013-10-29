@@ -40,6 +40,7 @@ using SharpDX.Direct3D9;
 using System.Drawing;
 using Color = SharpDX.Color;
 using Font = SharpDX.Direct3D9.Font;
+using Point = SharpDX.Point;
 using Rectangle = SharpDX.Rectangle;
 
 namespace MediaPortal.Plugins.StatisticsRenderer
@@ -270,20 +271,20 @@ namespace MediaPortal.Plugins.StatisticsRenderer
         int left = _tearingPos;
         int width = surface.Description.Width;
         int height = surface.Description.Height;
-        Size size = new Size(4, height);
-        Point topLeft = new Point(left, 0);
+        SizeF size = new SizeF(4, height);
+        PointF topLeft = new PointF(left, 0);
         if (topLeft.X + size.Width >= width)
           topLeft.X = 0;
 
-        Rectangle rcTearing = SharpDXHelper.CreateRectangle(topLeft, size);
+        Rectangle rcTearing = SharpDXHelper.CreateRectangle(topLeft, size.ToSizeF());
 
         _device.ColorFill(surface, rcTearing, new ColorBGRA(255, 255, 255, 255));
 
-        topLeft = new Point((rcTearing.Right + 15) % width, 0);
+        topLeft = new PointF((rcTearing.Right + 15) % width, 0);
         if (topLeft.X + size.Width >= width)
           topLeft.X = 0;
 
-        rcTearing = SharpDXHelper.CreateRectangle(topLeft, size);
+        rcTearing = SharpDXHelper.CreateRectangle(topLeft, size.ToSizeF());
         _device.ColorFill(surface, rcTearing, new ColorBGRA(100, 100, 100, 255));
 
         _tearingPos = (_tearingPos + 7) % width;

@@ -32,6 +32,7 @@ using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Utils;
 using MediaPortal.Utilities.DeepCopy;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels
 {
@@ -273,7 +274,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Panels
       IList<FrameworkElement> visibleChildren = GetVisibleChildren();
       int numVisibleChildren = visibleChildren.Count;
       if (numVisibleChildren == 0)
-        return SizeF.Empty;
+        return SharpDXHelper.EmptySizeF;
       float totalDesiredWidth = 0;
       float totalDesiredHeight = 0;
       int index = 0;

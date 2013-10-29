@@ -26,9 +26,11 @@ using System;
 using System.Drawing;
 using System.Security.Cryptography;
 using MediaPortal.UI.SkinEngine.ContentManagement;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX.Direct3D9;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 {
@@ -89,7 +91,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected override SizeF RawSourceSize
     {
-      get { return (_texture != null && _texture.IsAllocated) ? new SizeF(_texture.Width, _texture.Height) : SizeF.Empty; }
+      get { return (_texture != null && _texture.IsAllocated) ? new SizeF(_texture.Width, _texture.Height) : SharpDXHelper.EmptySizeF; }
     }
 
     protected override RectangleF TextureClip

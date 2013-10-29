@@ -50,6 +50,7 @@ using SharpDX.Direct3D9;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Controls.Visuals.Styles;
 using MediaPortal.Utilities.DeepCopy;
+using SizeF = SharpDX.Size2F;
 using Color = SharpDX.Color;
 using Rectangle = SharpDX.Rectangle;
 using RectangleF = SharpDX.RectangleF;
@@ -1437,7 +1438,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 #endif
 #endif
       _isMeasureInvalid = false;
-      _availableSize = new SizeF(totalSize);
+      _availableSize = new SizeF(totalSize.Width, totalSize.Height);
       RemoveMargin(ref totalSize, Margin);
 
       Matrix? layoutTransform = LayoutTransform == null ? new Matrix?() : LayoutTransform.GetTransform();
@@ -1449,7 +1450,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       if (!double.IsNaN(Height))
         totalSize.Height = (float) Height;
 
-      totalSize = CalculateInnerDesiredSize(new SizeF(totalSize));
+      totalSize = CalculateInnerDesiredSize(new SizeF(totalSize.Width, totalSize.Height));
 
       if (!double.IsNaN(Width))
         totalSize.Width = (float) Width;
@@ -1526,7 +1527,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         if (!layoutTransform.IsIdentity)
         {
           SizeF resultInnerSize = _innerDesiredSize;
-          SizeF resultOuterSize = new SizeF(resultInnerSize);
+          SizeF resultOuterSize = new SizeF(resultInnerSize.Width, resultInnerSize.Height);
           layoutTransform.TransformIncludingRectangleSize(ref resultOuterSize);
           if (resultOuterSize.Width > rect.Width + DELTA_DOUBLE || resultOuterSize.Height > rect.Height + DELTA_DOUBLE)
             // Transformation of desired size doesn't fit into the available rect
@@ -1556,7 +1557,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     protected virtual SizeF CalculateInnerDesiredSize(SizeF totalSize)
     {
-      return SizeF.Empty;
+      return SharpDXHelper.EmptySizeF;
     }
 
     protected SizeF ClampSize(SizeF size)
@@ -1686,7 +1687,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     /// <param name="skinSize">The size of the skin.</param>
     public void UpdateLayoutRoot(SizeF skinSize)
     {
-      SizeF size = new SizeF(skinSize);
+      SizeF size = new SizeF(skinSize.Width, skinSize.Height);
 
 #if DEBUG_LAYOUT
 #if DEBUG_MORE_LAYOUT
@@ -1948,8 +1949,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
           // TODO:
           // ToRect(tempRenderContext.OccupiedTransformedBounds, renderSurface.Size)
           GraphicsDevice.Device.StretchRectangle(
-              renderSurface.Surface, SharpDXHelper.CreateRectangle(Point.Empty, renderSurface.Size),
-              renderTexture.Surface0, SharpDXHelper.CreateRectangle(Point.Empty, renderTexture.Size),
+              renderSurface.Surface, SharpDXHelper.CreateRectangle(SharpDXHelper.EmptyPointF, new SizeF(renderSurface.Size.Width, renderSurface.Size.Height)),
+              renderTexture.Surface0, SharpDXHelper.CreateRectangle(SharpDXHelper.EmptyPointF, new SizeF(renderTexture.Size.Width, renderTexture.Size.Height)),
               TextureFilter.None);
         }
         else

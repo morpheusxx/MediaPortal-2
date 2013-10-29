@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
@@ -33,6 +32,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.Utilities.DeepCopy;
 using Color = SharpDX.Color;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {

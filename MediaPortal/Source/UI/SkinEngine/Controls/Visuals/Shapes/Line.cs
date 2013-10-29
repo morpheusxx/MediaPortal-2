@@ -23,6 +23,7 @@
 #endregion
 
 using System;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
@@ -30,8 +31,7 @@ using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX.Direct3D9;
 using RectangleF = SharpDX.RectangleF;
-using PointF = System.Drawing.PointF;
-using SizeF = System.Drawing.SizeF;
+using SizeF = SharpDX.Size2F;
 using MediaPortal.Utilities.DeepCopy;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes

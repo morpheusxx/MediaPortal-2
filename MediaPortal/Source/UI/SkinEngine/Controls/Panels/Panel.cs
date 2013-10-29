@@ -38,6 +38,7 @@ using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using MediaPortal.Utilities.DeepCopy;
 using Brush=MediaPortal.UI.SkinEngine.Controls.Brushes.Brush;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels
 {

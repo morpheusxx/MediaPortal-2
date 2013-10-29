@@ -32,6 +32,7 @@ using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Rendering
 {
@@ -166,7 +167,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       SetFont(font, size);
       _kerning = true;
       _lastTimeUsed = DateTime.MinValue;
-      _lastTextSize = SizeF.Empty;
+      _lastTextSize = SharpDXHelper.EmptySizeF;
       ResetScrollPosition();
     }
 
@@ -180,7 +181,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       SetFont(fontName, size);
       _kerning = true;
       _lastTimeUsed = DateTime.MinValue;
-      _lastTextSize = SizeF.Empty;
+      _lastTextSize = SharpDXHelper.EmptySizeF;
       ResetScrollPosition();
     }
 

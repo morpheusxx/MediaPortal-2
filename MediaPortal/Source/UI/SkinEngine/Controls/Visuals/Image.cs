@@ -29,11 +29,13 @@ using MediaPortal.Common.General;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.Controls.ImageSources;
 using MediaPortal.UI.SkinEngine.Utils;
 using MediaPortal.Utilities.DeepCopy;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {
@@ -98,7 +100,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     protected readonly ImageSourceState _fallbackSourceState = new ImageSourceState();
     protected bool _loadImageSource = false;
     protected bool _fallbackSourceInUse = false;
-    protected SizeF _lastImageSourceSize = SizeF.Empty;
+    protected SizeF _lastImageSourceSize = SharpDXHelper.EmptySizeF;
     protected string _formerWarnURI = null;
     protected bool _invalidateImageSourceOnResize = false;
 
@@ -441,7 +443,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       ImageSourceState allocatedSource = GetLoadedSource(false);
       if (allocatedSource == null)
       {
-        _lastImageSourceSize = SizeF.Empty;
+        _lastImageSourceSize = SharpDXHelper.EmptySizeF;
         return new SizeF(10, 10);
       }
 

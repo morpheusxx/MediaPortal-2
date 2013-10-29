@@ -46,6 +46,7 @@ using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using MediaPortal.Utilities.Exceptions;
 using SharpDX;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.ScreenManagement
 {

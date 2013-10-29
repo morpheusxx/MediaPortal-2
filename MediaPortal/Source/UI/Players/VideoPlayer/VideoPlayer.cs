@@ -43,6 +43,7 @@ using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
+using SharpDX;
 using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.Players.Video
@@ -655,7 +656,7 @@ namespace MediaPortal.UI.Players.Video
       get
       {
         Size videoSize = VideoSize;
-        return _cropSettings == null ? SharpDXHelper.CreateRectangle(Point.Empty, videoSize) : _cropSettings.CropRect(videoSize).FromRect();
+        return _cropSettings == null ? SharpDXHelper.CreateRectangle(0, 0, videoSize.Width, videoSize.Height) : _cropSettings.CropRect(videoSize).FromRect();
       }
     }
 

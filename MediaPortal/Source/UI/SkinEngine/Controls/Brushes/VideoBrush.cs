@@ -41,6 +41,7 @@ using MediaPortal.Utilities.DeepCopy;
 using Color = SharpDX.Color;
 using Rectangle = SharpDX.Rectangle;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 {
@@ -177,7 +178,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       ISlimDXVideoPlayer sdvPlayer = player as ISlimDXVideoPlayer;
       if (sdvPlayer == null)
         return false;
-      SizeF aspectRatio = sdvPlayer.VideoAspectRatio;
+      SizeF aspectRatio = new SizeF(sdvPlayer.VideoAspectRatio.Width, sdvPlayer.VideoAspectRatio.Height);
       Size playerSize = sdvPlayer.VideoSize;
       Rectangle cropVideoRect = sdvPlayer.CropVideoRect;
       IGeometry geometry = ChooseVideoGeometry(player);
@@ -212,10 +213,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         _videoTextureClip = SharpDXHelper.CreateRectangleF(cropVideoRect.X / desc.Width, cropVideoRect.Y / desc.Height,
             cropVideoRect.Width / desc.Width, cropVideoRect.Height / desc.Height);
       }
-      _scaledVideoSize = cropVideoRect.Size();
+      _scaledVideoSize = new SizeF(cropVideoRect.Size.Width, cropVideoRect.Size.Height);
 
       // Correct aspect ratio for anamorphic video
-      if (!aspectRatio.IsEmpty && geometry.RequiresCorrectAspectRatio)
+      if (!aspectRatio.IsEmpty() && geometry.RequiresCorrectAspectRatio)
       {
         float pixelRatio = aspectRatio.Width / aspectRatio.Height;
         _scaledVideoSize.Width = _scaledVideoSize.Height * pixelRatio;
@@ -224,7 +225,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       targetSize = ImageContext.AdjustForSkinAR(targetSize);
 
       // Adjust video size to fit desired geometry
-      _scaledVideoSize = geometry.Transform(_scaledVideoSize, targetSize);
+      _scaledVideoSize = geometry.Transform(_scaledVideoSize.ToDrawingSize(), targetSize.ToDrawingSize()).ToSizeF();
 
       // Cache inverse RelativeTransform
       Transform relativeTransform = RelativeTransform;

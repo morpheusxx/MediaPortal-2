@@ -26,6 +26,7 @@ using System.Drawing;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.SkinManagement;
@@ -33,6 +34,7 @@ using MediaPortal.Utilities.DeepCopy;
 using SharpDX.Direct3D9;
 using RectangleF = SharpDX.RectangleF;
 using RightAngledRotation = MediaPortal.UI.SkinEngine.Rendering.RightAngledRotation;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 {
@@ -226,7 +228,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
     {
       if (sourceTexture == null)
       {
-        textureSize = Size.Empty;
+        textureSize = SharpDXHelper.EmptySizeF;
         return null;
       }
       SurfaceDescription desc = sourceTexture.GetLevelDescription(0);

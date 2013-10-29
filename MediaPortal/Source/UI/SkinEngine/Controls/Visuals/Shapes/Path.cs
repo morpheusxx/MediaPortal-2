@@ -38,6 +38,7 @@ using SharpDX.Direct3D9;
 using FillMode=System.Drawing.Drawing2D.FillMode;
 using Matrix = System.Drawing.Drawing2D.Matrix;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
 {

@@ -1,13 +1,33 @@
 ﻿using System.ComponentModel;
 using System.Drawing;
+using SharpDX;
 using Color = SharpDX.Color;
 using Rectangle = SharpDX.Rectangle;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.DirectX
 {
   public static class SharpDXHelper
   {
+    public static Size2F EmptySizeF = new Size2F(0f, 0f);
+    public static PointF EmptyPointF = new PointF(0f, 0f);
+
+    public static bool IsEmpty(this SizeF sizef)
+    {
+      return sizef.Width == EmptySizeF.Width && sizef.Height == EmptySizeF.Width;
+    }
+
+    public static System.Drawing.SizeF ToDrawingSize(this SizeF sizef)
+    {
+      return new System.Drawing.SizeF(sizef.Width, sizef.Height);
+    }
+
+    public static Size2F ToSizeF(this System.Drawing.SizeF sizef)
+    {
+      return new Size2F(sizef.Width, sizef.Height);
+    }
+
     public static Size Size(this RectangleF rectangle)
     {
       return new Size((int) rectangle.Width, (int) rectangle.Height);
@@ -16,9 +36,10 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     {
       return new Size(rectangle.Width, rectangle.Height);
     }
-    public static SizeF SizeF(this RectangleF rectangle)
+    public static Size2F SizeF(this RectangleF rectangle)
     {
-      return new SizeF(rectangle.Width, rectangle.Height);
+      return rectangle.Size;
+      //return new SizeF(rectangle.Width, rectangle.Height);
     }
     public static PointF Location(this RectangleF rectangle)
     {
@@ -68,7 +89,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     {
       return new Rectangle(rectangle.X, rectangle.Y, (rectangle.X + rectangle.Width), (rectangle.Y + rectangle.Height));
     }
-    public static RectangleF CreateRectangleF(PointF location, SizeF size)
+    public static RectangleF CreateRectangleF(PointF location, Size2F size)
     {
       return new RectangleF(location.X, location.Y, location.X + size.Width, location.Y + size.Height);
     }

@@ -26,10 +26,12 @@ using System;
 using System.Drawing;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.ContentManagement;
+using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX.Direct3D9;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 {
@@ -247,7 +249,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected override SizeF LastRawSourceSize
     {
-      get { return _lastTexture == null ? SizeF.Empty : new SizeF(_lastTexture.Width, _lastTexture.Height); }
+      get { return _lastTexture == null ? SharpDXHelper.EmptySizeF : new SizeF(_lastTexture.Width, _lastTexture.Height); }
     }
 
     protected override RectangleF LastTextureClip
@@ -262,7 +264,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
 
     protected override SizeF CurrentRawSourceSize
     {
-      get { return _currentTexture == null ? SizeF.Empty : new SizeF(_currentTexture.Width, _currentTexture.Height); }
+      get { return _currentTexture == null ? SharpDXHelper.EmptySizeF : new SizeF(_currentTexture.Width, _currentTexture.Height); }
     }
 
     protected override RectangleF CurrentTextureClip

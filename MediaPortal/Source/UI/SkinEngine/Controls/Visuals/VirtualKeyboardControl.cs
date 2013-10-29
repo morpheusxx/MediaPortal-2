@@ -38,6 +38,7 @@ using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities;
 using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {

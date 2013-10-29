@@ -30,7 +30,7 @@ using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.Utilities.DeepCopy;
-using RectangleF = SharpDX.RectangleF;
+using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Panels
 {
@@ -222,7 +222,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Panels
 
       FrameworkElement child = currentVisibleChildEnumerator.Current;
       if (child == null) // Not necessary to check this, only to avoid warning
-        return SizeF.Empty;
+        return SharpDXHelper.EmptySizeF;
 
       SizeF childSize = new SizeF(currentAvailableSize.Width, currentAvailableSize.Height);
       SizeF nextChildrenDesiredSize;

@@ -28,9 +28,12 @@ using MediaPortal.Common.Localization;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.MediaManagement.DefaultItemAspects;
+using MediaPortal.Plugins.SlimTv.Client.Player;
 using MediaPortal.Plugins.SlimTv.Interfaces;
 using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using MediaPortal.Plugins.SlimTv.Interfaces.LiveTvMediaItem;
+using MediaPortal.Plugins.SlimTv.Interfaces.ResourceProvider;
+using MediaPortal.Plugins.SlimTv.Interfaces.UPnP.Items;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.UiNotifications;
 using MediaPortal.UiComponents.Media.Models;
@@ -175,7 +178,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       return 0;
     }
 
-    private PlayerContextConcurrencyMode GetMatchingPlayMode()
+    public PlayerContextConcurrencyMode GetMatchingPlayMode()
     {
       // no tv slots active? then stop all and play.
       if (NumberOfActiveSlots == 0)
@@ -184,7 +187,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       return PlayerContextConcurrencyMode.ConcurrentVideo;
     }
 
-    // Albert, 2012-12-28: TODO: Use a parameter of type PlayerChoice instead of directly referring to the slot index
+    // Note: the slotIndex represents the server side stream, which is not related to the PlayerSlot.
     public IChannel GetChannel(int slotIndex)
     {
       if (TimeshiftControl == null)
@@ -198,6 +201,8 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       if (TimeshiftControl == null || channel == null)
         return false;
 
+      ServiceRegistration.Get<ILogger>().Debug("SlimTvHandler: StartTimeshift slot {0} for channel '{1}'", slotIndex, channel.Name);
+
       int newSlotIndex = GetMatchingSlotIndex(slotIndex);
       MediaItem timeshiftMediaItem;
       bool result = TimeshiftControl.StartTimeshift(newSlotIndex, channel, out timeshiftMediaItem);
@@ -208,7 +213,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
         // if slot was empty, start a new player
         if (_slotContexes[newSlotIndex].AccessorPath == null)
         {
-          AddTimeshiftContext(timeshiftMediaItem as LiveTvMediaItem, channel);
+          AddOrUpdateTimeshiftContext(timeshiftMediaItem as LiveTvMediaItem, channel);
           PlayerContextConcurrencyMode playMode = GetMatchingPlayMode();
           PlayItemsModel.PlayOrEnqueueItem(timeshiftMediaItem, true, playMode);
         }
@@ -231,7 +236,13 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       return result;
     }
 
-    private void AddTimeshiftContext(LiveTvMediaItem timeshiftMediaItem, IChannel channel)
+    /// <summary>
+    /// Creates a new <see cref="TimeshiftContext"/> and fills the <see cref="LiveTvMediaItem.TimeshiftContexes"/> with it.
+    /// A new context is created for each channel change or for changed programs on same channel.
+    /// </summary>
+    /// <param name="timeshiftMediaItem">MediaItem</param>
+    /// <param name="channel">Current channel.</param>
+    private bool AddOrUpdateTimeshiftContext(LiveTvMediaItem timeshiftMediaItem, IChannel channel)
     {
       IProgram program = GetCurrentProgram(channel);
       TimeshiftContext tsContext = new TimeshiftContext
@@ -245,9 +256,14 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       if (tc > 0)
       {
         ITimeshiftContext lastContext = timeshiftMediaItem.TimeshiftContexes[tc - 1];
+        // If we are not changing the channel but trying to update current program only, we need to exit here if programs is still the same
+        if (ProgramComparer.Instance.Equals(lastContext.Program, program))
+          return false; // Nothing changed
         lastContext.TimeshiftDuration = DateTime.Now - lastContext.TuneInTime;
       }
       timeshiftMediaItem.TimeshiftContexes.Add(tsContext);
+      timeshiftMediaItem.AdditionalProperties[LiveTvMediaItem.CHANNEL] = channel;
+      return true;
     }
 
     private void UpdateExistingMediaItem(MediaItem timeshiftMediaItem)
@@ -266,14 +282,43 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
 
         if (!IsSameLiveTvItem(liveTvMediaItem, newLiveTvMediaItem))
         {
-          // Switch MediaItem in current slot
+          // Switch MediaItem in current slot, the LiveTvPlayer implements IReusablePlayer and will change its source without need to change full player.
           playerContext.DoPlay(newLiveTvMediaItem);
-          // Clear former timeshift contexes (card change cause loss of buffer in rtsp mode).
-          liveTvMediaItem.TimeshiftContexes.Clear();
+          // Use new MediaItem, so new context will be added to new instance.
+          liveTvMediaItem = newLiveTvMediaItem;
         }
         // Add new timeshift context
-        AddTimeshiftContext(liveTvMediaItem, newLiveTvMediaItem.AdditionalProperties[LiveTvMediaItem.CHANNEL] as IChannel);
+        AddOrUpdateTimeshiftContext(liveTvMediaItem, newLiveTvMediaItem.AdditionalProperties[LiveTvMediaItem.CHANNEL] as IChannel);
       }
+    }
+
+    /// <summary>
+    /// Updates all active timeshift contexes to match current running program.
+    /// </summary>
+    public bool Update()
+    {
+      IPlayerContextManager playerContextManager = ServiceRegistration.Get<IPlayerContextManager>();
+      bool changed = false;
+      for (int index = 0; index < playerContextManager.NumActivePlayerContexts; index++)
+      {
+        IPlayerContext playerContext = playerContextManager.GetPlayerContext(index);
+        if (playerContext == null)
+          continue;
+        LiveTvMediaItem liveTvMediaItem = playerContext.CurrentMediaItem as LiveTvMediaItem;
+        if (liveTvMediaItem == null)
+          continue;
+
+        // Update timeshift context
+        if (AddOrUpdateTimeshiftContext(liveTvMediaItem, liveTvMediaItem.AdditionalProperties[LiveTvMediaItem.CHANNEL] as IChannel))
+        {
+          LiveTvPlayer player = playerContext.CurrentPlayer as LiveTvPlayer;
+          if (player != null)
+            player.OnProgramChange();
+
+          changed = true;
+        }
+      }
+      return changed;
     }
 
     /// <summary>
@@ -296,8 +341,9 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
     /// <returns></returns>
     protected bool IsSameLiveTvItem(LiveTvMediaItem oldItem, LiveTvMediaItem newItem)
     {
-      if (oldItem.Aspects[ProviderResourceAspect.ASPECT_ID].GetAttributeValue(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH).ToString() !=
-               newItem.Aspects[ProviderResourceAspect.ASPECT_ID].GetAttributeValue(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH).ToString())
+      string oldPath = oldItem.Aspects[ProviderResourceAspect.ASPECT_ID].GetAttributeValue(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH).ToString();
+      string newPath = newItem.Aspects[ProviderResourceAspect.ASPECT_ID].GetAttributeValue(ProviderResourceAspect.ATTR_RESOURCE_ACCESSOR_PATH).ToString();
+      if (oldPath != newPath)
         return false;
 
       IChannel oldChannel = oldItem.AdditionalProperties[LiveTvMediaItem.CHANNEL] as IChannel;
@@ -329,6 +375,23 @@ namespace MediaPortal.Plugins.SlimTv.Client.TvHandler
       if (_slotContexes[slotIndex].CardChanging)
         return true;
       return StopTimeshift(slotIndex);
+    }
+
+    public bool WatchRecordingFromBeginning(IProgram program)
+    {
+      string fileOrStream;
+      if (ScheduleControl.GetRecordingFileOrStream(program, out fileOrStream))
+      {
+        IChannel channel;
+        if (ChannelAndGroupInfo.GetChannel(program.ChannelId, out channel))
+        {
+          MediaItem recordig = SlimTvMediaItemBuilder.CreateRecordingMediaItem(0, fileOrStream, program, channel);
+          PlayerContextConcurrencyMode playMode = GetMatchingPlayMode();
+          PlayItemsModel.PlayOrEnqueueItem(recordig, true, playMode);
+          return true;
+        }
+      }
+      return false;
     }
 
     #region IDisposable Member

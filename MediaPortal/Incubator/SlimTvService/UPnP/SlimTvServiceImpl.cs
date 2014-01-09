@@ -59,6 +59,9 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
       DvStateVariable A_ARG_TYPE_Bool = new DvStateVariable("A_ARG_TYPE_Bool", new DvStandardDataType(UPnPStandardDataType.Boolean)) { SendEvents = false };
       AddStateVariable(A_ARG_TYPE_Bool);
 
+      DvStateVariable A_ARG_TYPE_String = new DvStateVariable("A_ARG_TYPE_String", new DvStandardDataType(UPnPStandardDataType.String)) { SendEvents = false };
+      AddStateVariable(A_ARG_TYPE_String);
+
       DvStateVariable A_ARG_TYPE_DateTime = new DvStateVariable("A_ARG_TYPE_DateTime", new DvStandardDataType(UPnPStandardDataType.DateTime)) { SendEvents = false };
       AddStateVariable(A_ARG_TYPE_DateTime);
 
@@ -79,6 +82,9 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
 
       DvStateVariable A_ARG_TYPE_Schedule = new DvStateVariable("A_ARG_TYPE_Schedule", new DvExtendedDataType(UPnPDtSchedule.Instance)) { SendEvents = false };
       AddStateVariable(A_ARG_TYPE_Schedule);
+
+      DvStateVariable A_ARG_TYPE_ScheduleRecordingType = new DvStateVariable("A_ARG_TYPE_ScheduleRecordingType", new DvStandardDataType(UPnPStandardDataType.Int)) { SendEvents = false };
+      AddStateVariable(A_ARG_TYPE_ScheduleRecordingType);
 
       DvStateVariable A_ARG_TYPE_RecordingStatus = new DvStateVariable("A_ARG_TYPE_RecordingStatus", new DvStandardDataType(UPnPStandardDataType.String)) { SendEvents = false };
       AddStateVariable(A_ARG_TYPE_RecordingStatus);
@@ -134,6 +140,18 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
                                      });
       AddAction(getChannelGroups);
 
+      DvAction getChannel = new DvAction(Consts.ACTION_GET_CHANNEL, OnGetChannel,
+                                   new[]
+                                     {
+                                       new DvArgument("ChannelId", A_ARG_TYPE_ChannelId, ArgumentDirection.In)
+                                     },
+                                   new[]
+                                     {
+                                       new DvArgument("Result", A_ARG_TYPE_Bool, ArgumentDirection.Out, true),
+                                       new DvArgument("Channels", A_ARG_TYPE_Channels, ArgumentDirection.Out, false)
+                                     });
+      AddAction(getChannel);
+
       DvAction getChannels = new DvAction(Consts.ACTION_GET_CHANNELS, OnGetChannels,
                                    new[]
                                      {
@@ -163,6 +181,20 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
                                        new DvArgument("Programs", A_ARG_TYPE_Programs, ArgumentDirection.Out, false)
                                      });
       AddAction(getPrograms);
+
+      DvAction getProgramsByTitle = new DvAction(Consts.ACTION_GET_PROGRAMS_BY_TITLE, OnGetProgramsByTitle,
+                             new[]
+                                     {
+                                       new DvArgument("Title", A_ARG_TYPE_String, ArgumentDirection.In),
+                                       new DvArgument("TimeFrom", A_ARG_TYPE_DateTime, ArgumentDirection.In),
+                                       new DvArgument("TimeTo", A_ARG_TYPE_DateTime, ArgumentDirection.In)
+                                     },
+                             new[]
+                                     {
+                                       new DvArgument("Result", A_ARG_TYPE_Bool, ArgumentDirection.Out, true),
+                                       new DvArgument("Programs", A_ARG_TYPE_Programs, ArgumentDirection.Out, false)
+                                     });
+      AddAction(getProgramsByTitle);
 
       DvAction getProgramsGroup = new DvAction(Consts.ACTION_GET_PROGRAMS_GROUP, OnGetProgramsGroup,
                              new[]
@@ -199,6 +231,7 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
                             new[]
                                      {
                                        new DvArgument("ProgramId", A_ARG_TYPE_ProgramId, ArgumentDirection.In),
+                                       new DvArgument("ScheduleRecordingType", A_ARG_TYPE_ScheduleRecordingType, ArgumentDirection.In)
                                      },
                             new[]
                                      {
@@ -225,6 +258,7 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
                             new[]
                                      {
                                        new DvArgument("ProgramId", A_ARG_TYPE_ProgramId, ArgumentDirection.In),
+                                       new DvArgument("ScheduleRecordingType", A_ARG_TYPE_ScheduleRecordingType, ArgumentDirection.In)
                                      },
                             new[]
                                      {
@@ -243,6 +277,18 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
                                        new DvArgument("RecordingStatus", A_ARG_TYPE_RecordingStatus, ArgumentDirection.Out, true)
                                      });
       AddAction(getRecordingStatus);
+
+      DvAction getRecordingFileOrStream = new DvAction(Consts.ACTION_GET_REC_FILE_OR_STREAM, OnGetRecordingFileOrStream,
+                            new[]
+                                     {
+                                       new DvArgument("ProgramId", A_ARG_TYPE_ProgramId, ArgumentDirection.In),
+                                     },
+                            new[]
+                                     {
+                                       new DvArgument("Result", A_ARG_TYPE_Bool, ArgumentDirection.Out, true),
+                                       new DvArgument("FileOrStream", A_ARG_TYPE_String, ArgumentDirection.Out, true)
+                                     });
+      AddAction(getRecordingFileOrStream);
 
       #endregion
     }
@@ -281,7 +327,12 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
 
     private string BuildUserName(CallContext context)
     {
-      return context.RemoteAddress == context.Endpoint.EndPointIPAddress.ToString() ? SlimTvService.LOCAL_USERNAME : context.RemoteAddress;
+      return IsLocalClient(context) ? SlimTvService.LOCAL_USERNAME : context.RemoteAddress;
+    }
+
+    private static bool IsLocalClient(CallContext context)
+    {
+      return context.RemoteAddress == context.Endpoint.EndPointIPAddress.ToString();
     }
 
     private UPnPError OnDeInit(DvAction action, IList<object> inParams, out IList<object> outParams, CallContext context)
@@ -308,6 +359,21 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
       IList<IChannelGroup> groups;
       bool result = channelAndGroupInfo.GetChannelGroups(out groups);
       outParams = new List<object> { result, groups };
+      return null;
+    }
+
+    private UPnPError OnGetChannel(DvAction action, IList<object> inParams, out IList<object> outParams, CallContext context)
+    {
+      outParams = new List<object>();
+      IChannelAndGroupInfo channelAndGroupInfo = ServiceRegistration.Get<ITvProvider>() as IChannelAndGroupInfo;
+      if (channelAndGroupInfo == null)
+        return new UPnPError(500, "IChannelAndGroupInfo service not available");
+
+      int channelId = (int) inParams[0];
+
+      IChannel channel;
+      bool result = channelAndGroupInfo.GetChannel(channelId, out channel);
+      outParams = new List<object> { result, new List<IChannel> { channel } };
       return null;
     }
 
@@ -339,6 +405,23 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
 
       IList<IProgram> programs;
       bool result = programInfo.GetPrograms(new Channel { ChannelId = channelId }, timeFrom, timeTo, out programs);
+      outParams = new List<object> { result, programs };
+      return null;
+    }
+
+    private UPnPError OnGetProgramsByTitle(DvAction action, IList<object> inParams, out IList<object> outParams, CallContext context)
+    {
+      outParams = new List<object>();
+      IProgramInfo programInfo = ServiceRegistration.Get<ITvProvider>() as IProgramInfo;
+      if (programInfo == null)
+        return new UPnPError(500, "IProgramInfo service not available");
+
+      string title = (string) inParams[0];
+      DateTime timeFrom = (DateTime) inParams[1];
+      DateTime timeTo = (DateTime) inParams[2];
+
+      IList<IProgram> programs;
+      bool result = programInfo.GetPrograms(title, timeFrom, timeTo, out programs);
       outParams = new List<object> { result, programs };
       return null;
     }
@@ -384,9 +467,10 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
         return new UPnPError(500, "IProgramInfo or IScheduleControl service not available");
 
       int programId = (int) inParams[0];
+      ScheduleRecordingType recordingType = (ScheduleRecordingType)inParams[1];
       IProgram program;
       ISchedule schedule = null;
-      bool result = programInfo.GetProgram(programId, out program) && scheduleControl.CreateSchedule(program, out schedule);
+      bool result = programInfo.GetProgram(programId, out program) && scheduleControl.CreateSchedule(program, recordingType, out schedule);
 
       outParams = new List<object> { result, schedule };
       return null;
@@ -404,7 +488,7 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
       DateTime endTime = (DateTime) inParams[2];
       IProgram program = new Program { ChannelId = channelId, StartTime = startTime, EndTime = endTime, Title = "Manual" }; // TODO: localize
       ISchedule schedule = null;
-      bool result = scheduleControl.CreateSchedule(program, out schedule);
+      bool result = scheduleControl.CreateSchedule(program, ScheduleRecordingType.Once, out schedule);
 
       outParams = new List<object> { result, schedule };
       return null;
@@ -419,8 +503,9 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
         return new UPnPError(500, "IProgramInfo or IScheduleControl service not available");
 
       int programId = (int) inParams[0];
+      ScheduleRecordingType recordingType = (ScheduleRecordingType)inParams[1];
       IProgram program;
-      bool result = programInfo.GetProgram(programId, out program) && scheduleControl.RemoveSchedule(program);
+      bool result = programInfo.GetProgram(programId, out program) && scheduleControl.RemoveSchedule(program, recordingType);
 
       outParams = new List<object> { result };
       return null;
@@ -440,6 +525,23 @@ namespace MediaPortal.Plugins.SlimTv.Service.UPnP
       bool result = programInfo.GetProgram(programId, out program) && scheduleControl.GetRecordingStatus(program, out recordingStatus);
 
       outParams = new List<object> { result, recordingStatus.ToString() };
+      return null;
+    }
+
+    private UPnPError OnGetRecordingFileOrStream(DvAction action, IList<object> inParams, out IList<object> outParams, CallContext context)
+    {
+      outParams = new List<object>();
+      IProgramInfo programInfo = ServiceRegistration.Get<ITvProvider>() as IProgramInfo;
+      IScheduleControl scheduleControl = ServiceRegistration.Get<ITvProvider>() as IScheduleControl;
+      if (programInfo == null || scheduleControl == null)
+        return new UPnPError(500, "IProgramInfo or IScheduleControl service not available");
+
+      int programId = (int) inParams[0];
+      IProgram program;
+      string fileOrStream = null;
+      bool result = programInfo.GetProgram(programId, out program) && scheduleControl.GetRecordingFileOrStream(program, out fileOrStream);
+
+      outParams = new List<object> { result, fileOrStream };
       return null;
     }
   }

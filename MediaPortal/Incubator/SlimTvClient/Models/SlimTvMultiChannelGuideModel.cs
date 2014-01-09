@@ -37,6 +37,7 @@ using MediaPortal.Plugins.SlimTv.Interfaces;
 using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using MediaPortal.Plugins.SlimTv.Interfaces.UPnP.Items;
 using MediaPortal.UI.Presentation.DataObjects;
+using MediaPortal.UI.Presentation.Workflow;
 
 namespace MediaPortal.Plugins.SlimTv.Client.Models
 {
@@ -46,6 +47,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
   public class SlimTvMultiChannelGuideModel : SlimTvGuideModelBase
   {
     public const string MODEL_ID_STR = "5054408D-C2A9-451f-A702-E84AFCD29C10";
+    public static readonly Guid MODEL_ID = new Guid(MODEL_ID_STR);
 
     protected double _visibleHours;
     protected double _bufferHours = 1.5;
@@ -68,9 +70,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     #region Protected fields
 
     protected AbstractProperty _guideStartTimeProperty = null;
-    protected AbstractProperty _currentTimeViewOffsetProperty = null;
-    protected AbstractProperty _currentTimeLeftOffsetProperty = null;
-    protected AbstractProperty _currentTimeVisibleProperty = null;
 
     protected DateTime _bufferStartTime;
     protected DateTime _bufferEndTime;
@@ -111,48 +110,19 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       get { return _guideStartTimeProperty; }
     }
 
-    public int CurrentTimeViewOffset
-    {
-      get { return (int)_currentTimeViewOffsetProperty.GetValue(); }
-      set { _currentTimeViewOffsetProperty.SetValue(value); }
-    }
-
-    public AbstractProperty CurrentTimeViewOffsetProperty
-    {
-      get { return _currentTimeViewOffsetProperty; }
-    }
-
-    public double CurrentTimeLeftOffset
-    {
-      get { return (double)_currentTimeLeftOffsetProperty.GetValue(); }
-      set { _currentTimeLeftOffsetProperty.SetValue(value); }
-    }
-
-    public AbstractProperty CurrentTimeLeftOffsetProperty
-    {
-      get { return _currentTimeLeftOffsetProperty; }
-    }
-
-    public bool CurrentTimeVisible
-    {
-      get { return (bool)_currentTimeVisibleProperty.GetValue(); }
-      set { _currentTimeVisibleProperty.SetValue(value); }
-    }
-
-    public AbstractProperty CurrentTimeVisibleProperty
-    {
-      get { return _currentTimeVisibleProperty; }
-    }
-
     public void ScrollForward()
     {
-      GuideStartTime = GuideStartTime.AddMinutes(30);
-      UpdatePrograms();
+      Scroll(TimeSpan.FromDays(1));
     }
 
     public void ScrollBackward()
     {
-      GuideStartTime = GuideStartTime.AddMinutes(-30);
+      Scroll(TimeSpan.FromDays(-1));
+    }
+
+    public void Scroll(TimeSpan difference)
+    {
+      GuideStartTime = GuideStartTime + difference;
       UpdatePrograms();
     }
 
@@ -166,11 +136,8 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     {
       if (!_isInitialized)
       {
-        DateTime startDate = FormatHelper.RoundDateTime(DateTime.Now, 15, FormatHelper.RoundingDirection.Down);
+        DateTime startDate = DateTime.Now.RoundDateTime(15, DateFormatExtension.RoundingDirection.Down);
         _guideStartTimeProperty = new WProperty(typeof(DateTime), startDate);
-        _currentTimeViewOffsetProperty = new WProperty(typeof(int), 0);
-        _currentTimeLeftOffsetProperty = new WProperty(typeof(double), 0d);
-        _currentTimeVisibleProperty = new WProperty(typeof(bool), true);
       }
       base.InitModel();
     }
@@ -192,11 +159,30 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       if (_channels != null)
         foreach (IChannel channel in _channels)
         {
-          var channelProgramsItem = new ChannelProgramListItem(channel, new ItemsList());
+          IChannel localChannel = channel;
+          var channelProgramsItem = new ChannelProgramListItem(channel, new ItemsList())
+            {
+              Command = new MethodDelegateCommand(() => ShowSingleChannelGuide(localChannel))
+            };
           UpdateChannelPrograms(channelProgramsItem);
           _channelList.Add(channelProgramsItem);
         }
       _channelList.FireChange();
+    }
+
+    private void ShowSingleChannelGuide(IChannel channel)
+    {
+      if (channel == null)
+        return;
+
+      int channelId = channel.ChannelId;
+      int groupId = _channelGroups[_webChannelGroupIndex].ChannelGroupId;
+      IWorkflowManager workflowManager = ServiceRegistration.Get<IWorkflowManager>();
+      NavigationContextConfig navigationContextConfig = new NavigationContextConfig();
+      navigationContextConfig.AdditionalContextVariables = new Dictionary<string, object>();
+      navigationContextConfig.AdditionalContextVariables[SlimTvClientModel.KEY_CHANNEL_ID] = channelId;
+      navigationContextConfig.AdditionalContextVariables[SlimTvClientModel.KEY_GROUP_ID] = groupId;
+      workflowManager.NavigatePush(new Guid("A40F05BB-022E-4247-8BEE-16EB3E0B39C5"), navigationContextConfig);
     }
 
     private ProgramListItem BuildProgramListItem(IProgram program)
@@ -216,7 +202,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     private PlaceholderListItem NoProgramPlaceholder(IChannel channel, DateTime? startTime, DateTime? endTime)
     {
       ILocalization loc = ServiceRegistration.Get<ILocalization>();
-      DateTime today = FormatHelper.GetDay(GuideStartTime);
+      DateTime today = GuideStartTime.GetDay();
       ProgramProperties programProperties = new ProgramProperties();
       Program placeholderProgram = new Program
                               {
@@ -239,17 +225,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       if (!_isInitialized)
         return;
       UpdateProgramsState();
-      UpdateCurrentTimeIndicator();
-    }
-
-    private void UpdateCurrentTimeIndicator()
-    {
-      // TODO: move to EpgGrid
-      //DateTime now = DateTime.Now;
-      //int currentOffsetInViewport = (int)(now - GuideStartTime).TotalMinutes;
-      //CurrentTimeViewOffset = currentOffsetInViewport;
-      //CurrentTimeLeftOffset = (int)(_programsStartOffset + ProgramWidthFactor * currentOffsetInViewport);
-      //CurrentTimeVisible = now >= GuideStartTime && now <= GuideEndTime;
     }
 
     protected override void UpdateCurrentChannel()
@@ -257,8 +232,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
 
     protected override void UpdatePrograms()
     {
-      UpdateCurrentTimeIndicator();
-
       UpdateProgramsForGroup();
       foreach (ChannelProgramListItem channel in _channelList)
         UpdateChannelPrograms(channel);
@@ -288,22 +261,28 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     protected override bool UpdateRecordingStatus(IProgram program, RecordingStatus newStatus)
     {
       bool changed = base.UpdateRecordingStatus(program, newStatus);
-      if (changed)
-      {
-        ChannelProgramListItem programChannel = _channelList.OfType<ChannelProgramListItem>().FirstOrDefault(c => c.Channel.ChannelId == program.ChannelId);
-        if (programChannel == null)
-          return false;
+      return changed && UpdateRecordingStatus(program);
+    }
 
-        ProgramListItem listProgram;
-        lock (programChannel.Programs.SyncRoot)
-        {
-          listProgram = programChannel.Programs.OfType<ProgramListItem>().FirstOrDefault(p => p.Program.ProgramId == program.ProgramId);
-          if (listProgram == null)
-            return false;
-        }
-        listProgram.Program.IsScheduled = newStatus != RecordingStatus.None;
+    protected override bool UpdateRecordingStatus(IProgram program)
+    {
+      IProgramRecordingStatus recordingStatus = program as IProgramRecordingStatus;
+      if (recordingStatus == null)
+        return false;
+
+      ChannelProgramListItem programChannel = _channelList.OfType<ChannelProgramListItem>().FirstOrDefault(c => c.Channel.ChannelId == program.ChannelId);
+      if (programChannel == null)
+        return false;
+
+      ProgramListItem listProgram;
+      lock (programChannel.Programs.SyncRoot)
+      {
+        listProgram = programChannel.Programs.OfType<ProgramListItem>().FirstOrDefault(p => p.Program.ProgramId == program.ProgramId);
+        if (listProgram == null)
+          return false;
       }
-      return changed;
+      listProgram.Program.IsScheduled = recordingStatus.RecordingStatus != RecordingStatus.None;
+      return true;
     }
 
     private void UpdateProgramsState()
@@ -362,7 +341,16 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
 
     public override Guid ModelId
     {
-      get { return new Guid(MODEL_ID_STR); }
+      get { return MODEL_ID; }
+    }
+
+    public override void EnterModelContext(NavigationContext oldContext, NavigationContext newContext)
+    {
+      base.EnterModelContext(oldContext, newContext);
+      // Init viewport to start with current time.
+      GuideStartTime = DateTime.Now.RoundDateTime(15, DateFormatExtension.RoundingDirection.Down);
+      _bufferStartTime = _bufferEndTime = DateTime.MinValue;
+      UpdatePrograms();
     }
 
     #endregion

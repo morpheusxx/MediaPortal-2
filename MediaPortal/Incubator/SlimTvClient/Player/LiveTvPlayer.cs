@@ -27,21 +27,28 @@ using System.Collections.Generic;
 using MediaPortal.Common;
 using MediaPortal.Common.Localization;
 using MediaPortal.Common.Logging;
+using MediaPortal.Common.MediaManagement;
+using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using MediaPortal.Plugins.SlimTv.Interfaces.LiveTvMediaItem;
 using MediaPortal.UI.Players.Video;
+using MediaPortal.UI.Players.Video.Interfaces;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.SkinEngine.SkinManagement;
+using SharpDX;
+using SharpDX.Direct3D9;
 
 namespace MediaPortal.Plugins.SlimTv.Client.Player
 {
-  public class LiveTvPlayer : TsVideoPlayer, IUIContributorPlayer
+  public class LiveTvPlayer : TsVideoPlayer, IUIContributorPlayer, IReusablePlayer
   {
     #region Variables
 
     protected IList<ITimeshiftContext> _timeshiftContexes;
     protected StreamInfoHandler _chapterInfo = null;
-    protected static TimeSpan TIMESPAN_LIVE = TimeSpan.FromSeconds(1.0);
+    protected static TimeSpan TIMESPAN_LIVE = TimeSpan.FromMilliseconds(50);
+    protected bool _zapping; // Indicates that we are currently changing a channel.
 
     #endregion
 
@@ -96,12 +103,12 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
       TimeSpan totalTime = new TimeSpan();
       foreach (ITimeshiftContext timeshiftContext in timeshiftContexes)
       {
-        if (timeSpan >= totalTime && 
+        if (timeSpan >= totalTime &&
           (
             (timeSpan <= totalTime + timeshiftContext.TimeshiftDuration) || timeshiftContext.TimeshiftDuration.TotalSeconds == 0 /* currently playing */
           ))
           return timeshiftContext;
-        
+
         totalTime += timeshiftContext.TimeshiftDuration;
       }
       return null;
@@ -135,7 +142,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
         totalTime += timeshiftContext.TimeshiftDuration;
       }
 
-      if (!found) 
+      if (!found)
         return;
 
       if (next && index < timeshiftContexes.Count - 1)
@@ -144,7 +151,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
       if (!next && index > 0)
         CurrentTime = GetStartDuration(index - 1);
     }
-    
+
     protected override void EnumerateChapters(bool forceRefresh)
     {
       StreamInfoHandler chapterInfo;
@@ -180,27 +187,59 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
       if (timeshiftContext == null)
         return string.Empty;
 
-      string program = timeshiftContext.Program != null ? timeshiftContext.Program.Title : 
+      string program = timeshiftContext.Program != null ? timeshiftContext.Program.Title :
         ServiceRegistration.Get<ILocalization>().ToString("[SlimTvClient.NoProgram]");
       return string.Format("{0}: {1}", timeshiftContext.Channel.Name, program);
     }
 
-    public void ChannelZap()
+    public void BeginZap()
+    {
+      ServiceRegistration.Get<ILogger>().Debug("{0}: Begin zapping", PlayerTitle);
+      // Set indicator for zapping to blank the video surface with black.
+      _zapping = true;
+      // Tell the TsReader that we are zapping, before we actually tune the new channel.
+      ((ITsReader)_sourceFilter).OnZapping(0x80);
+    }
+
+    public void EndZap()
     {
       SeekToEnd();
+      Resume();
 
       // Clear any subtitle that might be currently displayed
       _subtitleRenderer.Reset();
       EnumerateStreams(true);
       EnumerateChapters(true);
       SetPreferredSubtitle();
+
+      // First reset zapping indicator
+      _zapping = false;
+      // Then invalidate the "black" surface to use new frame.
+      OnTextureInvalidated();
+      ServiceRegistration.Get<ILogger>().Debug("{0}: End zapping", PlayerTitle);
+    }
+
+    public void OnProgramChange()
+    {
+      EnumerateChapters(true);
+    }
+
+    protected override void PostProcessTexture(Surface targetSurface)
+    {
+      if (_zapping)
+      {
+        // While zapping fill the current video frame with black. This avoids a frozen last frame from previous channel.
+        SkinContext.Device.ColorFill(targetSurface, Color.Black);
+      }
+      else
+        base.PostProcessTexture(targetSurface);
     }
 
     /// <summary>
     /// Checks the current stream position and seeks to end, if it is less than <see cref="TIMESPAN_LIVE"/> behind the live point.
     /// </summary>
     /// <returns><c>true</c> if seeked to end.</returns>
-    protected bool SeekToEnd ()
+    protected bool SeekToEnd()
     {
       // Call a seek only if the stream is not "live"
       if (Duration - CurrentTime > TIMESPAN_LIVE)
@@ -226,6 +265,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
         return chapters == null || chapters.Count == 0 ? EMPTY_STRING_ARRAY : chapters.GetStreamNames();
       }
     }
+
     public override void SetChapter(string chapter)
     {
       StreamInfoHandler chapters;
@@ -256,6 +296,29 @@ namespace MediaPortal.Plugins.SlimTv.Client.Player
       {
         return GetContextTitle(GetContext(CurrentTime));
       }
+    }
+
+    #endregion
+
+    #region IReusablePlayer members
+
+    public event RequestNextItemDlgt NextItemRequest;
+
+    public bool NextItem(MediaItem mediaItem, StartTime startTime)
+    {
+      string mimeType;
+      string title;
+      if (!mediaItem.GetPlayData(out mimeType, out title) || mimeType != LiveTvMediaItem.MIME_TYPE_TV)
+      {
+        ServiceRegistration.Get<ILogger>().Debug("SlimTvHandler: Cannot reuse current player for new mimetype {0}", mimeType);
+        return false;
+      }
+      Stop();
+      // Set new resource locator for existing player, this avoids interim close of player slot
+      IResourceLocator resourceLocator = mediaItem.GetResourceLocator();
+      ServiceRegistration.Get<ILogger>().Debug("SlimTvHandler: Changing file/stream for player to {0}", resourceLocator.NativeResourcePath);
+      SetMediaItem(resourceLocator, mimeType);
+      return true;
     }
 
     #endregion

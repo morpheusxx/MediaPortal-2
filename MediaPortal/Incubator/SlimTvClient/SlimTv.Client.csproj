@@ -40,10 +40,19 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Packages\SharpDX.2.5.0\lib\net40\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D9, Version=2.5.0.0, Culture=neutral, PublicKeyToken=627a3d6d1956f55a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Packages\SharpDX.Direct3D9.2.5.0\lib\net40\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -97,8 +106,10 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Controls\EpgGrid.cs" />
+    <Compile Include="Controls\SlimTvDateFormatConverter.cs" />
+    <Compile Include="Extensions\ExtendedSchedule.cs" />
     <Compile Include="Extensions\ProgramExample.cs" />
-    <Compile Include="Helpers\FormatHelper.cs" />
+    <Compile Include="Helpers\DateFormatExtension.cs" />
     <Compile Include="Helpers\ChannelProgramListItem.cs" />
     <Compile Include="Helpers\ProgramListItem.cs" />
     <Compile Include="Helpers\ProgramProperties.cs" />
@@ -109,6 +120,7 @@
     <Compile Include="Models\RecordingsAction.cs" />
     <Compile Include="Models\ScreenData\AbstractChannelFilterScreenData.cs" />
     <Compile Include="Models\ScreenData\RecordingFilterByNameScreenData.cs" />
+    <Compile Include="Models\SlimTvGuideExtScheduleModel.cs" />
     <Compile Include="Models\SlimTvModelBase.cs" />
     <Compile Include="Models\SlimTvMultiChannelGuideModel.cs" />
     <Compile Include="Models\SlimTvGuideModelBase.cs" />
@@ -157,9 +169,30 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="build.targets" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\screens\DialogChooseGroup.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\SlimTvClient-extschedule.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Reflexion\screens\SlimTvClient-extschedule.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Titanium\screens\SlimTvClient-extschedule.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\DialogExtSchedule.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

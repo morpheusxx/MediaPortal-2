@@ -34,6 +34,7 @@ using UPnP.Infrastructure;
 using UPnP.Infrastructure.Dv;
 using ILogger=MediaPortal.Common.Logging.ILogger;
 using UPnPLogger = UPnP.Infrastructure.ILogger;
+using System.Collections.Generic;
 
 namespace MediaPortal.Backend.Services.BackendServer
 {
@@ -138,6 +139,10 @@ namespace MediaPortal.Backend.Services.BackendServer
       UPnPConfiguration.LOGGER = new UPnPLoggerDelegate();
       UPnPConfiguration.USE_IPV4 = serverSettings.UseIPv4;
       UPnPConfiguration.USE_IPV6 = serverSettings.UseIPv6;
+      if (serverSettings.IPAddressBindings != null)
+      {
+        UPnPConfiguration.IP_ADDRESS_BINDINGS = new List<string>(serverSettings.IPAddressBindings.Split(new char[] { ',' }));
+      }
       HttpResponse.HTTP_SERVER_NAME = MP2_HTTP_SERVER_NAME;
 
       ISystemResolver systemResolver = ServiceRegistration.Get<ISystemResolver>();

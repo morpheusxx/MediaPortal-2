@@ -124,6 +124,7 @@
     <Compile Include="Models\SlimTvModelBase.cs" />
     <Compile Include="Models\SlimTvMultiChannelGuideModel.cs" />
     <Compile Include="Models\SlimTvGuideModelBase.cs" />
+    <Compile Include="Models\SlimTvScheduleManagement.cs" />
     <Compile Include="Models\SlimTvSingleChannelGuideModel.cs" />
     <Compile Include="Models\Sorting\SortByRecordingDateDesc.cs" />
     <Compile Include="Player\LiveRadioPlayer.cs" />
@@ -141,6 +142,7 @@
     <Compile Include="Player\SlimTvPlayerBuilder.cs" />
     <Compile Include="TvHandler\TimeshiftContext.cs" />
     <Compile Include="TvHandler\RecordingsFilterByChannelScreenData.cs" />
+    <Content Include="Skin\default\images\tvguide_recordserie_button.png" />
     <Content Include="Skin\default\shortcuts\SlimTvClient-shortcuts.xml" />
     <Content Include="Skin\default\workflow\SlimTvClient-actions.xml" />
     <Content Include="Skin\default\screens\SlimTvClient-main.xaml" />
@@ -163,7 +165,7 @@
     <Content Include="Skin\Reflexion\themes\default\styles\SlimTvConsts.xaml" />
     <Content Include="Skin\default\screens\RecordingsByChannel.xaml" />
     <Content Include="Skin\default\screens\RecordingsByName.xaml" />
-    <Content Include="Skin\Titanium\themes\default\styles\ProgramInfoSlim.inc" />
+    <Content Include="Skin\Titanium\screens\ProgramInfoSlim.inc" />
     <Content Include="Skin\Titanium\themes\default\styles\SlimTvConsts.xaml" />
     <Content Include="Skin\Titanium\themes\default\styles\SlimTvStyles.xaml" />
   </ItemGroup>
@@ -182,17 +184,50 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Skin\Reflexion\screens\SlimTvClient-extschedule.xaml">
-      <SubType>Designer</SubType>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Skin\Titanium\screens\SlimTvClient-extschedule.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\screens\DialogExtSchedule.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\SlimTvClient-schedulelist.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\DialogScheduleManagement.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Titanium\screens\SlimTvClient-schedulelist.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Skin\Reflexion\screens\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Titanium\screens\SlimTvClient-guide.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Titanium\screens\FullScreenContentTv.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\Titanium\screens\SlimTvClient-fullguide.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\DialogClientModel.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

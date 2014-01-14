@@ -38,10 +38,8 @@ using MediaPortal.Plugins.SlimTv.Interfaces;
 using MediaPortal.Plugins.SlimTv.Interfaces.Extensions;
 using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using MediaPortal.UI.Presentation.DataObjects;
-using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UI.Presentation.Workflow;
-using MediaPortal.UI.Services.Workflow;
 using MediaPortal.UiComponents.Media.General;
 
 namespace MediaPortal.Plugins.SlimTv.Client.Models
@@ -188,7 +186,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
                 {
                   Command = new MethodDelegateCommand(() =>
                                                         {
-                                                          if (_tvHandler.ScheduleControl.RemoveSchedule(program, ScheduleRecordingType.Once))
+                                                          if (_tvHandler.ScheduleControl.RemoveScheduleForProgram(program, ScheduleRecordingType.Once))
                                                             UpdateRecordingStatus(program, RecordingStatus.None);
                                                         }
                     )

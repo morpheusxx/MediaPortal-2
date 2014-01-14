@@ -316,7 +316,25 @@ namespace MediaPortal.Plugins.SlimTv.Providers.UPnP
 
     public bool GetProgramsForSchedule(ISchedule schedule, out IList<IProgram> programs)
     {
-      throw new NotImplementedException();
+      try
+      {
+        CpAction action = GetAction(Consts.ACTION_GET_PROGRAMS_FOR_SCHEDULE);
+        IList<object> inParameters = new List<object> { schedule };
+        IList<object> outParameters = action.InvokeAction(inParameters);
+        bool success = (bool)outParameters[0];
+        if (success)
+        {
+          IList<Program> programList = (IList<Program>)outParameters[1];
+          programs = programList.Distinct(ProgramComparer.Instance).ToList(); // Using custom comparer to filter out duplicated programs.
+          return true;
+        }
+      }
+      catch (Exception ex)
+      {
+        NotifyException(ex);
+      }
+      programs = null;
+      return false;
     }
 
     public bool GetScheduledPrograms(IChannel channel, out IList<IProgram> programs)
@@ -445,12 +463,28 @@ namespace MediaPortal.Plugins.SlimTv.Providers.UPnP
       }
     }
 
-    public bool RemoveSchedule(IProgram program, ScheduleRecordingType recordingType)
+    public bool RemoveScheduleForProgram(IProgram program, ScheduleRecordingType recordingType)
+    {
+      try
+      {
+        CpAction action = GetAction(Consts.ACTION_REMOVE_SCHEDULE_FOR_PROGRAM);
+        IList<object> inParameters = new List<object> { program.ProgramId, (int)recordingType };
+        IList<object> outParameters = action.InvokeAction(inParameters);
+        return (bool)outParameters[0];
+      }
+      catch (Exception ex)
+      {
+        NotifyException(ex);
+        return false;
+      }
+    }
+
+    public bool RemoveSchedule(ISchedule schedule)
     {
       try
       {
         CpAction action = GetAction(Consts.ACTION_REMOVE_SCHEDULE);
-        IList<object> inParameters = new List<object> { program.ProgramId, (int)recordingType };
+        IList<object> inParameters = new List<object> { schedule };
         IList<object> outParameters = action.InvokeAction(inParameters);
         return (bool)outParameters[0];
       }
@@ -495,6 +529,30 @@ namespace MediaPortal.Plugins.SlimTv.Providers.UPnP
       {
         NotifyException(ex);
         fileOrStream = null;
+        return false;
+      }
+    }
+
+    public bool GetSchedules(out IList<ISchedule> schedules)
+    {
+      schedules = null;
+      try
+      {
+        CpAction action = GetAction(Consts.ACTION_GET_SCHEDULES);
+        IList<object> inParameters = new List<object>();
+        IList<object> outParameters = action.InvokeAction(inParameters);
+        bool success = (bool)outParameters[0];
+        IList<Schedule> scheduleList = (List<Schedule>)outParameters[1];
+        if (success)
+        {
+          schedules = scheduleList.Cast<ISchedule>().ToList();
+          return true;
+        }
+        return false;
+      }
+      catch (Exception ex)
+      {
+        NotifyException(ex);
         return false;
       }
     }

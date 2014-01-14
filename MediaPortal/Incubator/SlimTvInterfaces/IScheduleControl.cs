@@ -68,7 +68,14 @@ namespace MediaPortal.Plugins.SlimTv.Interfaces
     /// <param name="program">Program to cancel.</param>
     /// <param name="recordingType">Schedule recording type.</param>
     /// <returns><c>true</c> if successful.</returns>
-    bool RemoveSchedule(IProgram program, ScheduleRecordingType recordingType); // ISchedule schedule ?
+    bool RemoveScheduleForProgram(IProgram program, ScheduleRecordingType recordingType); // ISchedule schedule ?
+    
+    /// <summary>
+    /// Deletes a given <paramref name="schedule"/>.
+    /// </summary>
+    /// <param name="schedule">Schedule to delete.</param>
+    /// <returns><c>true</c> if successful.</returns>
+    bool RemoveSchedule(ISchedule schedule);
 
     /// <summary>
     /// Gets the <paramref name="recordingStatus"/> for the given <paramref name="program"/>.
@@ -95,7 +102,12 @@ namespace MediaPortal.Plugins.SlimTv.Interfaces
     bool GetProgramsForSchedule(ISchedule schedule, out IList<IProgram> programs);
 
     //bool GetSchedules(IChannel channel, out IList<ISchedule> schedules);
-    //bool GetSchedules(out IList<ISchedule> schedules);
+    /// <summary>
+    /// Gets the list of all available schedules.
+    /// </summary>
+    /// <param name="schedules">Returns schedules</param>
+    /// <returns><c>true</c> if at least one schedule could be found</returns>
+    bool GetSchedules(out IList<ISchedule> schedules);
 
     //bool AddRule(IScheduleRule rule);
     //bool RemoveRule(IScheduleRule rule);

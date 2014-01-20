@@ -136,7 +136,7 @@ namespace UPnP.Infrastructure
     /// <summary>
     /// Receive buffer size for the UDP socket for the SSDP protocol handlers.
     /// </summary>
-    public static int UDP_SSDP_RECEIVE_BUFFER_SIZE = 4096;
+    public static int UDP_SSDP_RECEIVE_BUFFER_SIZE = 16384;
 
     /// <summary>
     /// Receive buffer size for the UDP socket for the GENA event notifications. Must be quite big to hold a complete

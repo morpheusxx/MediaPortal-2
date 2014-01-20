@@ -37,6 +37,7 @@ namespace UPnP.Infrastructure.Utils
       _config = config;
       _buffer = new byte[bufferSize];
       _socket = socket;
+      _socket.ReceiveBufferSize = bufferSize;
     }
 
     public T Endpoint

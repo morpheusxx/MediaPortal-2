@@ -462,7 +462,7 @@ namespace UPnP.Infrastructure.Dv
       IDictionary<IPAddress, EndpointConfiguration> oldEndpoints = new Dictionary<IPAddress, EndpointConfiguration>();
       foreach (EndpointConfiguration config in _serverData.UPnPEndPoints)
         oldEndpoints.Add(config.EndPointIPAddress, config);
-      IList<IPAddress> addresses = NetworkHelper.OrderAddressesByScope(NetworkHelper.GetUPnPEnabledIPAddresses());
+      IList<IPAddress> addresses = NetworkHelper.OrderAddressesByScope(NetworkHelper.GetUPnPEnabledIPAddresses(UPnPConfiguration.IP_ADDRESS_BINDINGS));
 
       // Add new endpoints
       foreach (IPAddress address in addresses)

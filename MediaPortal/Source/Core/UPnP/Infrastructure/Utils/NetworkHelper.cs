@@ -52,13 +52,19 @@ namespace UPnP.Infrastructure.Utils
     /// <summary>
     /// Returns all local ip addresses which are known via DNS.
     /// </summary>
+    /// <param name="filters">If non-null and not empty only IPs in the filter list will be returned</param>
     /// <returns>Collection of local IP addresses.</returns>
-    public static ICollection<IPAddress> GetExternalIPAddresses()
+    public static ICollection<IPAddress> GetExternalIPAddresses(List<string> filters)
     {
       try
       {
         string hostName = Dns.GetHostName();
-        return new List<IPAddress>(Dns.GetHostAddresses(hostName));
+        List<IPAddress> addresses = new List<IPAddress>(Dns.GetHostAddresses(hostName));
+        if (filters != null && filters.Count > 0)
+        {
+          addresses = new List<IPAddress>(addresses.Where(address => filters.Contains(address.ToString())));
+        }
+        return addresses;
       }
       catch (SocketException)
       {
@@ -88,10 +94,11 @@ namespace UPnP.Infrastructure.Utils
     /// <summary>
     /// Collects all interfaces where the UPnP system should be active.
     /// </summary>
+    /// <param name="filters">Restrict IPs to only this list (plus loopback)</param>
     /// <returns>Collection of IP addresses to bind to receive UPnP messages.</returns>
-    public static ICollection<IPAddress> GetUPnPEnabledIPAddresses()
+    public static ICollection<IPAddress> GetUPnPEnabledIPAddresses(List<string> filters)
     {
-      ICollection<IPAddress> result = new List<IPAddress>(GetExternalIPAddresses());
+      ICollection<IPAddress> result = new List<IPAddress>(GetExternalIPAddresses(filters));
       if (!result.Contains(IPAddress.Loopback))
         result.Add(IPAddress.Loopback);
       return result;

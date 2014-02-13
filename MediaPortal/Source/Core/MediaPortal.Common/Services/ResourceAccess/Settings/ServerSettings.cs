@@ -23,6 +23,7 @@
 #endregion
 
 using MediaPortal.Common.Settings;
+using System.Collections.Generic;
 
 namespace MediaPortal.Common.Services.ResourceAccess.Settings
 {
@@ -31,6 +32,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.Settings
     protected int _httpServerPort = 0;
     protected bool _useIPv4 = true;
     protected bool _useIPv6 = true;
+    protected string _ipAaddressBindings = null;
 
     /// <summary>
     /// Port where the local HTTP server is started. Use a value of <c>0</c> to let the system choose
@@ -55,6 +57,13 @@ namespace MediaPortal.Common.Services.ResourceAccess.Settings
     {
       get { return _useIPv6; }
       set { _useIPv6 = value; }
+    }
+
+    [Setting(SettingScope.Global)]
+    public string IPAddressBindings
+    {
+      get { return _ipAaddressBindings; }
+      set { _ipAaddressBindings = value; }
     }
   }
 }

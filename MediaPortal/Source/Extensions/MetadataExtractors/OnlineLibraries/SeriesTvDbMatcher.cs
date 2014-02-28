@@ -32,7 +32,6 @@ using MediaPortal.Common.Localization;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement.Helpers;
 using MediaPortal.Common.PathManager;
-using MediaPortal.Common.TaskScheduler;
 using MediaPortal.Common.Threading;
 using MediaPortal.Extensions.OnlineLibraries.Libraries.Common;
 using MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data;
@@ -61,7 +60,7 @@ namespace MediaPortal.Extensions.OnlineLibraries
 
     public static string CACHE_PATH = ServiceRegistration.Get<IPathManager>().GetPath(@"<DATA>\TvDB\");
     protected static string _matchesSettingsFile = Path.Combine(CACHE_PATH, "Matches.xml");
-    protected static TimeSpan MAX_MEMCACHE_DURATION = TimeSpan.FromHours(24);
+    protected static TimeSpan MAX_MEMCACHE_DURATION = TimeSpan.FromHours(12);
 
     protected override string MatchesSettingsFile
     {

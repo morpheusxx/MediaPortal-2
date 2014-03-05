@@ -2,11 +2,11 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
 
   <PropertyGroup>
-    <PluginDestination>$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\</PluginDestination>
+    <PluginDestination>$(SolutionDir)..\Bin\$(SolutionName)\bin\$(PlatformName)\$(ConfigurationName)\Plugins\$(ProjectName)\</PluginDestination>
   </PropertyGroup>
 
   <PropertyGroup>
-    <DatabaseDestination>$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Database\</DatabaseDestination>
+    <DatabaseDestination>$(SolutionDir)..\Bin\$(SolutionName)\bin\$(PlatformName)\$(ConfigurationName)\Plugins\$(ProjectName)\Database\</DatabaseDestination>
   </PropertyGroup>
 
   <ItemGroup>

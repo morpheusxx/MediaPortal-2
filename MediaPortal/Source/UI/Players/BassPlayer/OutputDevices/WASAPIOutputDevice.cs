@@ -44,6 +44,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     protected const BASSFlag MIXER_FLAGS = BASSFlag.BASS_MIXER_NONSTOP | BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_STREAM_DECODE;
 
     protected readonly WASAPIPROC _streamWriteProcDelegate;
+    protected readonly SYNCPROC _onPlaybackEndDelegate;
     protected BASSWASAPIInit _flags;
     protected BassStream _mixer;
     protected int _mixerHandle;
@@ -54,6 +55,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       : base(controller)
     {
       _streamWriteProcDelegate = OutputStreamWriteProc;
+      _onPlaybackEndDelegate = OnPlaybackEnd;
       _deviceNo = GetDeviceNo();
     }
 
@@ -204,8 +206,6 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       {
         Bass.BASS_ChannelLock(_mixerHandle, true);
 
-        // TODO: both calls doesn't seem to work, playback end is not working in shared mode!
-        SetSyncPos(0.0);
         RegisterStreamFreedEvent(_inputStream);
 
         bool result = BassMix.BASS_Mixer_StreamAddChannel(_mixerHandle, _inputStream.Handle,
@@ -230,31 +230,12 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     /// <returns></returns>
     private void RegisterStreamFreedEvent(BassStream stream)
     {
-      int syncHandle = Bass.BASS_ChannelSetSync(stream.Handle, BASSSync.BASS_SYNC_FREE | BASSSync.BASS_SYNC_MIXTIME, 0, OnPlaybackEnd, IntPtr.Zero);
+      int syncHandle = Bass.BASS_ChannelSetSync(stream.Handle, BASSSync.BASS_SYNC_FREE | BASSSync.BASS_SYNC_MIXTIME, 0, _onPlaybackEndDelegate, IntPtr.Zero);
 
       if (syncHandle == 0)
         Log.Debug("BASS: RegisterStreamFreedEvent of stream {0} failed with error {1}", stream.Handle, Enum.GetName(typeof(BASSError), Bass.BASS_ErrorGetCode()));
       else
         stream.SyncProcHandles.Add(syncHandle);
-    }
-
-    /// <summary>
-    /// Sets a SyncPos on the mixer stream
-    /// </summary>
-    /// <param name="timePos"></param>
-    public void SetSyncPos(double timePos)
-    {
-      double fadeOutSeconds = Controller.GetSettings().CrossFadeDurationSecs;
-      double totalStreamLen = Bass.BASS_ChannelBytes2Seconds(_inputStream.Handle, Bass.BASS_ChannelGetLength(_inputStream.Handle, BASSMode.BASS_POS_BYTES));
-      long mixerPos = Bass.BASS_ChannelGetPosition(_mixer.Handle, BASSMode.BASS_POS_BYTES | BASSMode.BASS_POS_DECODE);
-      long syncPos = mixerPos + Bass.BASS_ChannelSeconds2Bytes(_mixer.Handle, totalStreamLen - timePos - fadeOutSeconds);
-
-      var syncProc = Bass.BASS_ChannelSetSync(_mixer.Handle,
-        BASSSync.BASS_SYNC_ONETIME | BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
-        syncPos, OnPlaybackEnd,
-        IntPtr.Zero);
-
-      _mixer.SyncProcHandles.Add(syncProc);
     }
 
     private void OnPlaybackEnd(int handle, int channel, int data, IntPtr user)

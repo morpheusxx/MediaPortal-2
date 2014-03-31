@@ -591,6 +591,8 @@ namespace MediaPortal.UI.Players.BassPlayer
         foreach (int syncProcHandle in _syncProcHandles)
           Bass.BASS_ChannelRemoveSync(h, syncProcHandle);
 
+        _syncProcHandles.Clear();
+
         // Ignore error
         Bass.BASS_StreamFree(h);
       }

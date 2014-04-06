@@ -194,7 +194,6 @@
     <Content Include="Skin\Titanium\sounds\navigate.wav" />
     <Content Include="Skin\Titanium\themes\anniversary\images\background.png" />
     <Content Include="Skin\Titanium\themes\anniversary\images\basichome_button_focus.png" />
-    <Content Include="Skin\Titanium\themes\anniversary\images\fanart_overlay.png" />
     <Content Include="Skin\Titanium\themes\anniversary\theme.xml" />
     <Content Include="Skin\Titanium\themes\blue-large\fonts\default-font.xml" />
     <Content Include="Skin\Titanium\themes\blue-large\images\preview.jpg" />

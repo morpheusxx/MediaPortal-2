@@ -31,13 +31,6 @@ namespace MediaPortal.UiComponents.Media.MediaItemActions
 {
   public class RemoveFromML : AbstractMediaItemAction
   {
-    private const string ACTION_NAME = "[Media.RemoveFromML]";
-
-    public RemoveFromML()
-    {
-      Caption = ACTION_NAME;
-    }
-
     public override bool IsAvailable(MediaItem mediaItem)
     {
       IContentDirectory cd = ServiceRegistration.Get<IServerConnectionManager>().ContentDirectory;

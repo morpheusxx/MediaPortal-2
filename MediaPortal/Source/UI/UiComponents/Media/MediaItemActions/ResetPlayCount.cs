@@ -33,13 +33,6 @@ namespace MediaPortal.UiComponents.Media.MediaItemActions
 {
   public class ResetPlayCount : AbstractMediaItemAction
   {
-    private const string ACTION_NAME = "[Media.ResetPlayCount]";
-
-    public ResetPlayCount()
-    {
-      Caption = ACTION_NAME;
-    }
-
     public override bool IsAvailable(MediaItem mediaItem)
     {
       IContentDirectory cd = ServiceRegistration.Get<IServerConnectionManager>().ContentDirectory;

@@ -22,27 +22,27 @@
 void Log(const char *fmt, ...)
 {
   va_list ap;
-	va_start(ap,fmt);
+  va_start(ap, fmt);
 
-	char buffer[1000]; 
-	int tmp;
-	va_start(ap,fmt);
-	tmp = vsprintf(buffer, fmt, ap);
-	va_end(ap); 
+  char buffer[1000];
+  int tmp;
+  va_start(ap, fmt);
+  tmp = vsprintf(buffer, fmt, ap);
+  va_end(ap);
 
-	FILE* fp = fopen("log/evr.log", "a+");
-	if (fp != NULL)
-	{
-		SYSTEMTIME systemTime;
-		GetLocalTime(&systemTime);
-		fprintf(fp,"%02.2d-%02.2d-%04.4d %02.2d:%02.2d:%02.2d.%03.3d [%x]%s\n",
-			systemTime.wDay, systemTime.wMonth, systemTime.wYear,
-			systemTime.wHour,systemTime.wMinute,systemTime.wSecond,
-			systemTime.wMilliseconds,
-			GetCurrentThreadId(),
-			buffer);
-		fclose(fp);
-	}
+  FILE* fp = fopen("log/evr.log", "a+");
+  if (fp != NULL)
+  {
+    SYSTEMTIME systemTime;
+    GetLocalTime(&systemTime);
+    fprintf(fp, "%02.2d-%02.2d-%04.4d %02.2d:%02.2d:%02.2d.%03.3d [%x]%s\n",
+      systemTime.wDay, systemTime.wMonth, systemTime.wYear,
+      systemTime.wHour, systemTime.wMinute, systemTime.wSecond,
+      systemTime.wMilliseconds,
+      GetCurrentThreadId(),
+      buffer);
+    fclose(fp);
+  }
 }
 
 

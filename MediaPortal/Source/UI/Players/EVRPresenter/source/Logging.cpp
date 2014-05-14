@@ -14,29 +14,40 @@
 // You should have received a copy of the GNU General Public License
 // along with MediaPortal. If not, see <http://www.gnu.org/licenses/>.
 
+#include <Shlobj.h>
 #include <stdio.h>
 
 #include "EVRPresenter.h"
+
+void LogPath(TCHAR* dest, TCHAR* name)
+{
+  TCHAR folder[MAX_PATH];
+  SHGetSpecialFolderPath(NULL, folder, CSIDL_COMMON_APPDATA, FALSE);
+  sprintf_s(dest, MAX_PATH, "%s\\Team MediaPortal\\MP2-Client\\Log\\Evr.%s", folder, name);
+}
 
 // write message to EVR Log
 void Log(const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap, fmt);
 
   char buffer[1000];
   int tmp;
   va_start(ap, fmt);
-  tmp = vsprintf(buffer, fmt, ap);
+  tmp = vsprintf_s(buffer, fmt, ap);
   va_end(ap);
 
-  FILE* fp = fopen("log/evr.log", "a+");
-  if (fp != NULL)
+  TCHAR fileName[MAX_PATH];
+  LogPath(fileName, "log");
+
+  FILE* fp;
+  int err = fopen_s(&fp, fileName, "a+");
+  if (err == 0)
   {
     SYSTEMTIME systemTime;
     GetLocalTime(&systemTime);
-    fprintf(fp, "%02.2d-%02.2d-%04.4d %02.2d:%02.2d:%02.2d.%03.3d [%x]%s\n",
-      systemTime.wDay, systemTime.wMonth, systemTime.wYear,
+    fprintf(fp, "%04.4d-%02.2d-%02.2d %02.2d:%02.2d:%02.2d.%03.3d [%x]%s\n",
+      systemTime.wYear, systemTime.wMonth, systemTime.wDay,
       systemTime.wHour, systemTime.wMinute, systemTime.wSecond,
       systemTime.wMilliseconds,
       GetCurrentThreadId(),

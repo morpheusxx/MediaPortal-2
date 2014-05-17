@@ -33,6 +33,8 @@ namespace MediaPortal.UiComponents.Media.MediaItemActions
   {
     public override bool IsAvailable(MediaItem mediaItem)
     {
+      if (!IsManagedByMediaLibrary(mediaItem))
+        return false;
       IContentDirectory cd = ServiceRegistration.Get<IServerConnectionManager>().ContentDirectory;
       return cd != null;
     }

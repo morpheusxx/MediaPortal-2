@@ -842,7 +842,8 @@ namespace MediaPortal.UiComponents.SkinBase.Models
         }
         else if (!push)
         {
-          _shareProxy.InvalidShareHint = null;
+          if (_shareProxy != null)
+            _shareProxy.InvalidShareHint = null;
           return;
         }
         if (workflowState == Consts.WF_STATE_ID_SHARES_REMOVE)

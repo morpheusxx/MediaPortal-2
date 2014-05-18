@@ -20,6 +20,11 @@ file_filter=Cache_MP2\BDHandler\strings_<lang>.xml
 source_file=Cache_MP2\BDHandler\strings_en.xml
 source_lang=en
 type=ANDROID
+[MP2.BluRayPlayer]
+file_filter=Cache_MP2\BluRayPlayer\strings_<lang>.xml
+source_file=Cache_MP2\BluRayPlayer\strings_en.xml
+source_lang=en
+type=ANDROID
 [MP2.Configuration]
 file_filter=Cache_MP2\Configuration\strings_<lang>.xml
 source_file=Cache_MP2\Configuration\strings_en.xml
@@ -113,6 +118,11 @@ type=ANDROID
 [MP2.SystemStateMenu]
 file_filter=Cache_MP2\SystemStateMenu\strings_<lang>.xml
 source_file=Cache_MP2\SystemStateMenu\strings_en.xml
+source_lang=en
+type=ANDROID
+[MP2.Trakt]
+file_filter=Cache_MP2\Trakt\strings_<lang>.xml
+source_file=Cache_MP2\Trakt\strings_en.xml
 source_lang=en
 type=ANDROID
 [MP2.UIPluginTemplate]

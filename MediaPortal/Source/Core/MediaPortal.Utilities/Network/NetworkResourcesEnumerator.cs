@@ -31,14 +31,14 @@ namespace MediaPortal.Utilities.Network
   [StructLayout(LayoutKind.Sequential)]
   public class NetResource
   {
-    public ResourceScope dwScope = 0;
-    public ResourceType dwType = 0;
-    public ResourceDisplayType dwDisplayType = 0;
-    public ResourceUsage dwUsage = 0;
-    public string lpLocalName = null;
-    public string lpRemoteName = null;
-    public string lpComment = null;
-    public string lpProvider = null;
+    public ResourceScope Scope = 0;
+    public ResourceType ResourceType = 0;
+    public ResourceDisplayType DisplayType = 0;
+    public ResourceUsage Usage = 0;
+    public string LocalName = null;
+    public string RemoteName = null;
+    public string Comment = null;
+    public string Provider = null;
   };
 
   public enum ResourceScope
@@ -139,14 +139,14 @@ namespace MediaPortal.Utilities.Network
               {
                 Marshal.PtrToStructure(buffer, pRsrc);
 
-                if (pRsrc.dwDisplayType == displayType)
-                  result.Add(pRsrc.lpRemoteName);
+                if (pRsrc.DisplayType == displayType)
+                  result.Add(pRsrc.RemoteName);
 
                 // If the current NetworkResource is a container, we call EnumerateResources recursively.
-                // In some situations, the lpRemoteName in the NetworkResource is null or empty. In this case
+                // In some situations, the RemoteName in the NetworkResource is null or empty. In this case
                 // we do not call EnumerateResources recursively as this leads to an infinite loop of
                 // recursive calls. For details see Jira MP2-356
-                if ((pRsrc.dwUsage & ResourceUsage.Container) == ResourceUsage.Container && !String.IsNullOrEmpty(pRsrc.lpRemoteName))
+                if ((pRsrc.Usage & ResourceUsage.Container) == ResourceUsage.Container && !String.IsNullOrEmpty(pRsrc.RemoteName))
                   result.AddRange(EnumerateResources(pRsrc, scope, type, usage, displayType));
               }
               else if (res != ErrorCodes.ErrorNoMoreItems)

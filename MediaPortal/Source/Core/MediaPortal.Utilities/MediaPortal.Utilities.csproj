@@ -59,6 +59,7 @@
     <Compile Include="CollectionUtils.cs" />
     <Compile Include="Conversion\Conversion.cs" />
     <Compile Include="Graphics\ImageUtilities.cs" />
+    <Compile Include="Network\NetworkConnection.cs" />
     <Compile Include="SystemAPI\NativeMethods.cs" />
     <Compile Include="Process\SingleInstanceHelper.cs" />
     <Compile Include="Network\NetworkConnectionTracker.cs" />

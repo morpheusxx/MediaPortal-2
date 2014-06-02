@@ -24,8 +24,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Services.ResourceAccess.LocalFsResourceProvider;
 using MediaPortal.Common.Services.Settings;
@@ -41,6 +44,13 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
   {
     #region Protected fields
 
+    /// <summary>
+    /// Contains all opened connections and their reference counts.
+    /// </summary>
+    protected static IDictionary<NetworkConnection, int> _connections = new Dictionary<NetworkConnection, int>();
+    protected static HashSet<string> _connectionFailures = new HashSet<string>();
+    protected static object _syncObj = new object();
+
     protected NetworkNeighborhoodResourceProvider _parent;
     protected string _path;
     protected ILocalFsResourceAccessor _underlayingResource = null; // Only set if the path points to a file system resource - not a server
@@ -50,6 +60,11 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
 
     #endregion
 
+    static NetworkNeighborhoodResourceAccessor()
+    {
+      _settings.SettingsChanged += SettingsChanged;
+    }
+
     public NetworkNeighborhoodResourceAccessor(NetworkNeighborhoodResourceProvider parent, string path)
     {
       _parent = parent;
@@ -57,12 +72,90 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
       if (IsServerPath(path))
         return;
 
+      CreateOrUpdateConnection();
+
       _impersonationContext = ImpersonateUser(null);
 
       IResourceAccessor ra;
       if (LocalFsResourceProvider.Instance.TryCreateResourceAccessor("/" + path, out ra))
-        _underlayingResource = (ILocalFsResourceAccessor) ra;
+        _underlayingResource = (ILocalFsResourceAccessor)ra;
     }
+
+    #region Connection cache handling
+
+    private static void SettingsChanged(object sender, EventArgs eventArgs)
+    {
+      // If network settings where changed, invalidate all caches
+      ICollection<NetworkConnection> keys;
+      lock (_syncObj)
+      {
+        keys = _connections.Keys;
+        _connections.Clear();
+        _connectionFailures.Clear();
+      }
+      foreach (NetworkConnection networkConnection in keys)
+        networkConnection.Dispose();
+    }
+
+    private void CreateOrUpdateConnection()
+    {
+      NetworkNeighborhoodResourceProviderSettings settings = _settings.Settings;
+      if (!settings.UseCredentials)
+        return;
+
+      var shareRoot = ShareRoot;
+      lock (_syncObj)
+      {
+        // Avoid retrying establishing connections, it can take multiple seconds.
+        // TODO: check for cache invalidation (i.e. share is not yet ready but will be available later)
+        if (_connectionFailures.Contains(shareRoot, StringComparer.OrdinalIgnoreCase))
+          return;
+
+        var existingConnection = _connections.Keys.FirstOrDefault(c => c.ToString() == shareRoot);
+        if (existingConnection != null)
+          _connections[existingConnection]++;
+        else
+        {
+          try
+          {
+            var newConnection = new NetworkConnection(shareRoot, settings.NetworkUserName, settings.NetworkPassword);
+            _connections.Add(newConnection, 0);
+          }
+          catch (IOException ex)
+          {
+            _connectionFailures.Add(shareRoot);
+            ServiceRegistration.Get<ILogger>().Warn("NetworkNeighborhoodResourceAccessor: Failed to map network drive '{0}'.", ex, shareRoot);
+          }
+        }
+      }
+    }
+
+    private string ShareRoot
+    {
+      get { return NetworkConnection.GetNetworkConnectionRoot(@"\" + LocalFsResourceProviderBase.ToDosPath(_path)); }
+    }
+
+    private void CloseConnection()
+    {
+      string shareRoot = ShareRoot;
+      NetworkConnection existingConnection;
+      lock (_syncObj)
+      {
+        existingConnection = _connections.Keys.FirstOrDefault(c => c.ToString() == shareRoot);
+        if (existingConnection == null)
+          return;
+
+        // Decrement reference counter and dispose connection once it gets 0.
+        _connections[existingConnection]--;
+        if (_connections[existingConnection] != 0)
+          return;
+        _connections.Remove(existingConnection);
+        ServiceRegistration.Get<ILogger>().Debug("NetworkNeighborhoodResourceAccessor: Closing network drive '{0}'.", existingConnection);
+      }
+      existingConnection.Dispose();
+    }
+
+    #endregion
 
     protected ICollection<IFileSystemResourceAccessor> WrapLocalFsResourceAccessors(ICollection<IFileSystemResourceAccessor> localFsResourceAccessors)
     {
@@ -117,13 +210,6 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
 
         ctx = ImpersonationHelper.ImpersonateByProcess("explorer");
       }
-      if (ctx != null)
-        return ctx;
-
-      // Second way based on network credentials.
-      if (settings.UseCredentials)
-        ctx = ImpersonationHelper.ImpersonateUser(settings.NetworkUserName, settings.NetworkPassword);
-
       return ctx;
     }
 
@@ -135,6 +221,7 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
         _underlayingResource.Dispose();
       if (_impersonationContext != null)
         _impersonationContext.Dispose();
+      CloseConnection();
     }
 
     public IResourceProvider ParentProvider
@@ -240,7 +327,7 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
     {
       IResourceAccessor ra;
       if (_parent.TryCreateResourceAccessor(ProviderPathHelper.Combine(_path, path), out ra))
-        return (IFileSystemResourceAccessor) ra;
+        return (IFileSystemResourceAccessor)ra;
       return null;
     }
 

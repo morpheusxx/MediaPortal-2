@@ -193,7 +193,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client.Models
       if (movie != null)
       {
         FanArtMediaType = FanArtConstants.FanArtMediaType.Movie;
-        FanArtName = movie.MovieName;
+        FanArtName = movie.MediaItem.MediaItemId.ToString();// movie.MovieName;
         ItemDescription = movie.StoryPlot;
         return;
       }

@@ -23,6 +23,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -37,7 +38,7 @@ using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 
 namespace MediaPortal.Extensions.UserServices.FanArtService.Local
 {
-  public class LocalFanartProvider : IFanArtProvider
+  public class LocalFanartProvider : IBinaryFanArtProvider
   {
     private readonly Dictionary<FanArtConstants.FanArtMediaType, Guid[]> _mediaTypeMapping =
       new Dictionary<FanArtConstants.FanArtMediaType, Guid[]>
@@ -65,9 +66,6 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
 
       Guid[] necessaryMIAs;
       if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.TryGetValue(mediaType, out necessaryMIAs))
-        return false;
-
-      if (mediaType != FanArtConstants.FanArtMediaType.Movie && mediaType != FanArtConstants.FanArtMediaType.MovieCollection)
         return false;
 
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
@@ -133,10 +131,43 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
       }
       catch (Exception ex)
       {
+#if DEBUG
         ServiceRegistration.Get<ILogger>().Warn("Error while search fanart of type '{0}' for path '{1}'", ex, fanArtType, fileSystemPath);
+#endif
       }
       result = files;
       return files.Count > 0;
+    }
+
+    public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<FanArtImage> result)
+    {
+      result = null;
+      Guid mediaItemId;
+
+      Guid[] necessaryMIAs;
+      if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.TryGetValue(mediaType, out necessaryMIAs))
+        return false;
+
+      IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
+      if (mediaLibrary == null)
+        return false;
+
+      // Try to load thumbnail from ML
+      Guid[] thumbGuids = { ThumbnailLargeAspect.ASPECT_ID };
+      IFilter filter = new MediaItemIdFilter(mediaItemId);
+      IList<MediaItem> items = mediaLibrary.Search(new MediaItemQuery(thumbGuids, filter), false);
+      if (items == null || items.Count == 0)
+        return false;
+
+      MediaItem mediaItem = items.First();
+      byte[] textureData;
+      if (!MediaItemAspect.TryGetAttribute(mediaItem.Aspects, ThumbnailLargeAspect.ATTR_THUMBNAIL, out textureData))
+        return false;
+
+      // Only one record required
+      result = new List<FanArtImage> { new FanArtImage(name, textureData) };
+      return true;
+
     }
   }
 }

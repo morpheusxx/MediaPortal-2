@@ -110,6 +110,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLiteDatabase", "..\Incuba
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ShellThumbnailProvider", "Extensions\MetadataExtractors\ShellThumbnailProvider\ShellThumbnailProvider.csproj", "{927AA852-186A-4880-A7B6-C11C543B97A9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FanArtService.Local", "..\Incubator\FanArtService.Local\FanArtService.Local.csproj", "{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -263,6 +265,10 @@ Global
 		{927AA852-186A-4880-A7B6-C11C543B97A9}.Debug|x86.Build.0 = Debug|x86
 		{927AA852-186A-4880-A7B6-C11C543B97A9}.Release|x86.ActiveCfg = Release|x86
 		{927AA852-186A-4880-A7B6-C11C543B97A9}.Release|x86.Build.0 = Release|x86
+		{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1}.Debug|x86.ActiveCfg = Debug|x86
+		{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1}.Debug|x86.Build.0 = Debug|x86
+		{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1}.Release|x86.ActiveCfg = Release|x86
+		{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -317,5 +323,6 @@ Global
 		{35DF0F35-CB07-4868-AD8B-146E5D5B5DB0} = {26B21F24-5C09-4F49-ABE3-C1B3F9059D2B}
 		{8A791C9C-5D72-42E8-B8D3-ED25ADC24188} = {EFC339EB-9F75-4E5A-937A-A8BECA514715}
 		{927AA852-186A-4880-A7B6-C11C543B97A9} = {35DF0F35-CB07-4868-AD8B-146E5D5B5DB0}
+		{CCF5076B-FDA7-4174-BBAF-E73EBD96B8B1} = {1FEC2432-78BD-4084-B08D-4FC99D808484}
 	EndGlobalSection
 EndGlobal

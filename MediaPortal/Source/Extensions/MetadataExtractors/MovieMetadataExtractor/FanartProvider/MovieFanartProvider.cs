@@ -61,7 +61,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor.Fanar
       Guid mediaItemId;
       string[] patterns;
 
-      if (!Guid.TryParse(name, out mediaItemId) || !GetPattern(mediaType, fanArtType, mediaItemId, out patterns))
+      Guid.TryParse(name, out mediaItemId);
+      if (!GetPattern(mediaType, fanArtType, mediaItemId, name, out patterns))
         return false;
 
       List<string> files = new List<string>();
@@ -85,31 +86,48 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor.Fanar
       return files.Count > 0;
     }
 
-    protected bool GetPattern(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, Guid mediaItemId, out string[] patterns)
+    protected bool GetPattern(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, Guid mediaItemId, string name, out string[] patterns)
     {
       patterns = null;
-      IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
-      if (mediaLibrary == null)
-        return false;
-
-      IFilter filter = new MediaItemIdFilter(mediaItemId);
-      IList<MediaItem> items = mediaLibrary.Search(new MediaItemQuery(NECESSARY_MIAS, filter), false);
-      if (items == null || items.Count == 0)
-        return false;
-
-      MediaItem mediaItem = items.First();
-
       string basePath = null;
-      int movieDbId;
-      if (MediaItemAspect.TryGetAttribute(mediaItem.Aspects, MovieAspect.ATTR_TMDB_ID, out movieDbId))
+      if (mediaItemId != Guid.Empty)
+      {
+        IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
+        if (mediaLibrary == null)
+          return false;
+
+        IFilter filter = new MediaItemIdFilter(mediaItemId);
+        IList<MediaItem> items = mediaLibrary.Search(new MediaItemQuery(NECESSARY_MIAS, filter), false);
+        if (items == null || items.Count == 0)
+          return false;
+
+        MediaItem mediaItem = items.First();
+        int movieDbId;
+        if (MediaItemAspect.TryGetAttribute(mediaItem.Aspects, MovieAspect.ATTR_TMDB_ID, out movieDbId))
+        {
+          switch (mediaType)
+          {
+            case FanArtConstants.FanArtMediaType.Movie:
+              basePath = Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
+              break;
+          }
+        }
+      }
+      else
       {
         switch (mediaType)
         {
           case FanArtConstants.FanArtMediaType.Movie:
-            basePath = Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
+            int movieDbId;
+            basePath = !MovieTheMovieDbMatcher.Instance.TryGetMovieDbId(name, out movieDbId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
+            break;
+          case FanArtConstants.FanArtMediaType.MovieCollection:
+            int collectionId;
+            basePath = !MovieTheMovieDbMatcher.Instance.TryGetCollectionId(name, out collectionId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, "COLL_" + collectionId);
             break;
         }
       }
+
       if (string.IsNullOrWhiteSpace(basePath))
         return false;
 

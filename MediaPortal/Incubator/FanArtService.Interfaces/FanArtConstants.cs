@@ -39,6 +39,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
       Artist,
       Channel,
       Album,
+      Image
     }
 
     public enum FanArtType
@@ -47,6 +48,9 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
       Poster,
       Banner,
       FanArt,
+      Thumbnail,
+      ClearArt,
+      DiscArt,
     }
   }
 }

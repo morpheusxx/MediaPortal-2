@@ -200,7 +200,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client.Models
       VideoItem video = SelectedItem as VideoItem;
       if (video != null)
       {
-        FanArtMediaType = FanArtConstants.FanArtMediaType.Undefined;
+        FanArtMediaType = FanArtConstants.FanArtMediaType.Movie;
         FanArtName = video.MediaItem.MediaItemId.ToString();// movie.MovieName;
         ItemDescription = video.StoryPlot;
         return;

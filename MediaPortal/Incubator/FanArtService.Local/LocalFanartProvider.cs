@@ -44,7 +44,8 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
       new Dictionary<FanArtConstants.FanArtMediaType, Guid[]>
       {
         { FanArtConstants.FanArtMediaType.Movie, new []{ ProviderResourceAspect.ASPECT_ID, VideoAspect.ASPECT_ID }},
-        { FanArtConstants.FanArtMediaType.Album, new []{ ProviderResourceAspect.ASPECT_ID, AudioAspect.ASPECT_ID }}
+        { FanArtConstants.FanArtMediaType.Album, new []{ ProviderResourceAspect.ASPECT_ID, AudioAspect.ASPECT_ID }},
+        { FanArtConstants.FanArtMediaType.Image, null}
       };
 
     /// <summary>
@@ -65,7 +66,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
       Guid mediaItemId;
 
       Guid[] necessaryMIAs;
-      if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.TryGetValue(mediaType, out necessaryMIAs))
+      if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.TryGetValue(mediaType, out necessaryMIAs) || necessaryMIAs == null)
         return false;
 
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
@@ -144,8 +145,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
       result = null;
       Guid mediaItemId;
 
-      Guid[] necessaryMIAs;
-      if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.TryGetValue(mediaType, out necessaryMIAs))
+      if (!Guid.TryParse(name, out mediaItemId) || !_mediaTypeMapping.ContainsKey(mediaType))
         return false;
 
       IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);

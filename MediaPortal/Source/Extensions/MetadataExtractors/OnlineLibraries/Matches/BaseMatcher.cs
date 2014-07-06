@@ -27,7 +27,6 @@ using System.Collections.Generic;
 using System.Threading;
 using MediaPortal.Common;
 using MediaPortal.Common.Threading;
-using MediaPortal.Extensions.OnlineLibraries.Libraries.Common;
 using MediaPortal.Utilities.Network;
 
 namespace MediaPortal.Extensions.OnlineLibraries.Matches
@@ -62,7 +61,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
     protected UniqueEventedQueue<TId> _downloadQueue = new UniqueEventedQueue<TId>();
     protected List<Thread> _downloadThreads = new List<Thread>(MAX_FANART_DOWNLOADERS);
     protected bool _downloadFanart = true;
-    protected bool _downloadAllowed = true;
+    protected volatile bool _downloadAllowed = true;
     protected Predicate<TMatch> _matchPredicate;
     protected MatchStorage<TMatch, TId> _storage;
 
@@ -128,7 +127,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
         _downloadAllowed = false;
       }
       foreach (Thread downloadThread in _downloadThreads)
-        if (!downloadThread.Join(2000))
+        if (!downloadThread.Join(5000))
           downloadThread.Abort();
 
       _downloadThreads.Clear();
@@ -140,7 +139,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
       lock (_syncObj)
       {
         // Load cache or create new list
-        List<TMatch> matches = _storage.LoadMatches();
+        List<TMatch> matches = _storage.GetMatches();
         foreach (TMatch match in matches.FindAll(m => m.Id.Equals(itemId)))
         {
           // We can have multiple matches for one TvDbId in list, if one has FanArt downloaded already, update the flag for all matches.
@@ -150,7 +149,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
           if (!match.FanArtDownloadStarted.HasValue)
             match.FanArtDownloadStarted = DateTime.Now;
         }
-        Settings.Save(MatchesSettingsFile, matches);
+        _storage.SaveMatchesAsync();
       }
       return fanArtDownloaded;
     }
@@ -160,12 +159,12 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
       lock (_syncObj)
       {
         // Load cache or create new list
-        List<TMatch> matches = _storage.LoadMatches();
+        List<TMatch> matches = _storage.GetMatches();
         foreach (TMatch match in matches.FindAll(m => m.Id.Equals(itemId)))
           if (!match.FanArtDownloadFinished.HasValue)
             match.FanArtDownloadFinished = DateTime.Now;
 
-        _storage.SaveMatches(matches);
+        _storage.SaveMatchesAsync();
       }
     }
 
@@ -174,18 +173,21 @@ namespace MediaPortal.Extensions.OnlineLibraries.Matches
       if (!Init())
         return;
 
-      List<TMatch> matches;
+      var downloadsToBeStarted = new HashSet<TId>();
       lock (_syncObj)
-        matches = _storage.LoadMatches();
-
-      foreach (TMatch match in matches.FindAll(m => m.FanArtDownloadStarted.HasValue && !m.FanArtDownloadFinished.HasValue ||
-          !m.Id.Equals(default(TId)) && !m.FanArtDownloadStarted.HasValue))
       {
-        if (!match.FanArtDownloadStarted.HasValue)
-          match.FanArtDownloadStarted = DateTime.Now;
-        ScheduleDownload(match.Id, true);
+        var matches = _storage.GetMatches();
+        foreach (TMatch match in matches.FindAll(m => m.FanArtDownloadStarted.HasValue && !m.FanArtDownloadFinished.HasValue ||
+                                                      !m.Id.Equals(default(TId)) && !m.FanArtDownloadStarted.HasValue))
+        {
+          if (!match.FanArtDownloadStarted.HasValue)
+            match.FanArtDownloadStarted = DateTime.Now;
+          downloadsToBeStarted.Add(match.Id);
+        }
+        _storage.SaveMatchesAsync();
       }
-      Settings.Save(MatchesSettingsFile, matches);
+      foreach (var id in downloadsToBeStarted)
+        ScheduleDownload(id, true);
     }
 
     protected void DownloadFanArtQueue()

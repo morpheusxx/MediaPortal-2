@@ -56,14 +56,14 @@ namespace MediaPortal.Extensions.MetadataExtractors.VideoThumbnailer
     /// <summary>
     /// Maximum duration for creating a single video thumbnail.
     /// </summary>
-    protected const int PROCESS_TIMEOUT_MS = 10000;
+    protected const int PROCESS_TIMEOUT_MS = 30000;
 
     #endregion
 
     #region Protected fields and classes
 
     protected static ICollection<MediaCategory> MEDIA_CATEGORIES = new List<MediaCategory>();
-
+    protected static readonly object FFMPEG_THROTTLE_LOCK = new object();
     protected MetadataExtractorMetadata _metadata;
 
     #endregion
@@ -135,7 +135,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.VideoThumbnailer
           defaultVideoOffset = videoDuration * 1 / 3;
       }
 
-      string tempFileName = Path.ChangeExtension(Path.GetTempFileName(), ".jpg");
+      // ToDo: Move creation of temp file names to FileUtils class
+      string tempFileName = Path.GetTempPath() + Guid.NewGuid() + ".jpg";
       string executable = FileUtils.BuildAssemblyRelativePath("ffmpeg.exe");
       string arguments = string.Format("-ss {0} -i \"{1}\" -vframes 1 -an -dn -vf \"yadif='mode=send_frame:parity=auto:deint=all',scale=iw*sar:ih,setsar=1/1,scale=iw/2:-1\" -y \"{2}\"",
         defaultVideoOffset,
@@ -144,7 +145,10 @@ namespace MediaPortal.Extensions.MetadataExtractors.VideoThumbnailer
 
       try
       {
-        if (ProcessUtils.TryExecute_AutoImpersonate(executable, arguments, ProcessPriorityClass.Idle, PROCESS_TIMEOUT_MS) && File.Exists(tempFileName))
+        bool success;
+        lock (FFMPEG_THROTTLE_LOCK)
+          success = ProcessUtils.TryExecute_AutoImpersonate(executable, arguments, ProcessPriorityClass.Idle, PROCESS_TIMEOUT_MS);
+        if (success && File.Exists(tempFileName))
         {
           var binary = FileUtils.ReadFile(tempFileName);
           MediaItemAspect.SetAttribute(extractedAspectData, ThumbnailLargeAspect.ATTR_THUMBNAIL, binary);

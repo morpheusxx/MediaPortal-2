@@ -28,6 +28,8 @@ using System.IO;
 using System.Linq;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
+using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Services.ResourceAccess;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 using MediaPortal.Utilities.FileSystem;
 
@@ -47,7 +49,7 @@ namespace MediaPortal.Plugins.SlimTv.SlimTvResources.FanartProvider
     /// <param name="singleRandom">If <c>true</c> only one random image URI will be returned</param>
     /// <param name="result">Result if return code is <c>true</c>.</param>
     /// <returns><c>true</c> if at least one match was found.</returns>
-    public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<string> result)
+    public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<IResourceLocator> result)
     {
       result = null;
       string baseFolder = GetBaseFolder(mediaType, name);
@@ -62,12 +64,17 @@ namespace MediaPortal.Plugins.SlimTv.SlimTvResources.FanartProvider
       if (string.IsNullOrEmpty(pattern))
         return false;
 
+      List<IResourceLocator> files = new List<IResourceLocator>();
       try
       {
         DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder);
         if (directoryInfo.Exists)
         {
-          result = directoryInfo.GetFiles(pattern).Select(file => file.FullName).ToList();
+          files.AddRange(directoryInfo.GetFiles(pattern)
+            .Select(f => f.FullName)
+            .Select(fileName => new ResourceLocator(ResourcePath.BuildBaseProviderPath(LocalFsResourceProviderBase.LOCAL_FS_RESOURCE_PROVIDER_ID, fileName)))
+            );
+          result = files;
           int count = result.Count;
           if (count == 0)
             ServiceRegistration.Get<ILogger>().Info("SlimTvFanartProvider: No result for '{0}'", pattern);

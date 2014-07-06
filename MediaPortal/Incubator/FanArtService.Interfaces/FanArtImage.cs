@@ -30,6 +30,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using MediaPortal.Common;
 using MediaPortal.Common.PathManager;
+using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Utilities.Graphics;
 
 namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
@@ -144,23 +145,48 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
 
       try
       {
-        byte[] binary;
-
         using (FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-        using (Stream resized = ResizeImage(fileStream, maxWidth, maxHeight))
-        using (BinaryReader binaryReader = new BinaryReader(resized))
-        {
-          binary = new byte[resized.Length];
-          binaryReader.Read(binary, 0, binary.Length);
-        }
-
-        return new FanArtImage(fileName, binary);
+          return FromStream(fileStream, maxWidth, maxHeight, fileName);
       }
       catch
       {
         return null;
       }
     }
+
+    public static FanArtImage FromResource(IResourceLocator resourceLocator, int maxWidth, int maxHeight)
+    {
+      try
+      {
+        using (var ra = resourceLocator.CreateAccessor())
+        {
+          IFileSystemResourceAccessor fsra = ra as IFileSystemResourceAccessor;
+          if (fsra != null)
+          {
+            fsra.PrepareStreamAccess();
+            using (var fileStream = fsra.OpenRead())
+              return FromStream(fileStream, maxWidth, maxHeight, fsra.ResourceName);
+          }
+        }
+      }
+      catch
+      {
+      }
+      return null;
+    }
+
+    public static FanArtImage FromStream(Stream stream, int maxWidth, int maxHeight, string fileName = null)
+    {
+      byte[] binary;
+      using (Stream resized = ResizeImage(stream, maxWidth, maxHeight))
+      using (BinaryReader binaryReader = new BinaryReader(resized))
+      {
+        binary = new byte[resized.Length];
+        binaryReader.Read(binary, 0, binary.Length);
+      }
+      return new FanArtImage(fileName, binary);
+    }
+
 
     /// <summary>
     /// Resizes an image to given size. The resized image will be saved to cache, so it can be reused later. Images that

@@ -29,6 +29,7 @@ using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.PluginManager;
 using MediaPortal.Common.PluginManager.Exceptions;
+using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces.Providers;
 
@@ -88,11 +89,11 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
       InitProviders();
       foreach (IFanArtProvider fanArtProvider in _providerList)
       {
-        IList<string> fanArtImages;
+        IList<IResourceLocator> fanArtImages;
         if (fanArtProvider.TryGetFanArt(mediaType, fanArtType, name, maxWidth, maxHeight, singleRandom, out fanArtImages))
         {
-          IList<string> result = singleRandom ? GetSingleRandom(fanArtImages) : fanArtImages;
-          return result.Select(f => FanArtImage.FromFile(f, maxWidth, maxHeight)).Where(fanArtImage => fanArtImage != null).ToList();
+          IList<IResourceLocator> result = singleRandom ? GetSingleRandom(fanArtImages) : fanArtImages;
+          return result.Select(f => FanArtImage.FromResource(f, maxWidth, maxHeight)).Where(fanArtImage => fanArtImage != null).ToList();
         }
       }
       foreach (IBinaryFanArtProvider binaryProvider in _providerList.OfType<IBinaryFanArtProvider>())

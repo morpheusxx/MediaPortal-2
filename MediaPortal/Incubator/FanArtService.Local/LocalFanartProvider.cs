@@ -33,6 +33,7 @@ using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.Common.MediaManagement.MLQueries;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Services.ResourceAccess;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 
 namespace MediaPortal.Extensions.UserServices.FanArtService.Local
@@ -53,7 +54,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
     /// <param name="singleRandom">If <c>true</c> only one random image URI will be returned</param>
     /// <param name="result">Result if return code is <c>true</c>.</param>
     /// <returns><c>true</c> if at least one match was found.</returns>
-    public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<string> result)
+    public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<IResourceLocator> result)
     {
       result = null;
       Guid mediaItemId;
@@ -74,11 +75,12 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
       MediaItem mediaItem = items.First();
       string fileSystemPath = null;
       List<string> localPatterns = new List<string>();
-      List<string> files = new List<string>();
+      List<IResourceLocator> files = new List<IResourceLocator>();
       // File based access
       try
       {
-        using (var accessor = mediaItem.GetResourceLocator().CreateAccessor())
+        var resourceLocator = mediaItem.GetResourceLocator();
+        using (var accessor = resourceLocator.CreateAccessor())
         {
           ILocalFsResourceAccessor fsra = accessor as ILocalFsResourceAccessor;
           if (fsra != null)
@@ -113,7 +115,9 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
                 DirectoryInfo directoryInfo = new DirectoryInfo(pathPart);
                 if (directoryInfo.Exists)
                 {
-                  files.AddRange(directoryInfo.GetFiles(filePart).Select(f => f.FullName).ToList());
+                  files.AddRange(directoryInfo.GetFiles(filePart)
+                    .Select(f => f.FullName)
+                    .Select(fileName => new ResourceLocator(resourceLocator.NativeSystemId, ResourcePath.BuildBaseProviderPath(resourceLocator.NativeResourcePath.LastPathSegment.ProviderId, fileName))));
                 }
               }
               catch

@@ -80,7 +80,7 @@ namespace MediaPortal.Plugins.SlimTv.SlimTvResources.FanartProvider
 
     protected string GetPattern(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name)
     {
-      if (mediaType != FanArtConstants.FanArtMediaType.Channel)
+      if (mediaType != FanArtConstants.FanArtMediaType.ChannelTv)
         return null;
 
       return FileUtils.GetSafeFilename(string.Format("{0}.png", name));
@@ -90,7 +90,7 @@ namespace MediaPortal.Plugins.SlimTv.SlimTvResources.FanartProvider
     {
       switch (mediaType)
       {
-        case FanArtConstants.FanArtMediaType.Channel:
+        case FanArtConstants.FanArtMediaType.ChannelTv:
           return FileUtils.BuildAssemblyRelativePath(@"Resources\ChannelLogos");
         default:
           return null;

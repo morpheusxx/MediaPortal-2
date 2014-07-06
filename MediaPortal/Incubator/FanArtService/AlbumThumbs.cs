@@ -45,7 +45,8 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
 
     public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<string> result)
     {
-      throw new NotImplementedException("Use IBinaryFanArtProvider's method.");
+      result = null;
+      return false;
     }
 
     public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<FanArtImage> result)

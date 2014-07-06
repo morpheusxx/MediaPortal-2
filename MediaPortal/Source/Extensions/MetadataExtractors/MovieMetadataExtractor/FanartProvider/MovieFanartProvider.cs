@@ -26,6 +26,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MediaPortal.Backend.MediaLibrary;
+using MediaPortal.Common;
+using MediaPortal.Common.MediaManagement;
+using MediaPortal.Common.MediaManagement.DefaultItemAspects;
+using MediaPortal.Common.MediaManagement.MLQueries;
 using MediaPortal.Extensions.OnlineLibraries;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 
@@ -33,6 +38,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor.Fanar
 {
   public class MovieFanartProvider : IFanArtProvider
   {
+    private static readonly Guid[] NECESSARY_MIAS = { ProviderResourceAspect.ASPECT_ID, MovieAspect.ASPECT_ID };
+
     /// <summary>
     /// Gets a list of <see cref="FanArtImage"/>s for a requested <paramref name="mediaType"/>, <paramref name="fanArtType"/> and <paramref name="name"/>.
     /// The name can be: Series name, Actor name, Artist name depending on the <paramref name="mediaType"/>.
@@ -48,69 +55,96 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor.Fanar
     public bool TryGetFanArt(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name, int maxWidth, int maxHeight, bool singleRandom, out IList<string> result)
     {
       result = null;
-      string baseFolder = GetBaseFolder(mediaType, name);
-      if (baseFolder == null || !Directory.Exists(baseFolder))
+      if (mediaType != FanArtConstants.FanArtMediaType.Movie && mediaType != FanArtConstants.FanArtMediaType.MovieCollection &&
+          mediaType != FanArtConstants.FanArtMediaType.Undefined && fanArtType == FanArtConstants.FanArtType.Thumbnail)
         return false;
 
-      string pattern = GetPattern(mediaType, fanArtType, name);
-      if (string.IsNullOrEmpty(pattern))
+      Guid mediaItemId;
+      string[] patterns;
+
+      Guid.TryParse(name, out mediaItemId);
+      if (!GetPattern(mediaType, fanArtType, mediaItemId, name, out patterns))
         return false;
 
-      try
+      List<string> files = new List<string>();
+      foreach (var pattern in patterns)
       {
-        DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder);
-        if (directoryInfo.Exists)
+        try
         {
-          result = directoryInfo.GetFiles(pattern).Select(file => file.FullName).ToList();
-          return result.Count > 0;
+          var pathPart = Path.GetDirectoryName(pattern);
+          var filePart = Path.GetFileName(pattern);
+          DirectoryInfo directoryInfo = new DirectoryInfo(pathPart);
+          if (directoryInfo.Exists)
+          {
+            files.AddRange(directoryInfo.GetFiles(filePart).Select(file => file.FullName).ToList());
+          }
+        }
+        catch
+        {
         }
       }
-      catch
-      { }
-      return false;
+      result = files;
+      return files.Count > 0;
     }
 
-    protected IList<FanArtImage> GetSingleRandom(IList<FanArtImage> fullList)
+    protected bool GetPattern(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, Guid mediaItemId, string name, out string[] patterns)
     {
-      if (fullList.Count <= 1)
-        return fullList;
+      patterns = null;
+      string basePath = null;
+      if (mediaItemId != Guid.Empty)
+      {
+        IMediaLibrary mediaLibrary = ServiceRegistration.Get<IMediaLibrary>(false);
+        if (mediaLibrary == null)
+          return false;
 
-      Random rnd = new Random(DateTime.Now.Millisecond);
-      int rndIndex = rnd.Next(fullList.Count - 1);
-      return new List<FanArtImage> { fullList[rndIndex] };
-    }
+        IFilter filter = new MediaItemIdFilter(mediaItemId);
+        IList<MediaItem> items = mediaLibrary.Search(new MediaItemQuery(NECESSARY_MIAS, filter), false);
+        if (items == null || items.Count == 0)
+          return false;
 
-    protected string GetPattern(FanArtConstants.FanArtMediaType mediaType, FanArtConstants.FanArtType fanArtType, string name)
-    {
-      if (mediaType != FanArtConstants.FanArtMediaType.Movie && mediaType != FanArtConstants.FanArtMediaType.MovieCollection)
-        return null;
+        MediaItem mediaItem = items.First();
+        int movieDbId;
+        if (MediaItemAspect.TryGetAttribute(mediaItem.Aspects, MovieAspect.ATTR_TMDB_ID, out movieDbId))
+        {
+          switch (mediaType)
+          {
+            case FanArtConstants.FanArtMediaType.Undefined:
+            case FanArtConstants.FanArtMediaType.Movie:
+              basePath = Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
+              break;
+          }
+        }
+      }
+      else
+      {
+        switch (mediaType)
+        {
+          case FanArtConstants.FanArtMediaType.Undefined:
+          case FanArtConstants.FanArtMediaType.Movie:
+            int movieDbId;
+            basePath = !MovieTheMovieDbMatcher.Instance.TryGetMovieDbId(name, out movieDbId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
+            break;
+          case FanArtConstants.FanArtMediaType.MovieCollection:
+            int collectionId;
+            basePath = !MovieTheMovieDbMatcher.Instance.TryGetCollectionId(name, out collectionId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, "COLL_" + collectionId);
+            break;
+        }
+      }
+
+      if (string.IsNullOrWhiteSpace(basePath))
+        return false;
 
       switch (fanArtType)
       {
+        case FanArtConstants.FanArtType.Thumbnail:
         case FanArtConstants.FanArtType.Poster:
-          return "Posters\\*.jpg";
+          patterns = new[] { Path.Combine(basePath, "Posters\\*.jpg") };
+          return true;
         case FanArtConstants.FanArtType.FanArt:
-          return "Backdrops\\*.jpg";
-        default:
-          return null;
+          patterns = new[] { Path.Combine(basePath, "Backdrops\\*.jpg") };
+          return true;
       }
-    }
-
-    protected string GetBaseFolder(FanArtConstants.FanArtMediaType mediaType, string name)
-    {
-      switch (mediaType)
-      {
-        case FanArtConstants.FanArtMediaType.Movie:
-          int movieDbId;
-          return !MovieTheMovieDbMatcher.Instance.TryGetMovieDbId(name, out movieDbId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, movieDbId.ToString());
-
-        case FanArtConstants.FanArtMediaType.MovieCollection:
-          int collectionId;
-          return !MovieTheMovieDbMatcher.Instance.TryGetCollectionId(name, out collectionId) ? null : Path.Combine(MovieTheMovieDbMatcher.CACHE_PATH, "COLL_" + collectionId);
-
-        default:
-          return null;
-      }
+      return false;
     }
   }
 }

@@ -136,19 +136,25 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
       if (string.IsNullOrEmpty(fileName))
         return null;
 
-      fileName = ResizeImage(fileName, maxWidth, maxHeight);
-      FileInfo fileInfo = new FileInfo(fileName);
-      if (!fileInfo.Exists)
-        return null;
+      // Morpheus_xx, 2014-07-05: disabled file based mode as the support of local fanart leads to no longer unique cache files.
+      //fileName = ResizeImage(fileName, maxWidth, maxHeight);
+      //FileInfo fileInfo = new FileInfo(fileName);
+      //if (!fileInfo.Exists)
+      //  return null;
 
       try
       {
-        byte[] binary = new byte[fileInfo.Length];
-        using (FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-        using (BinaryReader binaryReader = new BinaryReader(fileStream))
-          binaryReader.Read(binary, 0, binary.Length);
+        byte[] binary;
 
-        return new FanArtImage(fileInfo.Name, binary);
+        using (FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+        using (Stream resized = ResizeImage(fileStream, maxWidth, maxHeight))
+        using (BinaryReader binaryReader = new BinaryReader(resized))
+        {
+          binary = new byte[resized.Length];
+          binaryReader.Read(binary, 0, binary.Length);
+        }
+
+        return new FanArtImage(fileName, binary);
       }
       catch
       {
@@ -199,6 +205,47 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Interfaces
       catch (Exception)
       {
         return originalFile;
+      }
+    }
+
+    /// <summary>
+    /// Resizes an image to given size. The resized image will be saved to the given stream. Images that
+    /// are smaller than the requested target size will not be scaled up, but returned in original size.
+    /// </summary>
+    /// <param name="originalStream">Image to resize</param>
+    /// <param name="maxWidth">Maximum image width</param>
+    /// <param name="maxHeight">Maximum image height</param>
+    /// <returns></returns>
+    protected static Stream ResizeImage(Stream originalStream, int maxWidth, int maxHeight)
+    {
+      if (maxWidth == 0 || maxHeight == 0)
+        return originalStream;
+      
+      try
+      {
+        Image fullsizeImage = Image.FromStream(originalStream);
+        if (fullsizeImage.Width <= maxWidth)
+          maxWidth = fullsizeImage.Width;
+
+        int newHeight = fullsizeImage.Height * maxWidth / fullsizeImage.Width;
+        if (newHeight > maxHeight)
+        {
+          // Resize with height instead
+          maxWidth = fullsizeImage.Width * maxHeight / fullsizeImage.Height;
+          newHeight = maxHeight;
+        }
+
+        MemoryStream resizedStream = new MemoryStream();
+        using (fullsizeImage)
+        using (Image newImage = ImageUtilities.ResizeImage(fullsizeImage, maxWidth, newHeight))
+          ImageUtilities.SaveJpeg(resizedStream, newImage, 95);
+
+        resizedStream.Position = 0;
+        return resizedStream;
+      }
+      catch (Exception)
+      {
+        return originalStream;
       }
     }
   }

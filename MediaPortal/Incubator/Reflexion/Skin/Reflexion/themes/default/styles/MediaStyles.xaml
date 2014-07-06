@@ -72,13 +72,7 @@
                     <media:MovieAspectWrapper.Template>
                       <ControlTemplate>
                         <Image Width="{StaticResource MEDIA_POSTER_WIDTH}" Height="{StaticResource MEDIA_POSTER_HEIGHT}" Stretch="Uniform"
-                               FallbackSource="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=MediaItem}">
-                          <Image.Source>
-                            <fanart:FanArtImageSource fanart:FanArtMediaType="Movie" fanart:FanArtType="Poster"
-                                    fanart:FanArtName="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=MovieName}"
-                                    fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
-                          </Image.Source>
-                        </Image>
+                               Source="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=MediaItem}"/>
                       </ControlTemplate>
                     </media:MovieAspectWrapper.Template>
                   </media:MovieAspectWrapper>

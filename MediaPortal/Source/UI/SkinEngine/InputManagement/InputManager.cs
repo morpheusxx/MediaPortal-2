@@ -75,7 +75,7 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
   {
     #region Inner classes
 
-    protected class InputEvent
+    public class InputEvent
     {
       public override string ToString()
       {
@@ -150,6 +150,43 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
       }
     }
 
+    // EventArgs passed to Touch handlers
+    internal abstract class InputTouchEvent : InputEvent
+    {
+      // touch X client coordinate in pixels
+      public float LocationX { get; set; }
+
+      // touch Y client coordinate in pixels
+      public float LocationY { get; set; }
+
+      // contact ID
+      public int Id { get; set; }
+
+      // flags
+      public TouchEventFlags Flags { get; set; }
+
+      // mask which fields in the structure are valid
+      public TouchInputMask Mask { get; set; }
+
+      // touch event time
+      public int Time { get; set; }
+
+      // X size of the contact area in pixels
+      public float ContactX { get; set; }
+
+      // Y size of the contact area in pixels
+      public float ContactY { get; set; }
+
+      public bool IsPrimaryContact
+      {
+        get { return (Flags.HasFlag(TouchEventFlags.Primary)); }
+      }
+    }
+
+    internal class InputTouchDownEvent : InputTouchEvent { }
+    internal class InputTouchUpEvent : InputTouchEvent { }
+    internal class InputTouchMoveEvent : InputTouchEvent { }
+
     #endregion
 
     #region Consts
@@ -182,7 +219,7 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
 
     private InputManager()
     {
-      _lastMouseUsageTime =_lastInputTime = DateTime.Now;
+      _lastMouseUsageTime = _lastInputTime = DateTime.Now;
       _workThread = new Thread(DoWork) { IsBackground = true, Name = "InputMgr" };  //InputManager dispatch thread
       _workThread.Start();
     }
@@ -232,6 +269,10 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
     /// Can be registered by classes of the skin engine to preview key events before shortcuts are triggered.
     /// </summary>
     public event KeyPressedHandler KeyPreview;
+
+    public event EventHandler<TouchDownEvent> TouchDown;   // touch down event handler
+    public event EventHandler<TouchUpEvent> TouchUp;       // touch up event handler
+    public event EventHandler<TouchMoveEvent> TouchMove;   // touch move event handler
 
     public void Terminate()
     {
@@ -300,13 +341,19 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
     {
       Type eventType = evt.GetType();
       if (eventType == typeof(KeyEvent))
-        ExecuteKeyPress((KeyEvent) evt);
+        ExecuteKeyPress((KeyEvent)evt);
       else if (eventType == typeof(MouseMoveEvent))
-        ExecuteMouseMove((MouseMoveEvent) evt);
+        ExecuteMouseMove((MouseMoveEvent)evt);
       else if (eventType == typeof(MouseClickEvent))
-        ExecuteMouseClick((MouseClickEvent) evt);
+        ExecuteMouseClick((MouseClickEvent)evt);
       else if (eventType == typeof(MouseWheelEvent))
-        ExecuteMouseWheel((MouseWheelEvent) evt);
+        ExecuteMouseWheel((MouseWheelEvent)evt);
+      else if (eventType == typeof(InputTouchDownEvent))
+        ExecuteTouchDown(ToUiEvent<TouchDownEvent>((InputTouchDownEvent)evt));
+      else if (eventType == typeof(InputTouchUpEvent))
+        ExecuteTouchUp(ToUiEvent<TouchUpEvent>((InputTouchUpEvent)evt));
+      else if (eventType == typeof(InputTouchMoveEvent))
+        ExecuteTouchMove(ToUiEvent<TouchMoveEvent>((InputTouchMoveEvent)evt));
     }
 
     protected void Dispatch(object o)
@@ -411,6 +458,59 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
         dlgt(evt.NumDetents);
     }
 
+    internal void ExecuteTouchMove(TouchMoveEvent evt)
+    {
+      var dlgt = TouchMove;
+      if (dlgt != null)
+        dlgt(this, evt);
+    }
+
+    internal void ExecuteTouchDown(TouchDownEvent evt)
+    {
+      var dlgt = TouchDown;
+      if (dlgt != null)
+        dlgt(this, evt);
+    }
+
+    internal void ExecuteTouchUp(TouchUpEvent evt)
+    {
+      var dlgt = TouchUp;
+      if (dlgt != null)
+        dlgt(this, evt);
+    }
+
+    internal static TE ToUiEvent<TE>(InputTouchEvent inputEvent) where TE : Control.InputManager.TouchEvent, new()
+    {
+      TE uiEvent = new TE
+      {
+        ContactX = inputEvent.ContactX,
+        ContactY = inputEvent.ContactY,
+        LocationX = inputEvent.LocationX,
+        LocationY = inputEvent.LocationY,
+        Flags = inputEvent.Flags,
+        Id = inputEvent.Id,
+        Mask = inputEvent.Mask,
+        Time = inputEvent.Time
+      };
+      return uiEvent;
+    }
+
+    internal static TE ToInputEvent<TE>(Control.InputManager.TouchEvent inputEvent) where TE : InputTouchEvent, new()
+    {
+      TE uiEvent = new TE
+      {
+        ContactX = inputEvent.ContactX,
+        ContactY = inputEvent.ContactY,
+        LocationX = inputEvent.LocationX,
+        LocationY = inputEvent.LocationY,
+        Flags = inputEvent.Flags,
+        Id = inputEvent.Id,
+        Mask = inputEvent.Mask,
+        Time = inputEvent.Time
+      };
+      return uiEvent;
+    }
+
     protected void DoWork()
     {
       while (true)
@@ -425,7 +525,7 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
           if (IsTerminated)
             break;
         }
-        WaitHandle.WaitAny(new WaitHandle[] {_terminatedEvent, _inputAvailableEvent});
+        WaitHandle.WaitAny(new WaitHandle[] { _terminatedEvent, _inputAvailableEvent });
         if (IsTerminated)
           break;
       }
@@ -484,6 +584,30 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
     {
       _lastInputTime = DateTime.Now;
       TryEvent_NoLock(new KeyEvent(key));
+    }
+
+    void IInputManager.TouchDown(Control.InputManager.TouchDownEvent downEvent)
+    {
+      DateTime now = DateTime.Now;
+      _lastInputTime = now;
+      _lastMouseUsageTime = now; //TODO: same as mouse, or another?
+      TryEvent_NoLock(ToInputEvent<InputTouchDownEvent>(downEvent));
+    }
+
+    void IInputManager.TouchUp(Control.InputManager.TouchUpEvent upEvent)
+    {
+      DateTime now = DateTime.Now;
+      _lastInputTime = now;
+      _lastMouseUsageTime = now; //TODO: same as mouse, or another?
+      TryEvent_NoLock(ToInputEvent<InputTouchUpEvent>(upEvent));
+    }
+
+    void IInputManager.TouchMove(Control.InputManager.TouchMoveEvent moveEvent)
+    {
+      DateTime now = DateTime.Now;
+      _lastInputTime = now;
+      _lastMouseUsageTime = now; //TODO: same as mouse, or another?
+      TryEvent_NoLock(ToInputEvent<InputTouchMoveEvent>(moveEvent));
     }
 
     public void ExecuteCommand(ParameterlessMethod command)

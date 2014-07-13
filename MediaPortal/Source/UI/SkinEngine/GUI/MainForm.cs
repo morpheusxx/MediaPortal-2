@@ -52,7 +52,7 @@ namespace MediaPortal.UI.SkinEngine.GUI
 {
   public delegate void SwitchModeDelegate(ScreenMode mode);
 
-  public partial class MainForm : Form, IScreenControl
+  public partial class MainForm : WMTouchForm, IScreenControl
   {
     protected delegate void Dlgt();
 
@@ -156,6 +156,11 @@ namespace MediaPortal.UI.SkinEngine.GUI
       _adaptToSizeEnabled = true;
 
       VideoPlayerSynchronizationStrategy = new SynchronizeToPrimaryPlayer();
+
+      // Register touch events
+      TouchDown += MainForm_OnTouchDown;
+      TouchMove += MainForm_OnTouchMove;
+      TouchUp += MainForm_OnTouchUp;
     }
 
     /// <summary>
@@ -611,6 +616,56 @@ namespace MediaPortal.UI.SkinEngine.GUI
       // setting the MainWindow, which would have added an event handler which calls
       // Application.ExitThread() for us
       Application.ExitThread();
+    }
+
+    private void MainForm_OnTouchUp(object sender, TouchUpEvent uiTouchEventArgs)
+    {
+      try
+      {
+        IInputManager inputManager = ServiceRegistration.Get<IInputManager>();
+        inputManager.TouchUp(uiTouchEventArgs);
+      }
+      catch (Exception ex)
+      {
+        ServiceRegistration.Get<ILogger>().Error("SkinEngine MainForm: Error occured in TouchDown handler", ex);
+      }
+
+    }
+
+    private void MainForm_OnTouchMove(object sender, TouchMoveEvent uiTouchEventArgs)
+    {
+      ServiceRegistration.Get<ILogger>().Debug("MainForm_OnTouchMove: P:{0} LX:{1} LY:{2} CX:{3} CY:{4}", uiTouchEventArgs.IsPrimaryContact, uiTouchEventArgs.LocationX, uiTouchEventArgs.LocationY, uiTouchEventArgs.ContactX, uiTouchEventArgs.ContactY);
+      //if (_renderThreadStopped || last == null)
+      //  return;
+      //// Negative direction for touch
+      //int numDetents = -(last.LocationY - uiTouchEventArgs.LocationY) / 10;
+      //last = uiTouchEventArgs;
+      //if (numDetents == 0)
+      //  return;
+
+      //ServiceRegistration.Get<IInputManager>().MouseWheel(numDetents);
+      try
+      {
+        IInputManager inputManager = ServiceRegistration.Get<IInputManager>();
+        inputManager.TouchMove(uiTouchEventArgs);
+      }
+      catch (Exception ex)
+      {
+        ServiceRegistration.Get<ILogger>().Error("SkinEngine MainForm: Error occured in TouchDown handler", ex);
+      }
+    }
+
+    private void MainForm_OnTouchDown(object sender, TouchDownEvent uiTouchEventArgs)
+    {
+      try
+      {
+        IInputManager inputManager = ServiceRegistration.Get<IInputManager>();
+        inputManager.TouchDown(uiTouchEventArgs);
+      }
+      catch (Exception ex)
+      {
+        ServiceRegistration.Get<ILogger>().Error("SkinEngine MainForm: Error occured in TouchDown handler", ex);
+      }
     }
 
     private void MainForm_MouseWheel(object sender, MouseEventArgs e)

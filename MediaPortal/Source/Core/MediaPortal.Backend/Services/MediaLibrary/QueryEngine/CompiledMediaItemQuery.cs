@@ -343,6 +343,41 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
                   }
                 result.Aspects[miam.AspectId] = mia;
               }
+
+              // Add the relationships
+              int leftIdIndex;
+              int leftTypeIndex;
+              int rightIdIndex;
+              int rightTypeIndex;
+
+              using (IDbCommand command = MediaLibrary_SubSchema.SelectMediaRelationshipsCommand(transaction, mediaItemId, out leftIdIndex, out leftTypeIndex, out rightIdIndex, out rightTypeIndex))
+                using (IDataReader reader = command.ExecuteReader())
+                  while (reader.Read())
+                  {
+                    Guid leftId = reader.GetGuid(leftIdIndex);
+                    Guid leftType = reader.GetGuid(leftTypeIndex);
+                    Guid rightId = reader.GetGuid(rightIdIndex);
+                    Guid rightType = reader.GetGuid(rightTypeIndex);
+
+                    Guid itemType;
+                    Guid relationshipType;
+                    Guid relationshipId;
+                    if(leftId == mediaItemId)
+                    {
+                      itemType = leftType;
+                      relationshipType = rightType;
+                      relationshipId = rightId;
+                    }
+                    else
+                    {
+                      itemType = rightType;
+                      relationshipType = rightType;
+                      relationshipId = leftId;
+                    }
+
+                    MediaItemRelationship relationship = new MediaItemRelationship(itemType, relationshipType, relationshipId);
+                    result.Relationships.Add(relationship);
+                  }
             }
             return result;
           }

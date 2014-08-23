@@ -44,7 +44,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary
     public const string SUBSCHEMA_NAME = "MediaLibrary";
 
     public const int EXPECTED_SCHEMA_VERSION_MAJOR = 1;
-    public const int EXPECTED_SCHEMA_VERSION_MINOR = 1;
+    public const int EXPECTED_SCHEMA_VERSION_MINOR = 2;
 
     internal const string MEDIA_ITEMS_TABLE_NAME = "MEDIA_ITEMS";
     internal const string MEDIA_ITEMS_ITEM_ID_COL_NAME = "MEDIA_ITEM_ID";
@@ -363,6 +363,24 @@ namespace MediaPortal.Backend.Services.MediaLibrary
       database.AddParameter(result, "PLAYLIST_ID", playlistId, typeof(Guid));
 
       mediaItemIdIndex = 0;
+      return result;
+    }
+
+    public static IDbCommand SelectMediaRelationshipsCommand(ITransaction transaction, Guid guid,
+      out int leftIdIndex, out int leftTypeIndex, out int rightIdIndex, out int rightTypeIndex)
+    {
+      ISQLDatabase database = transaction.Database;
+      IDbCommand result = transaction.CreateCommand();
+      result.CommandText = "SELECT LEFTID, LEFTTYPE, RIGHTID, RIGHTTYPE FROM MEDIA_RELATIONSHIPS WHERE LEFTID=@LEFTID OR RIGHTID=@RIGHTID";
+
+      database.AddParameter(result, "LEFTID", guid, typeof(Guid));
+      database.AddParameter(result, "RIGHTID", guid, typeof(Guid));
+
+      leftIdIndex = 0;
+      leftTypeIndex = 1;
+      rightIdIndex = 2;
+      rightTypeIndex = 3;
+
       return result;
     }
   }

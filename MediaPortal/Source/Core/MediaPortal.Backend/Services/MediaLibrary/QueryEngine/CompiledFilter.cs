@@ -31,6 +31,7 @@ using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.MediaManagement.MLQueries;
 using MediaPortal.Utilities.Exceptions;
 using MediaPortal.Utilities;
+using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 
 namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
 {
@@ -268,7 +269,65 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         }
         return;
       }
+
+      RelationshipFilter relationshipFilter = filter as RelationshipFilter;
+      if(relationshipFilter != null)
+      {
+        resultParts.Add(outerMIIDJoinVariable);
+        resultParts.Add(" IN (");
+        CompileRelationshipCondition(miaManagement, bvNamespace, resultParts, resultBindVars,
+          "R1", relationshipFilter, MediaLibrary_Relationships.ATTR_LEFT_ID, MediaLibrary_Relationships.ATTR_LEFT_TYPE, MediaLibrary_Relationships.ATTR_RIGHT_TYPE, MediaLibrary_Relationships.ATTR_RIGHT_ID);
+        resultParts.Add(" UNION ");
+        CompileRelationshipCondition(miaManagement, bvNamespace, resultParts, resultBindVars,
+          "R2", relationshipFilter, MediaLibrary_Relationships.ATTR_RIGHT_ID, MediaLibrary_Relationships.ATTR_RIGHT_TYPE, MediaLibrary_Relationships.ATTR_LEFT_TYPE, MediaLibrary_Relationships.ATTR_LEFT_ID);
+        resultParts.Add(")");
+        return;
+      }
+
       throw new InvalidDataException("Filter type '{0}' isn't supported by the media library", filter.GetType().Name);
+    }
+
+    private void CompileRelationshipCondition(MIA_Management miaManagement, BindVarNamespace bvNamespace,
+      IList<object> resultParts, IList<BindVar> resultBindVars,
+      string prefix, RelationshipFilter relationshipFilter,
+      MediaItemAspectMetadata.AttributeSpecification attrId1, MediaItemAspectMetadata.AttributeSpecification attrType1,
+      MediaItemAspectMetadata.AttributeSpecification attrType2, MediaItemAspectMetadata.AttributeSpecification attrId2
+      )
+    {
+      resultParts.Add("SELECT ");
+      resultParts.Add(prefix);
+      resultParts.Add(".");
+      resultParts.Add(miaManagement.GetMIAAttributeColumnName(attrId2));
+      resultParts.Add(" FROM ");
+      resultParts.Add(miaManagement.GetMIATableName(MediaLibrary_Relationships.Metadata));
+      resultParts.Add(" ");
+      resultParts.Add(prefix);
+      resultParts.Add(" WHERE ");
+
+      resultParts.Add(prefix);
+      resultParts.Add(".");
+      AddBindVar(miaManagement, bvNamespace, resultParts, resultBindVars, attrId1, prefix, relationshipFilter.ItemId.ToString(), typeof(string));
+
+      resultParts.Add(" AND ");
+      resultParts.Add(prefix);
+      resultParts.Add(".");
+      AddBindVar(miaManagement, bvNamespace, resultParts, resultBindVars, attrType1, prefix, relationshipFilter.ItemType.ToString(), typeof(string));
+      
+      resultParts.Add(" AND ");
+      resultParts.Add(prefix);
+      resultParts.Add(".");
+      AddBindVar(miaManagement, bvNamespace, resultParts, resultBindVars, attrType2, prefix, relationshipFilter.RelationshipType.ToString(), typeof(string));
+    }
+
+    private void AddBindVar(MIA_Management miaManagement, BindVarNamespace bvNamespace,
+      IList<object> resultParts, IList<BindVar> resultBindVars,
+      MediaItemAspectMetadata.AttributeSpecification spec, string prefix, object value, Type valueType)
+    {
+      resultParts.Add(miaManagement.GetMIAAttributeColumnName(spec));
+      resultParts.Add("=");
+      BindVar bindVar = new BindVar(bvNamespace.CreateNewBindVarName(prefix), value, valueType);
+      resultParts.Add("@" + bindVar.Name);
+      resultBindVars.Add(bindVar);
     }
 
     /// <summary>

@@ -182,6 +182,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         miaIdAttribute = new RequestedAttribute(miaTableQuery, MediaLibrary_SubSchema.MEDIA_ITEMS_ITEM_ID_COL_NAME);
       }
 
+
       // Ensure that the tables for all optional MIAs are requested first (LEFT OUTER JOIN)
       // That is necessary to make empty optional MIA types available in the result
       foreach (MediaItemAspectMetadata miaType in _optionalRequestedMIAs)

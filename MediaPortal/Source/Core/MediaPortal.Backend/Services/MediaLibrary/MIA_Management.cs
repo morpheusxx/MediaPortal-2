@@ -146,6 +146,12 @@ namespace MediaPortal.Backend.Services.MediaLibrary
     // TODO: Rename to VALUE - will break an existing media library
     protected internal const string COLL_ATTR_VALUE_COL_NAME = "ATTRIBUTE_VALUE";
 
+    protected internal const string MIR_TABLE = "MEDIA_RELATIONSHIPS";
+    protected internal const string MIR_LEFTID_COL_NAME = "LEFTID";
+    protected internal const string MIR_LEFTTYPE_COL_NAME = "LEFTTYPE";
+    protected internal const string MIR_RIGHTID_COL_NAME = "RIGHTID";
+    protected internal const string MIR_RIGHTTYPE_COL_NAME = "RIGHTTYPE";
+
     protected readonly IDictionary<string, string> _nameAliases = new Dictionary<string, string>();
 
     /// <summary>
@@ -1606,6 +1612,94 @@ namespace MediaPortal.Backend.Services.MediaLibrary
         result = command.ExecuteNonQuery() > 0;
       }
       CleanupAllManyToOneOrphanedAttributeValues(transaction, miaType);
+      return result;
+    }
+
+    #endregion
+
+    #region MIR management
+
+    public bool MIRExists(ITransaction transaction, Guid mediaItemId, Guid mediaItemType, Guid relationshipType, Guid relationshipId)
+    {
+      ISQLDatabase database = transaction.Database;
+      using (IDbCommand command = transaction.CreateCommand())
+      {
+        command.CommandText = "SELECT FROM " + MIR_TABLE + " WHERE " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID1 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE1 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID1 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE1)"
+          + " OR " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID2 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE2 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID2 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE2)";
+
+        database.AddParameter(command, "LEFTID1", mediaItemId, typeof(Guid));
+        database.AddParameter(command, "LEFTTYPE1", mediaItemType, typeof(Guid));
+        database.AddParameter(command, "RIGHTID1", relationshipId, typeof(Guid));
+        database.AddParameter(command, "RIGHTTYPE1", relationshipType, typeof(Guid));
+
+        database.AddParameter(command, "LEFTID2", relationshipId, typeof(Guid));
+        database.AddParameter(command, "LEFTTYPE2", relationshipType, typeof(Guid));
+        database.AddParameter(command, "RIGHTID2", mediaItemId, typeof(Guid));
+        database.AddParameter(command, "RIGHTTYPE2", mediaItemType, typeof(Guid));
+
+        return command.ExecuteScalar() != null;
+      }
+    }
+
+    /// <summary>
+    /// Adds the given media item relationship on the media item with the given id.
+    /// </summary>
+    /// <param name="transaction">Database transaction to use.</param>
+    /// <param name="mediaItemId">Id of the media item to be added.</param>
+    /// <param name="mia">Media item relationship to write to DB.</param>
+    public bool AddMIR(ITransaction transaction, Guid mediaItemId, MediaItemRelationship mir)
+    {
+      if (MIRExists(transaction, mediaItemId, mir.ItemType, mir.RelationshipType, mir.RelationshipId))
+      {
+        return false;
+      }
+
+      bool result;
+      ISQLDatabase database = transaction.Database;
+      using (IDbCommand command = transaction.CreateCommand())
+      {
+        command.CommandText = "DELETE FROM " + MIR_TABLE + " WHERE " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID1 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE1 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID1 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE1)"
+          + " OR " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID2 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE2 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID2 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE2)";
+
+        database.AddParameter(command, "LEFTID", mediaItemId, typeof(Guid));
+        database.AddParameter(command, "LEFTTYPE", mir.ItemType, typeof(Guid));
+        database.AddParameter(command, "RIGHTID", mir.RelationshipId, typeof(Guid));
+        database.AddParameter(command, "RIGHTTYPE", mir.RelationshipType, typeof(Guid));
+
+        result = command.ExecuteNonQuery() > 0;
+      }
+
+      return result;
+    }
+
+    public bool RemoveMIR(ITransaction transaction, Guid mediaItemId, Guid mediaItemType, Guid relationshipType, Guid relationshipId)
+    {
+      bool result;
+      ISQLDatabase database = transaction.Database;
+      using (IDbCommand command = transaction.CreateCommand())
+      {
+        command.CommandText = "DELETE FROM " + MIR_TABLE + " WHERE " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID1 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE1 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID1 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE1)"
+          + " OR " +
+          "(" + MIR_LEFTID_COL_NAME + " = @LEFTID2 AND " + MIR_LEFTTYPE_COL_NAME + " = @LEFTTYPE2 AND " + MIR_RIGHTID_COL_NAME + " = @RIGHTID2 AND " + MIR_RIGHTTYPE_COL_NAME + " = @RIGHTTYPE2)";
+
+        database.AddParameter(command, "LEFTID1", mediaItemId, typeof(Guid));
+        database.AddParameter(command, "LEFTTYPE1", mediaItemType, typeof(Guid));
+        database.AddParameter(command, "RIGHTID1", relationshipId, typeof(Guid));
+        database.AddParameter(command, "RIGHTTYPE1", relationshipType, typeof(Guid));
+
+        database.AddParameter(command, "LEFTID2", relationshipId, typeof(Guid));
+        database.AddParameter(command, "LEFTTYPE2", relationshipType, typeof(Guid));
+        database.AddParameter(command, "RIGHTID2", mediaItemId, typeof(Guid));
+        database.AddParameter(command, "RIGHTTYPE2", mediaItemType, typeof(Guid));
+
+        result = command.ExecuteNonQuery() > 0;
+      }
+
       return result;
     }
 

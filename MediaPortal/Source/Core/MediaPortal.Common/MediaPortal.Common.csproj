@@ -61,6 +61,7 @@
   <ItemGroup>
     <Compile Include="ApplicationCore.cs" />
     <Compile Include="Exceptions\LauncherExceptionHandling.cs" />
+    <Compile Include="MediaManagement\DefaultItemAspects\AlbumAspect.cs" />
     <Compile Include="Services\MediaManagement\ImportDataflowBlocks\AsyncManualResetEvent.cs" />
     <Compile Include="Services\MediaManagement\ImportDataflowBlocks\DirectorySaveBlock.cs" />
     <Compile Include="Services\MediaManagement\ImportDataflowBlocks\FileUnfoldBlock.cs" />
@@ -152,6 +153,7 @@
     <Compile Include="MediaManagement\Helpers\ImdbIdMatcher.cs" />
     <Compile Include="MediaManagement\MediaCategory_DTO.cs" />
     <Compile Include="MediaManagement\MediaCategory.cs" />
+    <Compile Include="MediaManagement\MediaItemRelationship.cs" />
     <Compile Include="MediaManagement\DefaultItemAspects\ImporterAspect.cs" />
     <Compile Include="MediaManagement\DefaultItemAspects\DirectoryAspect.cs" />
     <Compile Include="MediaManagement\DefaultItemAspects\MovieAspect.cs" />
@@ -167,6 +169,7 @@
     <Compile Include="MediaManagement\Helpers\SharesHelper.cs" />
     <Compile Include="MediaManagement\MLQueries\FalseFilter.cs" />
     <Compile Include="MediaManagement\MLQueries\MediaItemIdFilter.cs" />
+    <Compile Include="MediaManagement\MLQueries\RelationshipFilter.cs" />
     <Compile Include="MediaManagement\PlaylistBase.cs" />
     <Compile Include="MediaManagement\PlaylistContents.cs" />
     <Compile Include="MediaManagement\PlaylistInformationData.cs" />

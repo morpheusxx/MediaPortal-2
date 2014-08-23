@@ -46,6 +46,7 @@ namespace MediaPortal.Common.MediaManagement
 
     protected Guid _id;
     protected readonly IDictionary<Guid, MediaItemAspect> _aspects;
+    protected readonly IList<MediaItemRelationship> _relationships;
 
     #endregion
 
@@ -58,18 +59,34 @@ namespace MediaPortal.Common.MediaManagement
       _id = mediaItemId;
     }
 
+    public MediaItem(Guid mediaItemId, IDictionary<Guid, MediaItemAspect> aspects) : this(mediaItemId, aspects, null)
+    {
+    }
+
+
     /// <summary>
     /// Creates a new media item.
     /// </summary>
     /// <param name="mediaItemId">Id of the media item in the media library. For local media items, this must be <c>Guid.Empty</c>.</param>
     /// <param name="aspects">Dictionary of media item aspects for the new media item instance.</param>
-    public MediaItem(Guid mediaItemId, IDictionary<Guid, MediaItemAspect> aspects)
+    /// <param name="relationships">List of media item relationsips for the new media item instance.</param>
+    public MediaItem(Guid mediaItemId, IDictionary<Guid, MediaItemAspect> aspects, IList<MediaItemRelationship> relationships)
     {
       _id = mediaItemId;
       _aspects = new Dictionary<Guid, MediaItemAspect>(aspects);
+      if (relationships != null)
+      {
+        _relationships = new List<MediaItemRelationship>(relationships);
+      }
+      else
+      {
+        _relationships = new List<MediaItemRelationship>();
+      }
+      /*
       if (!_aspects.ContainsKey(ProviderResourceAspect.ASPECT_ID))
         throw new ArgumentException(string.Format("Media items always have to contain the '{0}' aspect",
             typeof(ProviderResourceAspect).Name));
+      */
     }
 
     public Guid MediaItemId
@@ -80,6 +97,11 @@ namespace MediaPortal.Common.MediaManagement
     public IDictionary<Guid, MediaItemAspect> Aspects
     {
       get { return _aspects; }
+    }
+
+    public IList<MediaItemRelationship> Relationships
+    {
+      get { return _relationships; }
     }
 
     /// <summary>
@@ -148,8 +170,16 @@ namespace MediaPortal.Common.MediaManagement
       }
       while (reader.NodeType != XmlNodeType.EndElement)
       {
-        MediaItemAspect mia = MediaItemAspect.Deserialize(reader);
-        _aspects[mia.Metadata.AspectId] = mia;
+        if(reader.Name == MediaItemAspect.ELEMENT_NAME)
+        {
+          MediaItemAspect mia = MediaItemAspect.Deserialize(reader);
+         _aspects[mia.Metadata.AspectId] = mia;
+        }
+        else if(reader.Name == MediaItemRelationship.ELEMENT_NAME)
+        {
+          MediaItemRelationship mir = MediaItemRelationship.Deserialize(reader);
+          _relationships.Add(mir);
+        }
       }
       reader.ReadEndElement(); // MI
     }
@@ -159,6 +189,8 @@ namespace MediaPortal.Common.MediaManagement
       writer.WriteAttributeString("Id", _id.ToString("D"));
       foreach (MediaItemAspect mia in _aspects.Values)
         mia.Serialize(writer);
+      foreach(MediaItemRelationship relationship in _relationships)
+        relationship.Serialize(writer);
     }
 
     public void Serialize(XmlWriter writer)
@@ -218,6 +250,7 @@ namespace MediaPortal.Common.MediaManagement
     internal MediaItem()
     {
       _aspects = new Dictionary<Guid, MediaItemAspect>();
+      _relationships = new List<MediaItemRelationship>();
     }
 
     #endregion

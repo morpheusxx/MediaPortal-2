@@ -61,6 +61,8 @@ namespace MediaPortal.Common.MediaManagement
     /// </summary>
     public static readonly object IGNORE = new object();
 
+    public static readonly string ELEMENT_NAME = "Aspect";
+
     #endregion
 
     #region Protected fields
@@ -284,7 +286,7 @@ namespace MediaPortal.Common.MediaManagement
 
     public void Serialize(XmlWriter writer)
     {
-      writer.WriteStartElement("Aspect");
+      writer.WriteStartElement(ELEMENT_NAME);
       writer.WriteAttributeString("Id", _metadata.AspectId.ToString());
       foreach (MediaItemAspectMetadata.AttributeSpecification spec in _aspectData.Keys)
       {
@@ -303,7 +305,7 @@ namespace MediaPortal.Common.MediaManagement
           SerializeValue(writer, GetAttributeValue(spec), spec.AttributeType);
         writer.WriteEndElement(); // Attr
       }
-      writer.WriteEndElement(); // Aspect
+      writer.WriteEndElement(); // ELEMENT_NAME
     }
 
     public static MediaItemAspect Deserialize(XmlReader reader)
@@ -311,14 +313,14 @@ namespace MediaPortal.Common.MediaManagement
       if (!reader.MoveToAttribute("Id"))
         throw new ArgumentException("Media item aspect cannot be deserialized: 'Id' attribute missing");
       Guid aspectTypeId = new Guid(reader.ReadContentAsString());
-      reader.MoveToElement();
+      reader.MoveToElement(); // ELEMENT_NAME
       IMediaItemAspectTypeRegistration miatr = ServiceRegistration.Get<IMediaItemAspectTypeRegistration>();
       MediaItemAspectMetadata miaType;
       if (!miatr.LocallyKnownMediaItemAspectTypes.TryGetValue(aspectTypeId, out miaType))
         throw new ArgumentException(string.Format("Media item aspect cannot be deserialized: Unknown media item aspect type '{0}'",
             aspectTypeId));
       MediaItemAspect result = new MediaItemAspect(miaType);
-      if (SoapHelper.ReadEmptyStartElement(reader, "Aspect"))
+      if (SoapHelper.ReadEmptyStartElement(reader, ELEMENT_NAME))
         return result;
       while (reader.NodeType != XmlNodeType.EndElement)
       {
@@ -343,7 +345,7 @@ namespace MediaPortal.Common.MediaManagement
           result.SetAttribute(attributeSpec, DeserializeValue(reader, attributeSpec.AttributeType));
         reader.ReadEndElement(); // Attr
       }
-      reader.ReadEndElement(); // Aspect
+      reader.ReadEndElement(); // ELEMENT_NAME
       return result;
     }
 

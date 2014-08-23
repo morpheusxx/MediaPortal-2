@@ -112,11 +112,11 @@ namespace MediaPortal.Backend.Services.MediaLibrary
         _parent = parent;
       }
 
-      public Guid UpdateMediaItem(Guid parentDirectoryId, ResourcePath path, IEnumerable<MediaItemAspect> updatedAspects)
+      public Guid UpdateMediaItem(Guid parentDirectoryId, ResourcePath path, IEnumerable<MediaItemAspect> updatedAspects, IEnumerable<MediaItemRelationship> updatedRelationships)
       {
         try
         {
-          return _parent.AddOrUpdateMediaItem(parentDirectoryId, _parent.LocalSystemId, path, updatedAspects);
+          return _parent.AddOrUpdateMediaItem(parentDirectoryId, _parent.LocalSystemId, path, updatedAspects, updatedRelationships);
         }
         catch (Exception)
         {
@@ -786,7 +786,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary
 
     #region Media import
 
-    public Guid AddOrUpdateMediaItem(Guid parentDirectoryId, string systemId, ResourcePath path, IEnumerable<MediaItemAspect> mediaItemAspects)
+    public Guid AddOrUpdateMediaItem(Guid parentDirectoryId, string systemId, ResourcePath path, IEnumerable<MediaItemAspect> mediaItemAspects, IEnumerable<MediaItemRelationship> mediaItemRelationships)
     {
       // TODO: Avoid multiple write operations to the same media item
       ISQLDatabase database = ServiceRegistration.Get<ISQLDatabase>();
@@ -834,6 +834,13 @@ namespace MediaPortal.Backend.Services.MediaLibrary
           else
             _miaManagement.AddOrUpdateMIA(transaction, mediaItemId.Value, mia);
         }
+
+        // Update
+        foreach (MediaItemRelationship mir in mediaItemRelationships)
+        {
+          _miaManagement.AddMIR(transaction, mediaItemId.Value, mir);
+        }
+
         transaction.Commit();
         return mediaItemId.Value;
       }

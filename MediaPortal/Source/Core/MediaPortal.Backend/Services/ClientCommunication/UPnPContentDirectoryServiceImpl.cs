@@ -1118,7 +1118,8 @@ namespace MediaPortal.Backend.Services.ClientCommunication
       string systemId = (string) inParams[1];
       ResourcePath path = ResourcePath.Deserialize((string) inParams[2]);
       IEnumerable<MediaItemAspect> mediaItemAspects = (IEnumerable<MediaItemAspect>) inParams[3];
-      Guid mediaItemId = ServiceRegistration.Get<IMediaLibrary>().AddOrUpdateMediaItem(parentDirectoryId, systemId, path, mediaItemAspects);
+      IEnumerable<MediaItemRelationship> mediaItemRelationships = (IEnumerable<MediaItemRelationship>)inParams[4];
+      Guid mediaItemId = ServiceRegistration.Get<IMediaLibrary>().AddOrUpdateMediaItem(parentDirectoryId, systemId, path, mediaItemAspects, mediaItemRelationships);
       outParams = new List<object> {MarshallingHelper.SerializeGuid(mediaItemId)};
       return null;
     }

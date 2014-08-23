@@ -234,7 +234,7 @@ namespace MediaPortal.Backend.MediaLibrary
     /// <param name="path">The path at the given system of the media item to be updated.</param>
     /// <param name="mediaItemAspects">Media item aspects to be updated.</param>
     /// <returns>Id of the media item which has been added or updated.</returns>
-    Guid AddOrUpdateMediaItem(Guid parentDirectoryId, string systemId, ResourcePath path, IEnumerable<MediaItemAspect> mediaItemAspects);
+    Guid AddOrUpdateMediaItem(Guid parentDirectoryId, string systemId, ResourcePath path, IEnumerable<MediaItemAspect> mediaItemAspects, IEnumerable<MediaItemRelationship> mediaItemRelationships);
 
     /// <summary>
     /// Writes some media item aspects of an existing media item to the media library.

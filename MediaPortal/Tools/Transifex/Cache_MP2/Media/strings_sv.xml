@@ -188,6 +188,11 @@
   <string name="Media.PlaylistIdInfoLabel">Internt id på spellistan</string>
   <string name="Media.OpenPlayerStrategy.MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy.Default">Standard</string>
   <string name="Media.OpenPlayerStrategy.MediaPortal.UI.Services.Players.PCMOpenPlayerStrategy.PreservePiP">Bevara bild-i-bild video</string>
+  <!--MediaItemAction dialog-->
+  <string name="Media.MediaItemsActionDialogHeader">Media alternativ</string>
+  <string name="Media.RemoveFromML">Ta bort från biblioteket</string>
+  <string name="Media.ResetPlayCount">Återställ räknaren </string>
+  <string name="Media.DeleteFromStorage">Ta bort filen.</string>
   <!--Play items dialog-->
   <string name="Media.PlayItemDialogHeader">Spela objekt</string>
   <string name="Media.PlayAudioItems">Spela ljudobjekt</string>
@@ -275,7 +280,7 @@
   <string name="Media.RepeatMode.All">Alla</string>
   <string name="Media.RepeatMode.One">En</string>
   <!--VideoPlayerUIContributor-->
-  <string name="Media.SubtitleOff">Avaktivera undertexter</string>
+  <string name="Media.SubtitleOff">Inaktivera undertexter</string>
   <string name="Media.ChooseChapterDialogHeader">Välj kapitel</string>
   <string name="Media.ChooseSubtitleDialogHeader">Välj undertexter</string>
   <string name="Media.ChooseTitleDialogHeader">Välj titel</string>
@@ -286,8 +291,8 @@
   <string name="Media.Start">Start</string>
   <string name="Media.End">Slut</string>
   <string name="Media.DontSkip">Hoppa inte över</string>
-  <string name="Media.SwitchViewModeMenuItem">Vy</string>
-  <string name="Media.SwitchViewModeDialogTitle">Välj vy</string>
+  <string name="Media.SwitchViewModeMenuItem">Layout</string>
+  <string name="Media.SwitchViewModeDialogTitle">Välj layout</string>
   <string name="Media.SmallList">Liten lista</string>
   <string name="Media.MediumList">Medelstor lista:</string>
   <string name="Media.LargeList">Stor lista</string>

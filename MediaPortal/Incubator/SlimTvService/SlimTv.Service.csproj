@@ -49,20 +49,52 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Common.Utils, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.Plugins.Base, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.SetupControls, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVControl, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVDatabase.Entities, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVDatabase.EntityModel, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVDatabase.Presentation, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVDatabase.TVBusinessLayer, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVLibrary, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="Mediaportal.TV.Server.TVLibrary.Interfaces, Version=1.2.200.0, Culture=neutral, processorArchitecture=MSIL" />
-    <Reference Include="Mediaportal.TV.Server.TVLibrary.Services, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TvLibrary.Utils, Version=1.2.200.0, Culture=neutral, processorArchitecture=x86" />
-    <Reference Include="Mediaportal.TV.Server.TVService.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86" />
+    <Reference Include="Common.Utils, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86" />
+    <Reference Include="Mediaportal.TV.Server.Plugins.Base, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86" />
+    <Reference Include="Mediaportal.TV.Server.TVControl, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVControl.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.Entities, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVDatabase.Entities.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.EntityModel, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVDatabase.EntityModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.Presentation, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVDatabase.Presentation.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.TVBusinessLayer, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVDatabase.TVBusinessLayer.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary.Interfaces, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVLibrary.Interfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary.Services, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVLibrary.Services.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TvLibrary.Utils, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TvLibrary.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVService.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>References\Mediaportal.TV.Server.TVService.Interfaces.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -89,6 +121,59 @@
     <Content Include="plugin.xml">
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="References\Castle.Core.dll" />
+    <Content Include="References\Castle.Windsor.dll" />
+    <Content Include="References\Common.Utils.dll" />
+    <Content Include="References\DirectShowLib.dll" />
+    <Content Include="References\EntityFramework.dll" />
+    <Content Include="References\Mediaportal.TV.Server.Plugins.Base.dll" />
+    <Content Include="References\Mediaportal.TV.Server.SetupControls.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVControl.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVDatabase.Entities.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVDatabase.EntityModel.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVDatabase.Presentation.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVDatabase.TVBusinessLayer.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVLibrary.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVLibrary.Interfaces.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVLibrary.Services.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TvLibrary.Utils.dll" />
+    <Content Include="References\Mediaportal.TV.Server.TVService.Interfaces.dll" />
+    <Content Include="References\MPIPTV_FILE.dll" />
+    <Content Include="References\MPIPTV_HTTP.dll" />
+    <Content Include="References\MPIPTV_RTP.dll" />
+    <Content Include="References\MPIPTV_RTSP.dll" />
+    <Content Include="References\MPIPTV_UDP.dll" />
+    <Content Include="References\plugin.xml" />
+    <Content Include="References\Plugins\CustomDevices\Resources\CIAPI.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\KNCBDACTRL.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\TbsCIapi.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\TeVii.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\ttBdaDrvApi_Dll.dll" />
+    <Content Include="References\SetupTv\Castle.Core.dll" />
+    <Content Include="References\SetupTv\Castle.Facilities.Logging.dll" />
+    <Content Include="References\SetupTv\Castle.Services.Logging.Log4netIntegration.dll" />
+    <Content Include="References\SetupTv\Castle.Windsor.dll" />
+    <Content Include="References\SetupTv\Common.Utils.dll" />
+    <Content Include="References\SetupTv\Defaults\Paths.xml" />
+    <Content Include="References\SetupTv\DirectShowLib.dll" />
+    <Content Include="References\SetupTv\EntityFramework.dll" />
+    <Content Include="References\SetupTv\log4net.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.Plugins.Base.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.Plugins.PowerScheduler.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.RuleBasedScheduler.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.SetupControls.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVControl.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.Entities.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.EntityModel.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.Presentation.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.TVBusinessLayer.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVLibrary.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TvLibrary.Utils.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVService.Interfaces.dll" />
+    <Content Include="References\SetupTv\SetupTV.exe" />
+    <Content Include="References\StreamingServer.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Core\MediaPortal.Backend\MediaPortal.Backend.csproj">
@@ -121,6 +206,16 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="References\castle.config" />
+    <None Include="References\Database\MP2TVE.s3db" />
+    <None Include="References\filterConfig.ini" />
+    <None Include="References\MPIPTVSource.ax" />
+    <None Include="References\ProgramData\MPIPTVSource.ini" />
+    <None Include="References\ProgramData\ProgramData.zip" />
+    <None Include="References\SetupTv\log4net.config" />
+    <None Include="References\SetupTv\SetupTV.exe.Config" />
+    <None Include="References\SetupTv\TsReader.ax" />
+    <None Include="References\TsMuxer.ax" />
+    <None Include="References\TsWriter.ax" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

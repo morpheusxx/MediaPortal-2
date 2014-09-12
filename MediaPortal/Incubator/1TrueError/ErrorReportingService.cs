@@ -50,6 +50,8 @@ namespace MediaPortal.Plugins.OneTrueError
       var currentLogger = ServiceRegistration.Get<ILogger>();
       var errorLogger = new ErrorLogWrapper(currentLogger);
       ServiceRegistration.Set<ILogger>(errorLogger);
+
+      throw new ArgumentNullException("pluginRuntime");
     }
 
     private void OnUploadReportFailed(object sender, UploadReportFailedEventArgs uploadReportFailedEventArgs)

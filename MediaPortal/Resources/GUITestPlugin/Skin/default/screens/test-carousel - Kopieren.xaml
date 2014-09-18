@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Screen
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <DockPanel LastChildFill="True">
+    <DockPanel.Resources>
+      <Style x:Key="CarouselButton" TargetType="{x:Type Button}" BasedOn="{ThemeResource DefaultButtonStyle}">
+        <!--<Setter Property="TransformGroup">
+          <Setter.Value>
+            <TransformGroup>
+              <ScaleTransform ScaleX="1" ScaleY="1"/>
+              <SkewTransform AngleX="0" AngleY="0"/>
+              <RotateTransform Angle="0"/>
+              <TranslateTransform X="0" Y="0"/>
+            </TransformGroup>
+          </Setter.Value>
+        </Setter>-->
+      </Style>
+    </DockPanel.Resources>
+
+    <CarouselControl x:Name="ExampleCarouselControl" DockPanel.Dock="Center" RenderTransformOrigin="0.5,0.5">
+
+      <Button x:Name="BlackSphere" Content="Black" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="RedSphere" Content="Red" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="GreenSphere" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="BlueSphere" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="YellowSphere" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="PurpleSphere" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+      <Button x:Name="OrangeSphere" Width="60" Height="60" Style="{ThemeResource CarouselButton}"/>
+
+    </CarouselControl>
+
+  </DockPanel>
+</Screen>

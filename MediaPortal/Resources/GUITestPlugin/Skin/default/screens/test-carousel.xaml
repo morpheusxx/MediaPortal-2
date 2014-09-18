@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Screen
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <DockPanel LastChildFill="True">
+
+    <CarouselControl x:Name="ExampleCarouselControl" DockPanel.Dock="Center" RenderTransformOrigin="0.5,0.5" >
+
+      <Button x:Name="BlackSphere" Content="1" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=0}"/>
+      <Button x:Name="RedSphere" Content="2" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=1}"/>
+      <Button x:Name="GreenSphere" Content="3" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=2}"/>
+      <Button x:Name="BlueSphere" Content="4" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=3}"/>
+      <Button x:Name="YellowSphere" Content="5" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=4}"/>
+      <Button x:Name="PurpleSphere" Content="6" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=5}"/>
+      <Button x:Name="OrangeSphere" Content="7" Width="60" Height="60" Canvas.Left="1" Canvas.Top="1"
+              Command="{Command RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type CarouselControl}},Path=SelectIndex,Parameters=6}"/>
+
+    </CarouselControl>
+
+  </DockPanel>
+</Screen>

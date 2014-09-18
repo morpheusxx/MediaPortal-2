@@ -267,5 +267,15 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     }
 
     #endregion
+
+    public int IndexOf(FrameworkElement element)
+    {
+      for (int i = 0; i < Count; i++)
+      {
+        if (this[i] == element)
+          return i;
+      }
+      return -1;
+    }
   }
 }

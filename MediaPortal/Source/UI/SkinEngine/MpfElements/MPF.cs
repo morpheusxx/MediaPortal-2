@@ -80,6 +80,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements
       _objectClassRegistrations.Add("VirtualizingWrapPanel", typeof(SkinEngine.Controls.Panels.VirtualizingWrapPanel));
       _objectClassRegistrations.Add("UniformGrid", typeof(SkinEngine.Controls.Panels.UniformGrid));
       _objectClassRegistrations.Add("StarRatingPanel", typeof(SkinEngine.Controls.Panels.StarRatingPanel));
+      _objectClassRegistrations.Add("CarouselControl", typeof(SkinEngine.Controls.Panels.CarouselControl));
 
       // Visuals
       _objectClassRegistrations.Add("ARRetainingControl", typeof(SkinEngine.Controls.Visuals.ARRetainingControl));

@@ -17,6 +17,8 @@
   <ItemGroup>
     <ReferencesTarget Include="$(TargetDir)SlimTv.Interfaces.dll" />
     <ReferencesTarget Include="$(TargetDir)SlimTv.Integration.MP2.dll" />
+    <ReferencesTarget Include="$(TargetDir)Common.Utils.dll" />
+    <ReferencesTarget Include="$(TargetDir)MediaPortal.TV.Server.*.dll" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <DatabaseFiles Include="$(TargetDir)Database\*.*" />
+    <DatabaseFiles Include="$(ProjectDir)Database\*.*" />
   </ItemGroup>
 
   <ItemGroup>

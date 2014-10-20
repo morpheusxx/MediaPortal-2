@@ -52,9 +52,15 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(SharpDXPackageBinDir)\SharpDX.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Direct2D1">
+      <HintPath>$(SharpDXPackageBinDir)\SharpDX.Direct2D1.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX.Direct3D9, Version=2.6.2.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(SharpDXPackageBinDir)\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI">
+      <HintPath>$(SharpDXPackageBinDir)\SharpDX.DXGI.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -73,6 +79,7 @@
     <Compile Include="Commands\ICommandStencil.cs" />
     <Compile Include="Commands\IExecutableCommand.cs" />
     <Compile Include="Commands\InvokeCommand.cs" />
+    <Compile Include="ContentManagement\AssetCore\TextRenderOrderProcessor.cs" />
     <Compile Include="ContentManagement\AssetWrapper.cs" />
     <Compile Include="ContentManagement\AssetCore\RenderTargetAssetCore.cs" />
     <Compile Include="ContentManagement\AssetCore\EffectAssetCore.cs" />

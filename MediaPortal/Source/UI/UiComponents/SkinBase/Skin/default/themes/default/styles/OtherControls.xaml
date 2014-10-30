@@ -504,7 +504,7 @@
   <DataTemplate x:Key="DefaultItemDataTemplate" DataType="{x:Type collections:ListItem}">
     <DockPanel x:Name="ItemControl" LastChildFill="False">
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding [Name]}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           FontSize="{ThemeResource SmallFontSize}" Color="{ThemeResource TextColor}"/>
     </DockPanel>
   </DataTemplate>
@@ -514,7 +514,7 @@
   <DataTemplate x:Key="MainMenuItemDataTemplate">
     <DockPanel x:Name="ItemControl" LastChildFill="False">
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding [Name]}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
     </DockPanel>
   </DataTemplate>
@@ -527,7 +527,7 @@
       <Image Thumbnail="True" Stretch="Uniform" DockPanel.Dock="Left" Height="32" Width="32"
           Source="{Binding [ImageSrc]}" FallbackSource="{Binding [DefaultIconSrc]}"/>
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding [Name]}"
-          VerticalAlignment="Center" FontSize="{ThemeResource SmallFontSize}"
+          HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="{ThemeResource SmallFontSize}"
           Color="{ThemeResource TextColor}"/>
     </DockPanel>
   </DataTemplate>
@@ -540,7 +540,7 @@
       <Image x:Name="Image" Thumbnail="True" Width="100" DockPanel.Dock="Left" Stretch="Uniform"
           Source="{Binding [ImageSrc]}" FallbackSource="{Binding [DefaultIconSrc]}"/>
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Margin="10,5,0,0" Content="{Binding [Name]}"
-          VerticalAlignment="Center" FontSize="{ThemeResource SmallFontSize}"
+          HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="{ThemeResource SmallFontSize}"
           Color="{ThemeResource TextColor}"/>
     </DockPanel>
   </DataTemplate>
@@ -558,10 +558,10 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Label x:Name="ShareName" Grid.Column="0" Content="{Binding [Name]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
       <Label x:Name="SharePath" Grid.Column="1" Content="{Binding [Path]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource HintTextColor}"/>
 <!-- Additionally available properties to show here:
       <Label x:Name="ShareProvider" Grid.Column="2" Content="{Binding AdditionalProperties[ResourceProviderMetadata].Name}"
@@ -586,13 +586,13 @@
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
       <Label x:Name="ShareName" Grid.Column="0" Content="{Binding [Name]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
       <Label x:Name="Categories" Grid.Column="1" Content="{Binding [Categories]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
       <Label x:Name="OnlineState" Grid.Column="2" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}">
         <Label.Content>
           <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
@@ -623,10 +623,10 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Label x:Name="ResourceProviderName" Grid.Column="0" Content="{Binding [Name]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
       <Label x:Name="ResourceProviderDescription" Grid.Column="1" Content="{Binding AdditionalProperties[ResourceProviderMetadata].Description}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           FontSize="{ThemeResource SmallFontSize}" Color="{ThemeResource HintTextColor}"/>
     </Grid>
   </DataTemplate>
@@ -707,7 +707,7 @@
               <ItemsPresenter VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
             </ScrollViewer>
             <Label Content="[Shares.NoSharesInThisView]" IsVisible="{Binding RelativeSource={RelativeSource TemplatedParent},Path=IsEmpty}"
-                VerticalAlignment="Center"
+                HorizontalAlignment="Center" VerticalAlignment="Center"
                 Color="{ThemeResource HintTextColor}" FontSize="{ThemeResource SmallFontSize}"/>
           </Grid>
         </ControlTemplate>
@@ -926,7 +926,7 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Label x:Name="ShareName" Content="{Binding [Name]}" FontSize="{ThemeResource SmallFontSize}"
-          VerticalAlignment="Center"
+          HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
 
       <!-- Subitems of systems: resourceproviders -->

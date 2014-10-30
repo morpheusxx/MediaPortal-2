@@ -31,6 +31,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MediaPortal.Common;
+using MediaPortal.Common.Localization;
 using MediaPortal.UI.Control.InputManager;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.Commands;
@@ -183,6 +185,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     protected Matrix? _finalTransform = null;
 
     protected float _lastZIndex = 0;
+    // Culture with RTL text layout support
+    protected bool _cultureIsRTL;
 
     #endregion
 
@@ -190,6 +194,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
     public FrameworkElement()
     {
+      _cultureIsRTL = ServiceRegistration.Get<ILocalization>().CurrentCulture.TextInfo.IsRightToLeft;
       Init();
       Attach();
     }
@@ -1245,6 +1250,18 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     public static bool SameRect(RectangleF? rect1, RectangleF rect2)
     {
       return rect1.HasValue && SameRect(rect1.Value, rect2);
+    }
+
+    #endregion
+
+    #region Culture RTL support
+
+    protected HorizontalAlignmentEnum DefaultHorizontalAlignment
+    {
+      get
+      {
+        return _cultureIsRTL ? HorizontalAlignmentEnum.Right : HorizontalAlignmentEnum.Left;
+      }
     }
 
     #endregion

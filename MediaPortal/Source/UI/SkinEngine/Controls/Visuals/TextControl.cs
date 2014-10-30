@@ -114,7 +114,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       _colorProperty = new SProperty(typeof(Color), Color.Black);
 
       _preferredTextLengthProperty = new SProperty(typeof(int?), null);
-      _textAlignProperty = new SProperty(typeof(HorizontalAlignmentEnum), HorizontalAlignmentEnum.Left);
+      _textAlignProperty = new SProperty(typeof(HorizontalAlignmentEnum), DefaultHorizontalAlignment);
 
       _cursorState = TextCursorState.Hidden;
 

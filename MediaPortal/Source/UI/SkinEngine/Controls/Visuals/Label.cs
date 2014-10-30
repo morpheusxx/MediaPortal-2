@@ -70,7 +70,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       _scrollDelayProperty = new SProperty(typeof(double), DEFAULT_SCROLL_DELAY);
       _wrapProperty = new SProperty(typeof(bool), false);
 
-      HorizontalAlignment = HorizontalAlignmentEnum.Left;
+      HorizontalAlignment = DefaultHorizontalAlignment;
       InitializeResourceString();
     }
 

@@ -25,6 +25,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MediaPortal.Common;
+using MediaPortal.Common.Localization;
 using SharpDX;
 using SharpDX.Direct3D9;
 using MediaPortal.UI.SkinEngine.ContentManagement;
@@ -152,6 +154,8 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     protected DateTime _scrollInitialized;
     // Vertex buffer
     protected PrimitiveBuffer _buffer = new PrimitiveBuffer();
+    // Culture with RTL text layout support
+    protected bool _cultureIsRTL;
 
     #endregion
 
@@ -164,6 +168,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     /// <param name="size">The font size (may be slightly different to the size of <paramref name="font"/>).</param>
     public TextBuffer(FontAsset font, float size)
     {
+      _cultureIsRTL = ServiceRegistration.Get<ILocalization>().CurrentCulture.TextInfo.IsRightToLeft;
       SetFont(font, size);
       _kerning = true;
       _lastTimeUsed = DateTime.MinValue;
@@ -596,7 +601,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         if (_lastWrap && _lastTextSize.Height > textBox.Height)
           mode = TextScrollEnum.Up;
         else if (_textLines.Length == 1 && _lastTextSize.Width > textBox.Width)
-          mode = TextScrollEnum.Left;
+          mode = _cultureIsRTL ? TextScrollEnum.Right : TextScrollEnum.Left;
         else
           return TextScrollEnum.None;
       }

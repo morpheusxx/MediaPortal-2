@@ -733,6 +733,8 @@ namespace MediaPortal.UI.SkinEngine.ScreenManagement
     public RenderContext CreateInitialRenderContext()
     {
       Matrix transform = Matrix.Scaling((float)SkinContext.WindowSize.Width / _skinWidth, (float)SkinContext.WindowSize.Height / _skinHeight, 1);
+      transform *= Matrix.Scaling(-1.0f, 1, 1) * Matrix.Translation(SkinContext.WindowSize.Width, 0, 0);
+
       return new RenderContext(transform, new RectangleF(0, 0, _skinWidth, _skinHeight));
     }
 

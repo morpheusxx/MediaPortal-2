@@ -219,6 +219,7 @@
     <Content Include="Skin\Titanium\themes\default\images\ImageSmall.png" />
     <Content Include="Skin\Titanium\themes\default\images\NavigationLarge.png" />
     <Content Include="Skin\Titanium\themes\default\images\NavigationSmall.png" />
+    <None Include="Skin\Titanium\fonts\DejaVuSans.ttf" />
     <None Include="Skin\Titanium\fonts\TitanBold.desc" />
     <None Include="Skin\Titanium\fonts\Titan.desc" />
     <None Include="Skin\Titanium\fonts\TITAN.TTF" />

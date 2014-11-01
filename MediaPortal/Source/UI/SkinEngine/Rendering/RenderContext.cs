@@ -99,7 +99,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         transform *= Matrix.Translation(new Vector3(origin.X, origin.Y, 0));
         finalTransform = transform * finalTransform;
       }
-      RenderContext result = new RenderContext(finalTransform, _opacity * localOpacity, bounds, _zOrder - 0.001f);
+      RenderContext result = new RenderContext(finalTransform, _opacity * localOpacity, bounds, _zOrder - 0.001f) { InverseRtlTransform = InverseRtlTransform };
       return result;
     }
 
@@ -120,6 +120,11 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     public Matrix Transform
     {
       get { return _transform; }
+    }
+
+    public Matrix? InverseRtlTransform
+    {
+      get; set;
     }
 
     public RectangleF OccupiedTransformedBounds

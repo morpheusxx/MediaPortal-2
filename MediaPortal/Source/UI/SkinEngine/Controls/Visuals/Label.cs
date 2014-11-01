@@ -25,7 +25,9 @@
 using System;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Localization;
+using MediaPortal.UI.SkinEngine.Controls.Brushes;
 using MediaPortal.UI.SkinEngine.Rendering;
+using MediaPortal.UI.SkinEngine.SkinManagement;
 using SharpDX;
 using MediaPortal.Utilities.DeepCopy;
 using Size = SharpDX.Size2;
@@ -301,8 +303,27 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       Color4 color = ColorConverter.FromColor(Color);
       color.Alpha *= (float) localRenderContext.Opacity;
 
+      Matrix textTransform = localRenderContext.Transform;
+
+      //Background = new SolidColorBrush { Color = Color.Red };
+      if (localRenderContext.InverseRtlTransform.HasValue)
+      {
+        // Back to original layout (remove mirroring)
+        textTransform *= localRenderContext.InverseRtlTransform.Value;
+
+        // Move to other screen side
+        if (_innerRect.Center.X < (float)SkinContext.WindowSize.Width / 2)
+        {
+          textTransform *= Matrix.Translation(-_innerRect.Right + (SkinContext.WindowSize.Width - _innerRect.Left), 0, 0);
+        }
+        else
+        {
+          textTransform *= Matrix.Translation(- _innerRect.Left + (SkinContext.WindowSize.Width - _innerRect.Right), 0, 0);
+        }
+      }
+
       _asset.Render(_innerRect, horzAlign, vertAlign, color, Wrap, true, localRenderContext.ZOrder, 
-        Scroll, (float) ScrollSpeed, (float) ScrollDelay, localRenderContext.Transform);
+        Scroll, (float) ScrollSpeed, (float) ScrollDelay, textTransform);
     }
 
     public override void Deallocate()

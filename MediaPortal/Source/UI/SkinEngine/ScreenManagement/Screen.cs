@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using MediaPortal.Common.Localization;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Control.InputManager;
 using MediaPortal.Common;
@@ -199,6 +200,7 @@ namespace MediaPortal.UI.SkinEngine.ScreenManagement
     protected RenderContext _renderContext;
     protected IDictionary<string, object> _names = new Dictionary<string, object>();
     protected object _syncObj = new object();
+    protected Matrix? _rtlTransform;
 
     #endregion
 
@@ -733,14 +735,25 @@ namespace MediaPortal.UI.SkinEngine.ScreenManagement
     public RenderContext CreateInitialRenderContext()
     {
       Matrix transform = Matrix.Scaling((float)SkinContext.WindowSize.Width / _skinWidth, (float)SkinContext.WindowSize.Height / _skinHeight, 1);
-      transform *= Matrix.Scaling(-1.0f, 1, 1) * Matrix.Translation(SkinContext.WindowSize.Width, 0, 0);
+      _rtlTransform = ScreenRtlTransform(ref transform);
+      return new RenderContext(transform, new RectangleF(0, 0, _skinWidth, _skinHeight)) { InverseRtlTransform = _rtlTransform };
+    }
 
-      return new RenderContext(transform, new RectangleF(0, 0, _skinWidth, _skinHeight));
+    private static Matrix? ScreenRtlTransform(ref Matrix transform)
+    {
+      Matrix? rtlTransform = null;
+      if (ServiceRegistration.Get<ILocalization>().CurrentCulture.TextInfo.IsRightToLeft)
+      {
+        rtlTransform = Matrix.Scaling(-1.0f, 1, 1) * Matrix.Translation(SkinContext.WindowSize.Width, 0, 0);
+        transform *= rtlTransform.Value;
+        rtlTransform = Matrix.Invert(rtlTransform.Value);
+      }
+      return rtlTransform;
     }
 
     public RenderContext GetRenderPassContext()
     {
-      return new RenderContext(GraphicsDevice.RenderPipeline.GetRenderPassTransform(_renderContext.Transform), new RectangleF(0, 0, _skinWidth, _skinHeight));
+      return new RenderContext(GraphicsDevice.RenderPipeline.GetRenderPassTransform(_renderContext.Transform), new RectangleF(0, 0, _skinWidth, _skinHeight)) { InverseRtlTransform = _rtlTransform };
     }
 
     protected RectangleF CreateCenterRect()

@@ -1972,7 +1972,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         // Texture                                  : 235 fps
 
         // Create a temporary render context and render the control to the render texture
-        RenderContext tempRenderContext = new RenderContext(localRenderContext.Transform, localRenderContext.Opacity, bounds, localRenderContext.ZOrder);
+        RenderContext tempRenderContext = new RenderContext(localRenderContext.Transform, localRenderContext.Opacity, bounds, localRenderContext.ZOrder) { InverseRtlTransform = localRenderContext.InverseRtlTransform };
 
         // An additional copy step is only required for multisampling surfaces
         bool isMultiSample = GraphicsDevice.Setup.IsMultiSample;

@@ -30,7 +30,6 @@ using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.PlayerComponents;
-using MediaPortal.UI.Players.BassPlayer.Utils;
 using MediaPortal.UI.Presentation.Players;
 using Un4seen.Bass;
 using Un4seen.Bass.AddOn.Tags;
@@ -84,9 +83,9 @@ namespace MediaPortal.UI.Players.BassPlayer
 
     #endregion
 
-    public BassPlayer(string playerMainDirectory)
+    public BassPlayer()
     {
-      _controller = new Controller(this, playerMainDirectory);
+      _controller = new Controller(this);
       _inputSourceFactory = new InputSourceFactory();
       _externalState = PlayerState.Stopped;
     }

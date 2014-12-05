@@ -23,6 +23,6 @@
     <Shortcut Key="P:C" WorkflowAction="D83604C0-0936-4416-9DE8-7B6D7C50023C" />
 
     <!-- Name="*->AddToPlaylist" -->
-    <Shortcut Key="S:Play,P:P" WorkflowAction="09243059-EE44-460d-8412-2E994CCB5A98" />
+    <Shortcut Key="P:P" WorkflowAction="09243059-EE44-460d-8412-2E994CCB5A98" />
   </WorkflowActions>
 </Shortcut>

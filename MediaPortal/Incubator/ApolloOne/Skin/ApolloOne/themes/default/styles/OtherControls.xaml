@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="clr-namespace:System"
+    xmlns:collections="clr-namespace:MediaPortal.UI.Presentation.DataObjects;assembly=MediaPortal.UI"
+    xmlns:mp_special_controls="clr-namespace:MediaPortal.UI.SkinEngine.SpecialElements.Controls;assembly=SkinEngine"
+    xmlns:fanart="clr-namespace:MediaPortal.Extensions.UserServices.FanArtService.Client;assembly=FanArtService.Client"
+    xmlns:bgm="clr-namespace:MediaPortal.UiComponents.BackgroundManager.Converter;assembly=BackgroundManager"
+    xmlns:apc="clr-namespace:MediaPortal.UiComponents.ApolloOne.Converters;assembly=ApolloOne"
+    DependsOnStyleResources="ColorsOverrides,ButtonsOverrides,Consts,OtherControls"
+    >
+
+  <!-- BackgroundManager model -->
+  <Model x:Key="BackgroundManagerModel" Id="1F4CAEDE-7108-483d-B5C8-18BEC7EC58E5"/>
+  <bgm:ListItemActionIdConverter x:Key="ListItemActionIdConverter"/>
+  <apc:StringCaseConverter x:Key="StringCaseConverter"/>
+
+  <!-- An item list container represented by a standard "Button", scrolling its "ItemLabel" label when focused -->
+  <Style x:Key="MainMenuMenuItemContainerStyle" BasedOn="{ThemeResource DefaultItemContainerStyle}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListViewItem}">
+          <Button Style="{ThemeResource HomeButtonStyle}" Margin="0,0,16,16"
+              Command="{DynamicResource ResourceKey=Menu_Command}"
+              IsEnabled="{Binding Enabled}" SetFocus="{Binding Path=Selected,Mode=OneTime}">
+
+            <Button.Triggers>
+              <Trigger Property="HasFocus" Value="True">
+                <Setter TargetName="ItemLabel" Property="Scroll" Value="Auto"/>
+                <Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource TextColor}"/>
+              </Trigger>
+            </Button.Triggers>
+          </Button>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Menu template -->
+  <DataTemplate x:Key="MainMenuItemDataTemplateHover">
+    <!-- Rounded corners are applied by OpacityMask -->
+    <Grid x:Name="ItemControl" Margin="0,0,0,0" OpacityMask="{ThemeResource HomeTileOpacityBrush}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="48"/>
+        <RowDefinition Height="32"/>
+      </Grid.RowDefinitions>
+
+      <!-- Light blue background fill -->
+      <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" 
+          x:Name="HomeFill" Fill="#FF00B7FF" Opacity="0.302" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+      <!-- Image -->
+      <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="UniformToFill"
+             Source="{Binding Converter={StaticResource ListItemActionIdConverter}, ConverterParameter=.jpg}"/>
+
+      <!-- Darkened band -->
+      <Rectangle Grid.Row="1" Grid.Column="0" Fill="#FF000000" Opacity="0.749" 
+                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" />
+
+      <!-- Item label -->
+      <Label Grid.Row="1" Grid.Column="0" x:Name="ItemLabel" HorizontalAlignment="Center" VerticalAlignment="Bottom"  Content="{Binding [Name]}" 
+             FontSize="{ThemeResource BigFontSize}" Color="{ThemeResource HomeNonFocusedColor}" Margin="0,-5,0,0"/>
+    </Grid>
+  </DataTemplate>
+
+  <!-- ListView style to be used for main menu -->
+  <Style x:Key="HomeMenuListViewStyle" BasedOn="{ThemeResource MainMenuListViewStyle}">
+    <Setter Property="SelectionChanged" Value="{CommandStencil Source={StaticResource BackgroundManagerModel}, Path=SetSelectedItem}"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListView}">
+          <ItemsPresenter VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Setter Property="ItemTemplate" Value="{ThemeResource MainMenuItemDataTemplateHover}"/>
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <Grid x:Name="ListItemsHost" IsItemsHost="True" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+              <ColumnDefinition Width="{ThemeResource GridLayoutWidth}"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+              <RowDefinition Height="{ThemeResource GridLayoutHeight}"/>
+            </Grid.RowDefinitions>
+          </Grid>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
+    <Setter Property="ItemContainerStyle" Value="{ThemeResource MainMenuMenuItemContainerStyle}"/>
+  </Style>
+
+  <!-- An item list container represented by a standard "Button", scrolling its "ItemLabel" label when focused -->
+  <Style x:Key="HomeGroupMenuItemContainerStyle" BasedOn="{ThemeResource DefaultItemContainerStyle}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListViewItem}">
+          <Button Style="{ThemeResource GroupTabHeaderButtonStyle}" Margin="0,0,16,16"
+              Command="{DynamicResource ResourceKey=Menu_Command}"
+              IsEnabled="{Binding Enabled}" SetFocus="{Binding Path=Selected,Mode=OneTime}">
+
+            <Button.Triggers>
+              <Trigger Property="HasFocus" Value="True">
+                <Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource TextColor}"/>
+              </Trigger>
+            </Button.Triggers>
+          </Button>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <DataTemplate x:Key="HomeGroupDataTemplate" DataType="{x:Type collections:ListItem}">
+    <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding Path=[Name], Converter={StaticResource StringCaseConverter}, ConverterParameter={x:Static apc:StringConversion.LowerCase}}" Margin="20,0,20,0"
+        HorizontalAlignment="Center" VerticalAlignment="Center"
+        FontSize="{ThemeResource BigFontSize}" Color="{ThemeResource NonSelectedTextColor}"/>
+  </DataTemplate>
+
+  <!-- ListView style to be used for main groups menu -->
+  <Style x:Key="HomeGroupListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <StackPanel x:Name="ListItemsHost" IsItemsHost="True" Orientation="Horizontal"/>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
+    <Setter Property="ItemTemplate" Value="{ThemeResource HomeGroupDataTemplate}"/>
+    <Setter Property="ItemContainerStyle" Value="{ThemeResource HomeGroupMenuItemContainerStyle}"/>
+  </Style>
+
+  <!-- Player control styles -->
+  <Style x:Key="NavigationScreenPlayerControlStyle" TargetType="{x:Type mp_special_controls:PlayerControl}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type mp_special_controls:PlayerControl}">
+          <Grid x:Name="PCGroupBox" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <!-- Background -->
+              <RowDefinition Height="Auto"/>
+              <!-- Playback controls -->
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+              <!-- Media thumbnail -->
+              <ColumnDefinition Width="Auto"/>
+              <!-- Optional fanart -->
+            </Grid.ColumnDefinitions>
+
+            <!-- Order matters here: first paint the controls, as they will be overlapped by content panel -->
+            <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" HorizontalAlignment="Center" Margin="0,-15,0,0">
+              <Rectangle x:Name="PlaybackControlsBackground" 
+                       Fill="{ThemeResource PlaybackControlsBackgroundColor}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                       RadiusX="{ThemeResource PlayerControlBorderRadius}" RadiusY="{ThemeResource PlayerControlBorderRadius}" />
+
+              <StackPanel x:Name="MouseControlsPanel" Orientation="Horizontal" IsVisible="True" Margin="15">
+                <Button x:Name="SkipBackButton" Style="{ThemeResource SkipBackButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanSkipBack}"
+                      Command="{Command Previous}"/>
+                <Button x:Name="RewindButton" Style="{ThemeResource RewindButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanSeekBackward}"
+                      Command="{Command SeekBackward}"/>
+                <Button x:Name="PlayButton" Style="{ThemeResource PlayButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanPlay}"
+                      Command="{Command Play}"/>
+                <Button x:Name="PauseButton" Style="{ThemeResource PauseButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanPause}"
+                      Command="{Command Pause}"/>
+                <Button x:Name="StopButton" Style="{ThemeResource StopButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanStop}"
+                      Command="{Command Stop}"/>
+                <Button x:Name="ForwardButton" Style="{ThemeResource ForwardButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanSeekForward}"
+                      Command="{Command SeekForward}"/>
+                <Button x:Name="SkipForwardButton" Style="{ThemeResource SkipForwardButtonStyle}" Margin="5,0,5,0" IsVisible="{Binding CanSkipForward}"
+                      Command="{Command Next}"/>
+              </StackPanel>
+              <!--<StackPanel.LayoutTransform>
+                  <TransformGroup>
+                    <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
+                  </TransformGroup>
+                </StackPanel.LayoutTransform>-->
+            </Grid>
+
+            <!-- Background of player control panel-->
+            <Rectangle x:Name="PCBackground" Grid.ColumnSpan="2" Fill="{ThemeResource PlayerControlBackgroundColor}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" 
+                       RadiusX="{ThemeResource PlayerControlBorderRadius}" RadiusY="{ThemeResource PlayerControlBorderRadius}" />
+            <!-- TODO: Current player color definition and animation -->
+            <!--<Rectangle Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                       RadiusX="{ThemeResource PlayerControlBorderRadius}" RadiusY="{ThemeResource PlayerControlBorderRadius}" >
+              <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0.02,0">
+                  <GradientStop Color="{ThemeResource CurrentPlayerControlBackgroundColor2}" Offset="0"/>
+                  <GradientStop Color="{ThemeResource CurrentPlayerControlBackgroundColor3}" Offset="0.875"/>
+                </LinearGradientBrush>
+              </Rectangle.Fill>
+            </Rectangle>-->
+
+            <Image x:Name="ItemTypeImage" Grid.Row="0" Grid.Column="1" Stretch="Uniform" Source="{Binding MediaItem}" Height="165" Margin="40,0,20,0">
+              <Image.OpacityMask>
+                <VisualBrush>
+                  <VisualBrush.Visual>
+                    <Rectangle x:Name="CoverOpacityMask" Fill="#FF000000" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                       RadiusX="{ThemeResource PlayerControlBorderRadius}" RadiusY="{ThemeResource PlayerControlBorderRadius}" />
+                  </VisualBrush.Visual>
+                </VisualBrush>
+              </Image.OpacityMask>
+            </Image>
+
+            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical" VerticalAlignment="Stretch" Margin="10">
+              <Grid x:Name="MediaInfoPanel" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label x:Name="MediaItemTitle" Grid.Row="0" Grid.Column="1" Color="{ThemeResource PlayerControlMediaItemColor}" FontSize="{ThemeResource SmallFontSize}"
+                    Content="{Binding MediaItemTitle}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Scroll="Auto">
+                  <Label.Triggers>
+                    <DataTrigger Binding="{Binding IsPlayerPresent}" Value="False">
+                      <Setter Property="Color" Value="{ThemeResource PlayerControlInactiveMediaItemColor}"/>
+                    </DataTrigger>
+                  </Label.Triggers>
+                </Label>
+                <Label x:Name="PlayerTitle" Grid.Row="0" Grid.Column="2" Color="{ThemeResource HomeNonFocusedColor}" FontSize="{ThemeResource SmallFontSize}"
+                    Content="{Binding Title}" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="20,0,0,0"/>
+
+                <Label x:Name="CurrentPositionLabel" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Color="{ThemeResource PlayerControlMediaItemColor}" 
+                    FontSize="{ThemeResource SmallFontSize}" IsVisible="{Binding IsPlayerPresent}" HorizontalAlignment="Center">
+                  <Label.Content>
+                    <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0}+{1}+{2}">
+                      <Binding Path="CurrentTime"/>
+                      <Binding Source=" / " />
+                      <Binding Path="Duration"/>
+                    </MultiBinding>
+                  </Label.Content>
+                  <Label.Triggers>
+                    <DataTrigger Binding="{Binding IsPlayerPresent}" Value="False">
+                      <Setter Property="Color" Value="{ThemeResource PlayerControlInactiveMediaItemColor}"/>
+                    </DataTrigger>
+                  </Label.Triggers>
+                </Label>
+
+                <ProgressBar x:Name="ProgressBar" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Height="22" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,5,0,0"
+                        Value="{Binding Path=PercentPlayed}" IsVisible="{Binding IsPlayerPresent}" />
+              </Grid>
+            </StackPanel>
+
+          </Grid>
+
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsCurrentPlayer" Value="True">
+              <Setter TargetName="PCBackground" Property="Fill" Value="{ThemeResource CurrentPlayerControlBackgroundColor1}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- ListView style to be used for all menus (main menu, dialog menus, context menus, ...) -->
+  <Style x:Key="MenuListViewStyle" BasedOn="{ThemeResource DefaultListViewStyle}">
+    <Setter Property="ItemTemplate" Value="{ThemeResource DefaultItemDataTemplate}"/>
+    <Setter Property="DataStringProvider" Value="{ThemeResource DefaultItemDataStringProvider}"/>
+    <Setter Property="ItemContainerStyle" Value="{ThemeResource DefaultMenuItemContainerStyle}"/>
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <VirtualizingStackPanel x:Name="ListItemsHost" IsItemsHost="True" 
+           Width="{ThemeResource FixedDialogWidth}" Height="{ThemeResource FixedDialogHeight}"/>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Container style for the entries in the workflow navigation bar -->
+  <Style x:Key="A_WorkflowNavigationBarContainerStyle" BasedOn="{ThemeResource DefaultItemContainerStyle}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListViewItem}">
+          <!-- Available data in the given ListViewItem:
+               - AdditionalProperties[IsFirst] is true for the first item
+               - Executing the Command will navigate the workflow to the underlaying workflow state
+          -->
+          <Button Command="{Binding Command}" Style="{ThemeResource EmptyStyle}">
+            <Button.TemplateControl>
+              <Grid>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <!-- Dummy placeholder for first item margin -->
+                <Rectangle Width="40" Height="1" IsVisible="{Binding AdditionalProperties[IsFirst]}" Fill="#00000000"/>
+
+                <Ellipse  Width="6" Height="6" Grid.Column="1" Margin="15,8,15,0"
+                     IsVisible="{Binding !AdditionalProperties[IsFirst]}"
+                     VerticalAlignment="Center">
+                  <Ellipse.Fill>
+                    <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0}?{1}:{2}">
+                      <Binding Path="AdditionalProperties[IsLast]"/>
+                      <Binding Source="{ThemeResource TextColor}" />
+                      <Binding Source="{ThemeResource HomeNonFocusedColor}"/>
+                    </MultiBinding>
+                  </Ellipse.Fill>
+                </Ellipse>
+
+                <ContentPresenter Grid.Row="0" Grid.Column="2" x:Name="WorkflowNavibationItemContentPresenter" HorizontalAlignment="Center"/>
+              </Grid>
+            </Button.TemplateControl>
+            <Button.Triggers>
+              <Trigger Property="HasFocus" Value="True">
+                <Trigger.EnterActions>
+                  <BeginStoryboard x:Name="Focused_BeginStoryboard" Storyboard="{ThemeResource FocusedNavbarContainerStoryboard}"/>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                  <StopStoryboard BeginStoryboardName="Focused_BeginStoryboard"/>
+                </Trigger.ExitActions>
+              </Trigger>
+            </Button.Triggers>
+          </Button>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Data template for contents of workflow navigation bar entries -->
+  <DataTemplate x:Key="A_WorkflowNavigationBarItemDataTemplate" DataType="{x:Type collections:ListItem}">
+    <Label x:Name="ItemLabel" Content="{Binding Path=[Name], Converter={StaticResource StringCaseConverter}, ConverterParameter={x:Static apc:StringConversion.LowerCase}}"
+             Margin="0,4,0,0"
+             FontSize="{ThemeResource SmallFontSize}"
+             VerticalAlignment="Center">
+      <Label.Color>
+        <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0}?{1}:{2}">
+          <Binding Path="AdditionalProperties[IsLast]"/>
+          <Binding Source="{ThemeResource TextColor}" />
+          <Binding Source="{ThemeResource HomeNonFocusedColor}"/>
+        </MultiBinding>
+      </Label.Color>
+    </Label>
+  </DataTemplate>
+
+  <Style x:Key="A_WorkflowNavigationBarListViewStyle" TargetType="{x:Type ListView}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate>
+          <ItemsPresenter/>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Setter Property="ItemTemplate" Value="{ThemeResource A_WorkflowNavigationBarItemDataTemplate}"/>
+    <Setter Property="ItemContainerStyle" Value="{ThemeResource A_WorkflowNavigationBarContainerStyle}"/>
+    <Setter Property="ItemsPanel">
+      <Setter.Value>
+        <ItemsPanelTemplate>
+          <mp_special_controls:WorkflowNavigationBarPanel x:Name="WorkflowNavigationBarItemsHost" IsItemsHost="True" Margin="-20,20,0,-5"
+              Orientation="Horizontal"
+              EllipsisControlStyle="{ThemeResource WorkflowNavigationBarEllipsisControlStyle}"
+              OpacityMask="{ThemeResource HomeTileOpacityBrush}"
+              Background="#60000000"/>
+        </ItemsPanelTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="A_WorkflowNavigationBarStyle" TargetType="{x:Type mp_special_controls:WorkflowNavigationBar}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate>
+          <ListView x:Name="WorkflowNavigationBarListView" ItemsSource="{TemplateBinding NavigationItems}" Style="{ThemeResource A_WorkflowNavigationBarListViewStyle}"/>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+</ResourceDictionary>

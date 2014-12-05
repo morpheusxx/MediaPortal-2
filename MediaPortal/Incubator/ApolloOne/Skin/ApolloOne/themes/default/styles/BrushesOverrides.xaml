@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    DependsOnStyleResources="ColorsOverrides,Consts"
+    >
+
+  <!-- Default brush used to paint the background of a page/window -->
+  <ResourceWrapper x:Key="BackgroundBrush">
+    <ImageBrush ImageSource="Background.jpg" />
+  </ResourceWrapper>
+
+  <!-- Default brush used to paint the background of a dialog -->
+  <ResourceWrapper x:Key="DialogBackgroundBrush" Value="#B0000000" />
+
+  <!-- Home screen tile opacity brush -->
+  <ResourceWrapper x:Key="HomeTileOpacityBrush">
+    <VisualBrush>
+      <VisualBrush.Visual>
+        <Rectangle Fill="#FFFFFFFF" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RadiusX="{ThemeResource ButtonControlRadiusX}" RadiusY="{ThemeResource ButtonControlRadiusY}" />
+      </VisualBrush.Visual>
+    </VisualBrush>
+  </ResourceWrapper>
+
+</ResourceDictionary>

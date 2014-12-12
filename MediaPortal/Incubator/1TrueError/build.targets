@@ -12,7 +12,7 @@
       <PluginFiles Include="$(TargetDir)OneTrueError.Reporting*.dll" />
       <PluginFiles Include="$(ProjectDir)plugin.xml" />
     </ItemGroup>
-  
+    
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
   </Target>
 

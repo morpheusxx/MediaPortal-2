@@ -2,7 +2,7 @@
 <ResourceDictionary
     xmlns="www.team-mediaportal.com/2008/mpf/directx"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    DependsOnStyleResources="ColorsOverrides,Consts"
+    DependsOnStyleResources="Colors,Consts"
     >
 
   <!-- Default brush used to paint the background of a page/window -->
@@ -21,5 +21,20 @@
       </VisualBrush.Visual>
     </VisualBrush>
   </ResourceWrapper>
+  
+  <!-- MediaItem's opacity brush -->
+  <ResourceWrapper x:Key="MediaItemsOpacityBrush">
+    <ImageBrush ImageSource="MediaItem_OpacityMask.png" />
+  </ResourceWrapper>
+
+  <ResourceWrapper x:Key="MediaItemsFocusedBorderBrush">
+    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+      <GradientStop Color="{ThemeResource HomeNonFocusedColor}" Offset="0"/>
+      <GradientStop Color="{ThemeResource TextColor}" Offset="0.30"/>
+      <GradientStop Color="{ThemeResource TextColor}" Offset="0.70"/>
+      <GradientStop Color="{ThemeResource HomeNonFocusedColor}" Offset="1"/>
+    </LinearGradientBrush>
+  </ResourceWrapper>
+
 
 </ResourceDictionary>

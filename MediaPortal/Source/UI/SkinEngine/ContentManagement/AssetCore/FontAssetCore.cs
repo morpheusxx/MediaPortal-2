@@ -58,8 +58,6 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     protected int _rowHeight = 0;
     protected int _currentY = 0;
 
-    protected DirectWriteRenderer _dwRenderer;
-
     #region Ctor
 
     /// <summary>
@@ -73,7 +71,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       _family = family;
       _resolution = resolution;
 
-      FT_FaceRec face = (FT_FaceRec)Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
+      FT_FaceRec face = (FT_FaceRec) Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
 
       _charSet = new BitmapCharacterSet(face.num_glyphs)
         {
@@ -239,7 +237,6 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         _texture = new Texture(GraphicsDevice.Device, MAX_WIDTH, MAX_HEIGHT, 1, Usage.Dynamic, Format.L8, Pool.Default);
         // Add 'not defined' glyph
         AddGlyph(0);
-        _dwRenderer = new DirectWriteRenderer(this, _family.Name);
       }
 
       AllocationChanged(AllocationSize);
@@ -264,7 +261,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       lock (_syncObj)
       {
         float pointSize = 64.0f * _charSet.RenderedSize * 72.0f / _resolution;
-        FT.FT_Set_Char_Size(_family.Face, (int)pointSize, 0, _resolution, 0);
+        FT.FT_Set_Char_Size(_family.Face, (int) pointSize, 0, _resolution, 0);
 
         // Font does not contain that glyph, the 'missing' glyph will be shown instead
         if (glyphIndex == 0 && _charSet.GetCharacter(0) != null)
@@ -274,7 +271,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         if (FT.FT_Load_Glyph(_family.Face, glyphIndex, FT.FT_LOAD_DEFAULT) != 0)
           return false;
 
-        FT_FaceRec face = (FT_FaceRec)Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
+        FT_FaceRec face = (FT_FaceRec) Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
 
         IntPtr glyphPtr;
         // Load the glyph data into our local array.
@@ -286,7 +283,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
           return false;
 
         // Get the structure fron the intPtr
-        FT_BitmapGlyph glyph = (FT_BitmapGlyph)Marshal.PtrToStructure(glyphPtr, typeof(FT_BitmapGlyph));
+        FT_BitmapGlyph glyph = (FT_BitmapGlyph) Marshal.PtrToStructure(glyphPtr, typeof(FT_BitmapGlyph));
 
         // Width/height of char
         int cwidth = glyph.bitmap.width;
@@ -348,7 +345,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
             XOffset = glyph.left,
             YOffset = _charSet.Ascender - glyph.top,
             // Convert fixed point 16.16 to float by divison with 2^16
-            XAdvance = (int)(glyph.root.advance.x / 65536.0f)
+            XAdvance = (int) (glyph.root.advance.x / 65536.0f)
           };
     }
 
@@ -360,7 +357,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         Rectangle charArea = new Rectangle(_currentX, _currentY, pwidth, pheight);
         DataStream dataStream;
         _texture.LockRectangle(0, charArea, LockFlags.None, out dataStream);
-        using (dataStream)
+        using(dataStream)
         {
           // Copy FreeType glyph bitmap into our font texture.
           Byte[] fontPixels = new Byte[pwidth];
@@ -419,8 +416,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       {
         int ix = verts.Count;
 
-        //lineWidth[i] = CreateTextLine(text[i], liney, sizeScale, kerning, ref verts);
-        lineWidth[i] = _dwRenderer.CreateTextLine(text[i], liney, size, sizeScale, kerning, ref verts);
+        lineWidth[i] = CreateTextLine(text[i], liney, sizeScale, kerning, ref verts);
         lineIndex[i] = ix;
         liney += _charSet.RenderedSize;
       }
@@ -458,36 +454,36 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
             x += GetKerningAmount(lastChar, character);
           lastChar = c;
           if (!char.IsWhiteSpace(character))
-            CreateQuad(c, sizeScale, x, y, 1, ref verts);
+            CreateQuad(c, sizeScale, x, y, ref verts);
           x += c.XAdvance;
         }
         // Make sure there is at least one character
         if (verts.Count == 0)
         {
           BitmapCharacter c = Character(' ');
-          CreateQuad(c, sizeScale, c.XOffset, y, 1, ref verts);
+          CreateQuad(c, sizeScale, c.XOffset, y, ref verts);
         }
-        return x * sizeScale;
+        return x*sizeScale;
       }
     }
 
-    public void CreateQuad(BitmapCharacter c, float sizeScale, float x, float y, int direction, ref List<PositionColoredTextured> verts)
+    protected void CreateQuad(BitmapCharacter c, float sizeScale, float x, float y, ref List<PositionColoredTextured> verts)
     {
-      x += c.XOffset * direction;
+      x += c.XOffset;
       y += c.YOffset;
       PositionColoredTextured tl = new PositionColoredTextured(
           x * sizeScale,
           y * sizeScale,
           1.0f,
           (c.X + 0.5f) / _charSet.Width,
-          c.Y / (float)_charSet.Height,
+          c.Y / (float) _charSet.Height,
           Color.Transparent
           );
       PositionColoredTextured br = new PositionColoredTextured(
           (x + c.Width) * sizeScale,
           (y + c.Height) * sizeScale,
           1.0f,
-          (c.X + c.Width) / (float)_charSet.Width,
+          (c.X + c.Width) / (float) _charSet.Width,
           (c.Y + c.Height - 0.5f) / _charSet.Height,
           Color.Transparent
           );
@@ -503,7 +499,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       verts.Add(br);
     }
 
-    public BitmapCharacter Character(char character)
+    protected BitmapCharacter Character(char character)
     {
       lock (_syncObj)
       {
@@ -521,12 +517,11 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       }
     }
 
-    public int GetKerningAmount(BitmapCharacter first, char second)
+    protected int GetKerningAmount(BitmapCharacter first, char second)
     {
       Kerning result = first.KerningList.FirstOrDefault(node => node.Second == second);
       return result == null ? 0 : result.Amount;
     }
-
     #endregion
 
     #region IAssetCore implementation
@@ -538,7 +533,6 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 
     public void Free()
     {
-      _dwRenderer.Dispose();
       if (_texture != null)
       {
         if (AllocationChanged != null)

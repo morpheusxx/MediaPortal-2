@@ -16,7 +16,10 @@
   </ControlTemplate>
 
   <ControlTemplate x:Key="MuteOnOffControlTemplate">
-    <Image Source="PlayerControls.Large\AudioMute.png" Stretch="Uniform" Height="{ThemeResource PlayerControlHeight}" />
+    <Canvas>
+      <Path Data="F1M1137.8418,600.5068L1130.2018,606.9598L1054.1758,516.9818L1061.8148,510.5278z" Fill="#A0FF0000" Stretch="Fill"
+            Height="{ThemeResource PlayerControlHeight}" Width="{ThemeResource PlayerControlHeight}"/>
+    </Canvas>
   </ControlTemplate>
 
   <ControlTemplate x:Key="PlayControlTemplate">
@@ -143,6 +146,16 @@
           HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="5,5,5,5"
           Data="F1 M22.0,0.0 L11,11.5 22.0,22.0 z"/>
     </Grid>
+  </ControlTemplate>
+
+
+  <!-- Star shape for rating control -->
+  <!-- Empty style for non selected stars, it's intended to show only the selection (actual value)-->
+  <ControlTemplate x:Key="StarPolygonTemplate">
+  </ControlTemplate>
+
+  <ControlTemplate x:Key="StarPolygonSelectedTemplate">
+    <Polygon x:Name="Star" Points="9,2 11,7 17,7 12,10 14,15 9,12 4,15 6,10 1,7 7,7" Fill="{ThemeResource StarRatingSelectedColor}" StrokeThickness="0.5" />
   </ControlTemplate>
 
 </ResourceDictionary>

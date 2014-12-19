@@ -13,6 +13,7 @@
 
   <Model x:Key="FanArtBackgroundModel" Id="8F42C8E9-E8A3-475C-A50A-99E1E644DC91"/>
   <Model x:Key="TimeModel" Id="E821B1C8-0666-4339-8027-AA45A4F6F107"/>
+  <Model x:Key="VideoPlayerModel" Id="4E2301B4-3C17-4a1d-8DE5-2CEA169A0256"/>
 
   <fanart:MediaItemAspectToBoolConverter x:Key="MediaItemAspectToBoolConverter" />
 
@@ -188,57 +189,6 @@
 
 
   <!-- Movie Collection Filter -->
-  <ControlTemplate x:Key="ListViewMovieFilterItemTemplate">
-    <Grid x:Name="ItemControl">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="50"/>
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto"/>
-        <RowDefinition Height="Auto"/>
-      </Grid.RowDefinitions>
-
-      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}"
-          Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"/>
-
-      <Image x:Name="ItemTypeSmall" Stretch="Uniform"
-            FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_S}" Height="{StaticResource MEDIA_THUMB_HEIGHT_S}">
-        <Image.Source>
-          <fanart:FanArtImageSource fanart:FanArtMediaType="MovieCollection" fanart:FanArtType="Poster" fanart:FanArtName="{Binding SimpleTitle}"
-                                    fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
-        </Image.Source>
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small}"/>
-        </Image.IsVisible>
-      </Image>
-      <Image x:Name="ItemTypeMedium" Stretch="Uniform"
-            FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_M}" Height="{StaticResource MEDIA_THUMB_HEIGHT_M}">
-        <Image.Source>
-          <fanart:FanArtImageSource fanart:FanArtMediaType="MovieCollection" fanart:FanArtType="Poster" fanart:FanArtName="{Binding SimpleTitle}"
-                                    fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
-        </Image.Source>
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Medium}"/>
-        </Image.IsVisible>
-      </Image>
-      <Image x:Name="ItemTypeLarge" Stretch="Uniform"
-            FallbackSource="VideoLarge.png" Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}">
-        <Image.Source>
-          <fanart:FanArtImageSource fanart:FanArtMediaType="MovieCollection" fanart:FanArtType="Poster" fanart:FanArtName="{Binding SimpleTitle}"
-                                    fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
-        </Image.Source>
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Large}"/>
-        </Image.IsVisible>
-      </Image>
-
-      <Label x:Name="NumItems" Grid.Row="0" Grid.Column="2" Content="{Binding NumItems}"
-          Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"/>
-    </Grid>
-  </ControlTemplate>
-
   <ControlTemplate x:Key="GridViewMovieFilterItemTemplate">
     <Grid>
       <Image Source="MediaItem_Shadow.png" Margin="-7,-4,-8,-6"/>
@@ -252,9 +202,8 @@
     </Grid>
   </ControlTemplate>
 
-  <!-- Movie -->
-  <ControlTemplate x:Key="ListViewMovieItemTemplate">
-    <Grid x:Name="ItemControl">
+  <ControlTemplate x:Key="ListViewMovieFilterItemTemplate">
+    <Grid x:Name="ItemControl" Margin="8,0,8,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
@@ -265,40 +214,48 @@
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
 
-      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
-        <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
-            <Binding Source="{ThemeResource WatchedTextColor}"/>
+      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" FontFamily="DefaultBold">
+        <Label.Opacity>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <!--<Binding Path="PlayCount"/>-->
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source="1.0"/>
+            <Binding Source="0.6"/>
           </MultiBinding>
-        </Label.Color>
+        </Label.Opacity>
       </Label>
-      <Image x:Name="ItemTypeSmall" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_S}" Height="{StaticResource MEDIA_THUMB_HEIGHT_S}">
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small}"/>
-        </Image.IsVisible>
-      </Image>
-      <Image x:Name="ItemTypeMedium" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_M}" Height="{StaticResource MEDIA_THUMB_HEIGHT_M}">
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Medium}"/>
-        </Image.IsVisible>
-      </Image>
-      <Image x:Name="ItemTypeLarge" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoLarge.png" Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}">
-        <Image.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Large}"/>
-        </Image.IsVisible>
-      </Image>
 
-      <!-- TODO: Year -->
-      <Label x:Name="Year" Grid.Row="0" Grid.Column="2" Content="{Binding Year}"
+      <Control x:Name="ListViewCover" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,10,0"
+               Template="{ThemeResource GridViewMovieFilterItemTemplate}" RenderTransformOrigin="0.5,0.5"
+               IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
+        <Control.LayoutTransform>
+          <ScaleTransform>
+            <ScaleTransform.ScaleX>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleX>
+            <ScaleTransform.ScaleY>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleY>
+          </ScaleTransform>
+        </Control.LayoutTransform>
+      </Control>
+
+      <Label x:Name="NumItems" Grid.Row="0" Grid.Column="2" Content="{Binding NumItems}"
           Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"/>
     </Grid>
   </ControlTemplate>
 
+  <!-- Movie -->
   <ControlTemplate x:Key="GridViewMovieItemTemplate">
     <Grid>
       <Image Source="MediaItem_Shadow.png" Margin="-7,-4,-8,-6"/>
@@ -312,68 +269,108 @@
     </Grid>
   </ControlTemplate>
 
-  <!-- Video -->
-  <ControlTemplate x:Key="ListViewVideoItemTemplate">
-    <Grid x:Name="ItemControl">
+  <ControlTemplate x:Key="ListViewMovieItemTemplate">
+    <Grid x:Name="ItemControl" Margin="8,0,8,0">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto"/>
         <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <DockPanel LastChildFill="True" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,4,0">
-        <Image x:Name="ItemTypeSmall" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_S}" Height="{StaticResource MEDIA_THUMB_HEIGHT_S}">
-          <Image.IsVisible>
-            <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small}"/>
-          </Image.IsVisible>
-        </Image>
 
-        <Image x:Name="ItemTypeMedium" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoSmall.png" Width="{StaticResource MEDIA_THUMB_WIDTH_M}" Height="{StaticResource MEDIA_THUMB_HEIGHT_M}">
-          <Image.IsVisible>
-            <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Medium}"/>
-          </Image.IsVisible>
-        </Image>
-        <Image x:Name="ItemTypeLarge" Stretch="Uniform"
-            Source="{Binding MediaItem}" FallbackSource="VideoLarge.png" Width="{StaticResource MEDIA_THUMB_WIDTH_L}" Height="{StaticResource MEDIA_THUMB_HEIGHT_L}">
-          <Image.IsVisible>
-            <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Large}"/>
-          </Image.IsVisible>
-        </Image>
-      </DockPanel>
-      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}">
-        <Label.Color>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="{ThemeResource TextColor}"/>
-            <Binding Source="{ThemeResource WatchedTextColor}"/>
+      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" Color="{ThemeResource TextColor}" FontFamily="DefaultBold">
+        <Label.Opacity>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <!--<Binding Path="PlayCount"/>-->
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source="1.0"/>
+            <Binding Source="0.6"/>
           </MultiBinding>
-        </Label.Color>
+        </Label.Opacity>
       </Label>
-      <Label x:Name="Duration" Grid.Row="0" Grid.Column="2" Content="{Binding Duration}"
-          Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"/>
-      <Grid x:Name="Details" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
-        <Grid.IsVisible>
-          <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} != {LayoutSize}.{Small}"/>
-        </Grid.IsVisible>
+
+      <Control x:Name="ListViewCover" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,10,0"
+               Template="{ThemeResource GridViewMovieItemTemplate}" RenderTransformOrigin="0.5,0.5"
+               IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
+        <Control.LayoutTransform>
+          <ScaleTransform>
+            <ScaleTransform.ScaleX>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleX>
+            <ScaleTransform.ScaleY>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleY>
+          </ScaleTransform>
+        </Control.LayoutTransform>
+      </Control>
+
+      <Grid x:Name="FocusDetails" Grid.Row="1" Grid.Column="1"
+            HorizontalAlignment="Stretch"
+            IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
+
         <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
           <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="200"/>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition Width="200"/>
         </Grid.ColumnDefinitions>
-        <Label x:Name="VideoEncodingTitle" Grid.Column="0" Content="Video: " FontSize="{ThemeResource SmallFontSize}" Color="{StaticResource MediaDetailsColor}"/>
-        <Label x:Name="VideoEncoding" Grid.Column="1" Content="{Binding VideoEncoding}" FontSize="{ThemeResource SmallFontSize}" Color="{StaticResource MediaDetailsColor}"/>
-        <Label x:Name="AudioEncodingTitle" Grid.Column="2" Content="Audio: " FontSize="{ThemeResource SmallFontSize}" Color="{StaticResource MediaDetailsColor}"/>
-        <Label x:Name="AudioEncoding" Grid.Column="3" Content="{Binding AudioEncoding}" FontSize="{ThemeResource SmallFontSize}" Color="{StaticResource MediaDetailsColor}"/>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <media:VideoAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="0">
+          <media:VideoAspectWrapper.Template>
+            <ControlTemplate>
+              <Grid DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label x:Name="Genre" Grid.Row="0" Grid.Column="0" Content="{Binding Genres}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallerFontSize}" />
+
+              </Grid>
+            </ControlTemplate>
+          </media:VideoAspectWrapper.Template>
+        </media:VideoAspectWrapper>
+
+        <media:MovieAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="1" HorizontalAlignment="Right">
+          <media:MovieAspectWrapper.Template>
+            <ControlTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+
+                <StarRatingPanel x:Name="RatingReadOnly" IsReadOnly="True" StarReadOnlyTemplate="{StaticResource StarReadOnlyTemplate}"
+                               Maximum="10"
+                               Value="{Binding TotalRating}">
+                  <StarRatingPanel.LayoutTransform>
+                    <TransformGroup>
+                      <ScaleTransform ScaleX="1.7" ScaleY="1.7"/>
+                    </TransformGroup>
+                  </StarRatingPanel.LayoutTransform>
+                </StarRatingPanel>
+              </StackPanel>
+            </ControlTemplate>
+          </media:MovieAspectWrapper.Template>
+        </media:MovieAspectWrapper>
+
       </Grid>
     </Grid>
   </ControlTemplate>
 
+  <!-- Video -->
   <ControlTemplate x:Key="GridViewVideoItemTemplate">
     <Grid>
       <Image Source="MediaItem_Shadow.png" Margin="-7,-4,-8,-6"/>
@@ -384,6 +381,125 @@
     </Grid>
   </ControlTemplate>
 
+  <ControlTemplate x:Key="ListViewVideoItemTemplate">
+    <Grid x:Name="ItemControl" Margin="8,0,8,0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+
+      <Label x:Name="ItemLabel" Grid.Row="0" Grid.Column="1" Content="{Binding SimpleTitle}" FontSize="{ThemeResource SmallFontSize}" Color="{ThemeResource TextColor}" FontFamily="DefaultBold">
+        <Label.Opacity>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <!--<Binding Path="PlayCount"/>-->
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source="1.0"/>
+            <Binding Source="0.6"/>
+          </MultiBinding>
+        </Label.Opacity>
+      </Label>
+
+      <Control x:Name="ListViewCover" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,10,0"
+               Template="{ThemeResource GridViewVideoItemTemplate}" RenderTransformOrigin="0.5,0.5"
+               IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
+        <Control.LayoutTransform>
+          <ScaleTransform>
+            <ScaleTransform.ScaleX>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleX>
+            <ScaleTransform.ScaleY>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == {LayoutSize}.{Small} ? {1} : ({0} == {LayoutSize}.{Medium} ? {2}: {3})">
+                <Binding Source="{StaticResource ViewModeModel}" Path="LayoutSize"/>
+                <Binding Source="0.5"/>
+                <Binding Source="0.8"/>
+                <Binding Source="1"/>
+              </MultiBinding>
+            </ScaleTransform.ScaleY>
+          </ScaleTransform>
+        </Control.LayoutTransform>
+      </Control>
+
+      <Grid x:Name="FocusDetails" Grid.Row="1" Grid.Column="1"
+            HorizontalAlignment="Stretch"
+            IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
+
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <media:VideoAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="0">
+          <media:VideoAspectWrapper.Template>
+            <ControlTemplate>
+              <Grid DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label x:Name="Genre" Grid.Row="0" Grid.Column="0" Content="{Binding Genres}" Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallerFontSize}" />
+
+              </Grid>
+            </ControlTemplate>
+          </media:VideoAspectWrapper.Template>
+        </media:VideoAspectWrapper>
+
+        <media:MovieAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="1" HorizontalAlignment="Right">
+          <media:MovieAspectWrapper.Template>
+            <ControlTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+
+                <StarRatingPanel x:Name="RatingReadOnly" IsReadOnly="True" StarReadOnlyTemplate="{StaticResource StarReadOnlyTemplate}"
+                               Maximum="10"
+                               Value="{Binding TotalRating}">
+                  <StarRatingPanel.LayoutTransform>
+                    <TransformGroup>
+                      <ScaleTransform ScaleX="1.7" ScaleY="1.7"/>
+                    </TransformGroup>
+                  </StarRatingPanel.LayoutTransform>
+                </StarRatingPanel>
+              </StackPanel>
+            </ControlTemplate>
+          </media:MovieAspectWrapper.Template>
+        </media:MovieAspectWrapper>
+
+        <media:SeriesAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="1" HorizontalAlignment="Right">
+          <media:SeriesAspectWrapper.Template>
+            <ControlTemplate>
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
+
+                <StarRatingPanel x:Name="RatingReadOnly" IsReadOnly="True" StarReadOnlyTemplate="{StaticResource StarReadOnlyTemplate}"
+                               Maximum="10"
+                               Value="{Binding TotalRating}">
+                  <StarRatingPanel.LayoutTransform>
+                    <TransformGroup>
+                      <ScaleTransform ScaleX="1.7" ScaleY="1.7"/>
+                    </TransformGroup>
+                  </StarRatingPanel.LayoutTransform>
+                </StarRatingPanel>
+              </StackPanel>
+            </ControlTemplate>
+          </media:SeriesAspectWrapper.Template>
+        </media:SeriesAspectWrapper>
+
+      </Grid>
+    </Grid>
+  </ControlTemplate>
 
   <!-- Audio -->
   <ControlTemplate x:Key="ListViewAudioItemTemplate">
@@ -748,6 +864,7 @@
             <Button.Triggers>
               <Trigger Property="HasFocus" Value="True">
                 <Setter TargetName="ItemLabel" Property="Scroll" Value="Auto"/>
+                <!--<Setter TargetName="ListViewCover" Property="IsVisible" Value="True"/>-->
                 <Setter Property="StackPanel.ZIndex" Value="100.0"/>
               </Trigger>
             </Button.Triggers>
@@ -827,13 +944,93 @@
   </Style>
 
   <!-- OSD styles -->
+  <ControlTemplate x:Key="GenericVideoOSDProgressControl">
+    <DockPanel LastChildFill="true" Margin="3">
+      <Grid DockPanel.Dock="Center" HorizontalAlignment="Stretch">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="100"/>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="100"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Label x:Name="CurrentTimeLabel" Grid.Column="0" Content="{Binding CurrentTime}"
+                        Color="{ThemeResource TextColor}" HorizontalAlignment="Left" VerticalAlignment="Center"
+                        FontSize="{ThemeResource SmallFontSize}"/>
+
+        <ProgressBar x:Name="ProgressBar" Grid.Column="1" Height="18" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,5,0,0"
+                        Style="{ThemeResource OSDProgressBarStyle}" Value="{Binding Path=PercentPlayed}" />
+
+        <Label x:Name="VideoDurationLabel" Grid.Column="2" Content="{Binding Duration}"
+                        Color="{ThemeResource TextColor}" HorizontalAlignment="Left" VerticalAlignment="Center"
+                        FontSize="{ThemeResource SmallFontSize}"/>
+
+      </Grid>
+    </DockPanel>
+  </ControlTemplate>
+
+  <ControlTemplate x:Key="GenericVideoOSDControlsControl">
+    <StackPanel x:Name="PlayControlsPanel" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+      <!-- Morpheus_xx: we want to see buttons always, not only when using mouse // IsVisible="{Binding ShowMouseControls}" -->
+      <Button x:Name="SkipBackButton" Style="{ThemeResource SkipBackButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSkipBack}"
+                          Command="{Command Previous}"/>
+      <Button x:Name="RewindButton" Style="{ThemeResource RewindButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSeekBackward}"
+                          Command="{Command SeekBackward}"/>
+      <Button x:Name="PlayButton" Style="{ThemeResource PlayButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanPlay}"
+                          Command="{Command Play}"/>
+      <Button x:Name="PauseButton" Style="{ThemeResource PauseButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanPause}"
+                          Command="{Command Pause}"/>
+      <Button x:Name="StopButton" Style="{ThemeResource StopButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanStop}"
+                          Command="{Command Stop}"/>
+      <Button x:Name="ForwardButton" Style="{ThemeResource ForwardButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSeekForward}"
+                          Command="{Command SeekForward}"/>
+      <Button x:Name="SkipForwardButton" Style="{ThemeResource SkipForwardButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSkipForward}"
+                          Command="{Command Next}"/>
+      <Button x:Name="SelectTitleButton" Style="{ThemeResource ShowDvdMenuButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
+                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.TitlesAvailable}"
+                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseTitleDialog}"/>
+      <Button x:Name="PreviousChapterButton" Style="{ThemeResource PreviousChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
+                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
+                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.PrevChapter}"/>
+      <Button x:Name="SelectChapterButton" Style="{ThemeResource SelectChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
+                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
+                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseChapterDialog}"/>
+      <Button x:Name="NextChapterButton" Style="{ThemeResource NextChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
+                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
+                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.NextChapter}"/>
+      <Button x:Name="SelectSubtitleButton" Style="{ThemeResource SelectSubtitleButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
+                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.SubtitlesAvailable}"
+                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseSubtitleDialog}"/>
+
+      <Grid x:Name="AudioPanel" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="4">
+        <Grid x:Name="Audio_NoMouse" IsVisible="{Binding !ShowMouseControls}"
+                      VerticalAlignment="Center" HorizontalAlignment="Center">
+          <!-- Must be located the same as Audio_Mouse -->
+          <Control x:Name="AudioSimple" IsVisible="{Binding IsAudio}" Template="{ThemeResource AudioActiveControlTemplate}"/>
+          <Control x:Name="MuteOnOffSimple" Template="{ThemeResource MuteOnOffControlTemplate}">
+            <Control.IsVisible>
+              <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} &amp;&amp; {1}">
+                <Binding Path="IsAudio"/>
+                <Binding Path="IsMuted"/>
+              </MultiBinding>
+            </Control.IsVisible>
+          </Control>
+        </Grid>
+        <Grid x:Name="Audio_Mouse" IsVisible="{Binding ShowMouseControls}" VerticalAlignment="Center" HorizontalAlignment="Center">
+          <!-- Must be located the same as Audio_NoMouse -->
+          <Button x:Name="AudioActiveButton" IsVisible="{Binding IsAudio}" Style="{ThemeResource AudioActiveButtonStyle}" Command="{Command AudioButtonPressed}"/>
+          <Button x:Name="AudioInactiveButton" IsVisible="{Binding !IsAudio}" Style="{ThemeResource AudioInactiveButtonStyle}" Command="{Command AudioButtonPressed}"/>
+        </Grid>
+      </Grid>
+    </StackPanel>
+  </ControlTemplate>
+
   <Style x:Key="PrimaryVideoOSDStyle" TargetType="{x:Type mp_special_controls:PlayerControl}">
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type mp_special_controls:PlayerControl}">
-          <ControlTemplate.Resources>
-            <Model x:Key="VideoPlayerModel" Id="4E2301B4-3C17-4a1d-8DE5-2CEA169A0256"/>
-          </ControlTemplate.Resources>
 
           <Control Style="{ThemeResource OSDContainer}" Width="{ThemeResource FullScreenContentVideoPrimaryPlayerOSDWidth}" DataContext="{Binding RelativeSource={RelativeSource TemplatedParent}}">
             <Control.Resources>
@@ -911,100 +1108,13 @@
               </ControlTemplate>
 
               <ControlTemplate x:Key="OSD_Progress_Template">
-
-                <DockPanel LastChildFill="true" Margin="3">
-                  <Grid DockPanel.Dock="Center" HorizontalAlignment="Stretch">
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="100"/>
-                      <ColumnDefinition Width="*"/>
-                      <ColumnDefinition Width="100"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                      <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!--<Label x:Name="PlayerStateLabel" Grid.Column="0" Grid.Row="1" HorizontalAlignment="Left"
-                        Content="{Binding PlayerStateText}" Scroll="Auto"
-                        Color="{ThemeResource TextColor}" />-->
-
-                    <Label x:Name="CurrentTimeLabel" Grid.Column="0" Grid.Row="0"  Content="{Binding CurrentTime}"
-                        Color="{ThemeResource TextColor}"  Margin="0,0,0,0" HorizontalAlignment="Left"
-                        FontSize="{ThemeResource SmallFontSize}"/>
-
-                    <ProgressBar x:Name="ProgressBar" Grid.Column="1" Grid.Row="0" Height="18" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,5,0,0"
-                        Value="{Binding Path=PercentPlayed}" />
-
-                    <Label x:Name="VideoDurationLabel" Grid.Column="2" Grid.Row="0" Margin="0,0,0,0"
-                        Content="{Binding Duration}"
-                        HorizontalAlignment="Left" VerticalAlignment="Center"
-                        Color="{ThemeResource TextColor}"
-                        FontSize="{ThemeResource SmallFontSize}"/>
-
-                  </Grid>
-                  <!-- PlayerGrid -->
-                </DockPanel>
+                <Control Template="{ThemeResource GenericVideoOSDProgressControl}" />
               </ControlTemplate>
 
               <ControlTemplate x:Key="OSD_Controls_Template">
-                <StackPanel x:Name="PlayControlsPanel" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                  <!-- Morpheus_xx: we want to see buttons always, not only when using mouse // IsVisible="{Binding ShowMouseControls}" -->
-                  <Button x:Name="SkipBackButton" Style="{ThemeResource SkipBackButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSkipBack}"
-                          Command="{Command Previous}"/>
-                  <Button x:Name="RewindButton" Style="{ThemeResource RewindButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSeekBackward}"
-                          Command="{Command SeekBackward}"/>
-                  <Button x:Name="PlayButton" Style="{ThemeResource PlayButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanPlay}"
-                          Command="{Command Play}"/>
-                  <Button x:Name="PauseButton" Style="{ThemeResource PauseButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanPause}"
-                          Command="{Command Pause}"/>
-                  <Button x:Name="StopButton" Style="{ThemeResource StopButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanStop}"
-                          Command="{Command Stop}"/>
-                  <Button x:Name="ForwardButton" Style="{ThemeResource ForwardButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSeekForward}"
-                          Command="{Command SeekForward}"/>
-                  <Button x:Name="SkipForwardButton" Style="{ThemeResource SkipForwardButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}" IsVisible="{Binding CanSkipForward}"
-                          Command="{Command Next}"/>
-                  <Button x:Name="SelectTitleButton" Style="{ThemeResource ShowDvdMenuButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
-                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.TitlesAvailable}"
-                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseTitleDialog}"/>
-                  <Button x:Name="PreviousChapterButton" Style="{ThemeResource PreviousChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
-                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
-                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.PrevChapter}"/>
-                  <Button x:Name="SelectChapterButton" Style="{ThemeResource SelectChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
-                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
-                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseChapterDialog}"/>
-                  <Button x:Name="NextChapterButton" Style="{ThemeResource NextChapterButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
-                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.ChaptersAvailable}"
-                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.NextChapter}"/>
-                  <Button x:Name="SelectSubtitleButton" Style="{ThemeResource SelectSubtitleButtonStyle}" Margin="{ThemeResource PlayerControlButtonMargins}"
-                          IsVisible="{Binding Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.SubtitlesAvailable}"
-                          Command="{Command Source={StaticResource VideoPlayerModel},Path=PlayerUIContributor.OpenChooseSubtitleDialog}"/>
-
-                  <Grid x:Name="AudioPanel" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="4,0,0,0">
-                    <Grid x:Name="Audio_NoMouse" IsVisible="{Binding !ShowMouseControls}"
-                      VerticalAlignment="Center" HorizontalAlignment="Center">
-                      <!-- Must be located the same as Audio_Mouse -->
-                      <Control x:Name="AudioSimple" IsVisible="{Binding IsAudio}" Template="{ThemeResource AudioActiveControlTemplate}"/>
-                      <Control x:Name="MuteOnOffSimple" Template="{ThemeResource MuteOnOffControlTemplate}">
-                        <Control.IsVisible>
-                          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} &amp;&amp; {1}">
-                            <Binding Path="IsAudio"/>
-                            <Binding Path="IsMuted"/>
-                          </MultiBinding>
-                        </Control.IsVisible>
-                      </Control>
-                    </Grid>
-                    <Grid x:Name="Audio_Mouse" IsVisible="{Binding ShowMouseControls}"
-                      VerticalAlignment="Center" HorizontalAlignment="Center">
-                      <!-- Must be located the same as Audio_NoMouse -->
-                      <Button x:Name="AudioActiveButton" IsVisible="{Binding IsAudio}" Style="{ThemeResource AudioActiveButtonStyle}"
-                        Command="{Command AudioButtonPressed}"/>
-                      <Button x:Name="AudioInactiveButton" IsVisible="{Binding !IsAudio}" Style="{ThemeResource AudioInactiveButtonStyle}"
-                        Command="{Command AudioButtonPressed}"/>
-                    </Grid>
-                  </Grid>
-
-                </StackPanel>
-                <!-- PlayControlsPanel -->
+                <Control Template="{ThemeResource GenericVideoOSDControlsControl}" />
               </ControlTemplate>
+
             </Control.Resources>
           </Control>
           <!--<ControlTemplate.Triggers>

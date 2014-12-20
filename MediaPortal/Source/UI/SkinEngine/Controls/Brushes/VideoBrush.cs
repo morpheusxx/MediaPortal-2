@@ -312,7 +312,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         ServiceRegistration.Get<ILogger>().Debug("VideoBrush.SetupBrush: Player manager not found");
     }
 
-    protected override bool BeginRenderBrushOverride(PrimitiveBuffer primitiveContext, RenderContext renderContext)
+    protected bool BeginRenderBrushOverride(PrimitiveBuffer primitiveContext, RenderContext renderContext)
     {
       ISharpDXVideoPlayer player;
       if (!GetPlayer(out player))
@@ -346,7 +346,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       return player != null;
     }
 
-    public override void EndRender()
+    public void EndRender()
     {
       _imageContext.EndRender();
     }

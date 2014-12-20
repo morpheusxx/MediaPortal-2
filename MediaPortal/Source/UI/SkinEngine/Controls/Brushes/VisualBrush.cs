@@ -110,14 +110,14 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
     void UpdateRenderTarget(FrameworkElement fe)
     {
-      RectangleF bounds = new RectangleF(0, 0, _vertsBounds.Size.Width, _vertsBounds.Size.Height);
-      fe.RenderToSurface(_visualSurface, new RenderContext(Matrix.Identity, Opacity, bounds, 1.0f));
+      //RectangleF bounds = new RectangleF(0, 0, _vertsBounds.Size.Width, _vertsBounds.Size.Height);
+      //fe.RenderToSurface(_visualSurface, new RenderContext(Matrix.Identity, Opacity, bounds, 1.0f));
 
-      // Unfortunately, brushes/brush effects are based on textures and cannot work with surfaces, so we need this additional copy step
-      GraphicsDevice.Device.StretchRectangle(
-          _visualSurface.Surface, new Rectangle(0, 0, _visualSurface.Size.Width, _visualSurface.Size.Height),
-          _visualTexture.Surface0, new Rectangle(0, 0, _visualTexture.Size.Width, _visualTexture.Size.Height),
-          TextureFilter.None);
+      //// Unfortunately, brushes/brush effects are based on textures and cannot work with surfaces, so we need this additional copy step
+      //GraphicsDevice.Device.StretchRectangle(
+      //    _visualSurface.Surface, new Rectangle(0, 0, _visualSurface.Size.Width, _visualSurface.Size.Height),
+      //    _visualTexture.Surface0, new Rectangle(0, 0, _visualTexture.Size.Width, _visualTexture.Size.Height),
+      //    TextureFilter.None);
     }
 
     protected void PrepareVisual()
@@ -172,7 +172,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       set { _autoLayoutContentProperty.SetValue(value); }
     }
 
-    public override Texture Texture
+    public Texture Texture
     {
       get { return _visualTexture.Texture; }
     }
@@ -198,7 +198,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       PrepareVisual();
     }
 
-    protected override bool BeginRenderBrushOverride(PrimitiveBuffer primitiveContext, RenderContext renderContext)
+    protected bool BeginRenderBrushOverride(PrimitiveBuffer primitiveContext, RenderContext renderContext)
     {
       FrameworkElement fe = _preparedVisual;
       if (fe == null) return false;

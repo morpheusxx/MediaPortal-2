@@ -165,7 +165,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
                 //Relative origin
                 PointF point = points[0];
                 lastPoint = new PointF(lastPoint.X + point.X, lastPoint.Y + point.Y);
-
+                if (hasOpenFigure)
+                  sink.EndFigure(FigureEnd.Open);
                 sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Hollow);
                 hasOpenFigure = true;
               }
@@ -174,6 +175,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
               {
                 //Absolute origin
                 lastPoint = points[0];
+                if (hasOpenFigure)
+                  sink.EndFigure(FigureEnd.Open);
                 sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Hollow);
                 hasOpenFigure = true;
               }

@@ -52,8 +52,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     protected bool _performLayout;
     protected RectangleF _outerBorderRect;
     protected FrameworkElement _initializedContent = null; // We need to cache the Content because after it was set, it first needs to be initialized before it can be used
-    protected SharpDX.Direct2D1.Geometry _backgroundGeometry;
-    protected SharpDX.Direct2D1.Geometry _borderGeometry;
+    protected TransformedGeometryCache _backgroundGeometry = new TransformedGeometryCache();
+    protected TransformedGeometryCache _borderGeometry = new TransformedGeometryCache();
 
     #endregion
 
@@ -346,7 +346,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       // Setup background brush
       if (Background != null)
       {
-        _backgroundGeometry = CreateBorderRectPath(innerBorderRect);
+        _backgroundGeometry.UpdateGeometry(CreateBorderRectPath(innerBorderRect));
       }
     }
 
@@ -360,7 +360,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         innerBorderRect.Y -= (float)BorderThickness / 2;
         innerBorderRect.Width += (float)BorderThickness;
         innerBorderRect.Height += (float)BorderThickness;
-        _borderGeometry = CreateBorderRectPath(innerBorderRect);
+        _borderGeometry.UpdateGeometry(CreateBorderRectPath(innerBorderRect));
       }
     }
 
@@ -378,16 +378,17 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       PerformLayout(localRenderContext);
 
       var background = Background;
-      if (background != null && _backgroundGeometry != null && background.TryAllocate())
+      if (background != null && _backgroundGeometry.HasGeom && background.TryAllocate())
       {
         var oldOpacity = background.Brush2D.Opacity;
         background.Brush2D.Opacity *= (float)localRenderContext.Opacity;
-        GraphicsDevice11.Instance.Context2D1.FillGeometry(_backgroundGeometry, background.Brush2D);
+        _backgroundGeometry.UpdateTransform(localRenderContext.Transform);
+        GraphicsDevice11.Instance.Context2D1.FillGeometry(_backgroundGeometry.TransformedGeom, background.Brush2D);
         background.Brush2D.Opacity = oldOpacity;
       }
 
       var border = BorderBrush;
-      if (border != null && _borderGeometry != null && BorderThickness > 0 && border.TryAllocate())
+      if (border != null && _borderGeometry.HasGeom && BorderThickness > 0 && border.TryAllocate())
       {
         var oldOpacity = border.Brush2D.Opacity;
         border.Brush2D.Opacity *= (float)localRenderContext.Opacity;
@@ -395,7 +396,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         //StrokeStyleProperties prop = new StrokeStyleProperties();
         //var style = new StrokeStyle(GraphicsDevice11.Instance.Context2D1.Factory, prop);
         //style.LineJoin = LineJoin.Miter;
-        GraphicsDevice11.Instance.Context2D1.DrawGeometry(_borderGeometry, border.Brush2D, (float)BorderThickness);
+        _borderGeometry.UpdateTransform(localRenderContext.Transform);
+        GraphicsDevice11.Instance.Context2D1.DrawGeometry(_borderGeometry.TransformedGeom, border.Brush2D, (float)BorderThickness);
         border.Brush2D.Opacity = oldOpacity;
       }
 

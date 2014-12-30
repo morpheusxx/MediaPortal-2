@@ -163,7 +163,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
                 lastPoint = new PointF(lastPoint.X + point.X, lastPoint.Y + point.Y);
                 if (hasOpenFigure)
                   sink.EndFigure(FigureEnd.Open);
-                sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Hollow);
+                sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Filled);
                 hasOpenFigure = true;
               }
               break;
@@ -173,7 +173,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
                 lastPoint = points[0];
                 if (hasOpenFigure)
                   sink.EndFigure(FigureEnd.Open);
-                sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Hollow);
+                sink.BeginFigure(ToVector2(lastPoint), FigureBegin.Filled);
                 hasOpenFigure = true;
               }
               break;

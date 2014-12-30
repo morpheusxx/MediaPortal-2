@@ -283,7 +283,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Panels
       Brush background = Background;
       if (background != null && background.TryAllocate() && _backgroundGeometry != null)
       {
-        GraphicsDevice11.Instance.Context2D1.FillGeometry(_backgroundGeometry, background, OpacityMask, localRenderContext);
+        GraphicsDevice11.Instance.Context2D1.FillGeometry(_backgroundGeometry, background, localRenderContext);
       }
 
       RenderChildren(localRenderContext);

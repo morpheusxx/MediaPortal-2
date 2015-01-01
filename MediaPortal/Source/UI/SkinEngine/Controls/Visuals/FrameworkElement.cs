@@ -1969,6 +1969,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         _renderedBoundingBox = CalculateBoundingBox(_innerRect, finalTransform);
       }
 
+      bool layerPushed = false;
       Brushes.Brush opacityMask = OpacityMask;
       if (opacityMask != null && opacityMask.TryAllocate())
       {
@@ -1992,12 +1993,11 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         };
 
         GraphicsDevice11.Instance.Context2D1.PushLayer(ref layerParameters, null);
+        layerPushed = true;
       }
-      // TODO
-      //if (opacityMask == null && Effect == null)
-      // Simply render without opacity mask
+
       RenderOverride(localRenderContext);
-      if (opacityMask != null)
+      if (layerPushed)
       {
         GraphicsDevice11.Instance.Context2D1.PopLayer();
       }

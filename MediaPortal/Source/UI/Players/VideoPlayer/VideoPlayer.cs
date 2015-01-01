@@ -40,11 +40,12 @@ using MediaPortal.UI.Presentation.Geometries;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine;
+using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
 using SharpDX;
-using SharpDX.Direct3D9;
+using SharpDX.Direct2D1;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -195,6 +196,9 @@ namespace MediaPortal.UI.Players.Video
         throw new VideoPlayerException("Initializing of EVR failed");
       }
 
+      // Set the instance
+      _evrCallback.PresenterInstance = _presenterInstance;
+
       // Set the number of video/subtitle/cc streams that are allowed to be connected to EVR. This has to be done after the custom presenter is initialized.
       IEVRFilterConfig config = (IEVRFilterConfig) _evr;
       config.SetNumberOfStreams(_streamCount);
@@ -263,7 +267,7 @@ namespace MediaPortal.UI.Players.Video
       get { return (_evrCallback == null) ? new System.Drawing.SizeF(1, 1) : _evrCallback.AspectRatio.ToDrawingSizeF(); }
     }
 
-    protected Surface RawVideoSurface
+    protected IBitmapAsset2D RawVideoSurface
     {
       get { return (_initialized && _evrCallback != null) ? _evrCallback.Surface : null; }
     }
@@ -277,17 +281,17 @@ namespace MediaPortal.UI.Players.Video
       }
     }
 
-    public Surface Surface
+    public IBitmapAsset2D Surface
     {
       get
       {
         lock (SurfaceLock)
         {
-          Surface videoSurface = RawVideoSurface;
+          IBitmapAsset2D videoSurface = RawVideoSurface;
           if (!_textureInvalid)
             return videoSurface;
 
-          if (videoSurface == null || videoSurface.IsDisposed)
+          if (videoSurface == null || !videoSurface.IsAllocated)
             return null;
 
           PostProcessTexture(videoSurface);
@@ -307,7 +311,7 @@ namespace MediaPortal.UI.Players.Video
     /// i.e. for overlaying subtitles or OSD menus.
     /// </summary>
     /// <param name="targetTexture"></param>
-    protected virtual void PostProcessTexture(Surface targetTexture)
+    protected virtual void PostProcessTexture(IBitmapAsset2D targetTexture)
     { }
 
     public IGeometry GeometryOverride

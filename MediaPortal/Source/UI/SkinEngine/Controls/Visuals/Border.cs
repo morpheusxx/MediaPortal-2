@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Windows.Markup;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.DirectX11;
@@ -39,6 +40,7 @@ using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {
+  [ContentProperty("Content")]
   public class Border : FrameworkElement, IAddChild<FrameworkElement>
   {
     #region Protected fields

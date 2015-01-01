@@ -69,6 +69,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -105,11 +106,16 @@
     <Compile Include="Controls\Animations\ColorAnimationUsingKeyFrames.cs" />
     <Compile Include="Controls\Animations\ColorKeyFrame.cs" />
     <Compile Include="Controls\Animations\DiscreteObjectKeyFrame.cs" />
+    <Compile Include="Controls\Animations\ColorKeyFrameCollection.cs" />
+    <Compile Include="Controls\Animations\PointKeyFrameCollection.cs" />
+    <Compile Include="Controls\Animations\ObjectKeyFrameCollection.cs" />
+    <Compile Include="Controls\Animations\DoubleKeyFrameCollection.cs" />
     <Compile Include="Controls\Animations\ObjectAnimationUsingKeyFrames.cs" />
     <Compile Include="Controls\Animations\DoubleAnimation.cs" />
     <Compile Include="Controls\Animations\DoubleAnimationUsingKeyFrames.cs" />
     <Compile Include="Controls\Animations\DoubleKeyFrame.cs" />
     <Compile Include="Controls\Animations\PropertyAnimationTimeline.cs" />
+    <Compile Include="Controls\Animations\TimeLineCollection.cs" />
     <Compile Include="Controls\Animations\TimelineContext.cs" />
     <Compile Include="Controls\Animations\ValueKeyFrame.cs" />
     <Compile Include="Controls\Animations\KeySpline.cs" />
@@ -156,6 +162,7 @@
     <Compile Include="Controls\Visuals\ISelectableItemContainer.cs" />
     <Compile Include="Controls\Panels\StarRatingPanel.cs" />
     <Compile Include="Controls\Visuals\Star.cs" />
+    <Compile Include="Controls\Visuals\Styles\SetterBaseCollection.cs" />
     <Compile Include="Controls\Visuals\Templates\DataStringProvider.cs" />
     <Compile Include="Controls\Visuals\ListViewItemGenerator.cs" />
     <Compile Include="Controls\Panels\VirtualizingStackPanel.cs" />
@@ -181,6 +188,8 @@
     <Compile Include="Controls\Visuals\Triggers\SoundPlayerAction.cs" />
     <Compile Include="Controls\Visuals\Triggers\StopStoryboard.cs" />
     <Compile Include="Controls\Visuals\Triggers\TriggerBase.cs" />
+    <Compile Include="Controls\Visuals\Triggers\TriggerActionCollection.cs" />
+    <Compile Include="Controls\Visuals\Triggers\TriggerCollection.cs" />
     <Compile Include="Controls\Visuals\Triggers\TriggerCommand.cs" />
     <Compile Include="Controls\Brushes\Brush.cs" />
     <Compile Include="Controls\Brushes\BrushCache.cs" />
@@ -272,13 +281,14 @@
     </Compile>
     <Compile Include="InputManagement\ClipboardManager.cs" />
     <Compile Include="InputManagement\InputMapper.cs" />
-    <Compile Include="MarkupExtensions\ColorMarkupExtension.cs" />
+    <Compile Include="MarkupExtensions\MPFExtensionBase.cs" />
+    <Compile Include="MarkupExtensions\ColorExtension.cs" />
     <Compile Include="MarkupExtensions\IMultiValueConverter.cs" />
     <Compile Include="MarkupExtensions\ITypeConverter.cs" />
     <Compile Include="MarkupExtensions\IValueConverter.cs" />
-    <Compile Include="MarkupExtensions\MultiBindingMarkupExtension.cs" />
+    <Compile Include="MarkupExtensions\MultiBindingExtension.cs" />
     <Compile Include="MarkupExtensions\StaticResourceBase.cs" />
-    <Compile Include="MarkupExtensions\ThemeResourceMarkupExtension.cs" />
+    <Compile Include="MarkupExtensions\ThemeResourceExtension.cs" />
     <Compile Include="MpfElements\Converters\CommaSeparatedValuesConverter.cs" />
     <Compile Include="MpfElements\Converters\AbstractSingleDirectionConverter.cs" />
     <Compile Include="MpfElements\Converters\EmptyString2FalseConverter.cs" />
@@ -320,6 +330,7 @@
     <Compile Include="MpfElements\Converters\expr\UnaryOp.cs" />
     <Compile Include="MpfElements\Converters\expr\Variable.cs" />
     <Compile Include="MpfElements\Converters\DurationConverter.cs" />
+    <Compile Include="MpfElements\Converters\MPFConverter.cs" />
     <Compile Include="MpfElements\Converters\PriorityBindingConverter.cs" />
     <Compile Include="MpfElements\Converters\ReferenceNotNull_BoolConverter.cs" />
     <Compile Include="MpfElements\Converters\expr\Error.cs" />
@@ -369,8 +380,8 @@
     <Compile Include="Xaml\DataDescriptors.cs" />
     <Compile Include="Xaml\Exceptions\Exceptions.cs" />
     <Compile Include="MarkupExtensions\CommandBaseMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\CommandStencilMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\PickupBindingMarkupExtension.cs" />
+    <Compile Include="MarkupExtensions\CommandStencilExtension.cs" />
+    <Compile Include="MarkupExtensions\PickupBindingExtension.cs" />
     <Compile Include="MpfElements\Resources\BindingWrapper.cs" />
     <Compile Include="MpfElements\Resources\LateBoundValue.cs" />
     <Compile Include="MpfElements\Resources\ValueWrapper.cs" />
@@ -458,10 +469,10 @@
     <Compile Include="InputManagement\InputManager.cs" />
     <Compile Include="MarkupExtensions\BindingDependency.cs" />
     <Compile Include="MarkupExtensions\BindingBase.cs" />
-    <Compile Include="MarkupExtensions\CommandMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\DynamicResourceMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\ServiceRegistrationMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\RelativeSource.cs" />
+    <Compile Include="MarkupExtensions\CommandExtension.cs" />
+    <Compile Include="MarkupExtensions\DynamicResourceExtension.cs" />
+    <Compile Include="MarkupExtensions\ServiceExtension.cs" />
+    <Compile Include="MarkupExtensions\RelativeSourceExtension.cs" />
     <Compile Include="MarkupExtensions\TreeHelper.cs" />
     <Compile Include="MpfElements\MpfCopyManager.cs" />
     <Compile Include="MpfElements\MPF.cs" />
@@ -496,10 +507,10 @@
     <Compile Include="Settings\Configuration\Appearance\Skin\SkinConfigSetting.cs" />
     <Compile Include="Settings\Configuration\Appearance\Skin\ThemeConfigSetting.cs" />
     <Compile Include="Xaml\ParserHelper.cs" />
-    <Compile Include="MarkupExtensions\BindingMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\TemplateBindingMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\StaticResourceMarkupExtension.cs" />
-    <Compile Include="MarkupExtensions\GetModelMarkupExtension.cs" />
+    <Compile Include="MarkupExtensions\BindingExtension.cs" />
+    <Compile Include="MarkupExtensions\TemplateBindingExtension.cs" />
+    <Compile Include="MarkupExtensions\StaticResourceExtension.cs" />
+    <Compile Include="MarkupExtensions\ModelExtension.cs" />
     <Compile Include="ScreenManagement\Animator.cs" />
     <Compile Include="ScreenManagement\Screen.cs" />
     <Compile Include="ScreenManagement\ScreenManager.cs" />
@@ -508,11 +519,11 @@
     <Compile Include="Xaml\DefaultNamespaceHandler.cs" />
     <Compile Include="Xaml\ElementContextStack.cs" />
     <Compile Include="Xaml\XamlNamespace\XamlNamespaceHandler.cs" />
-    <Compile Include="Xaml\XamlNamespace\ArrayMarkupExtension.cs" />
+    <Compile Include="Xaml\XamlNamespace\ArrayExtension.cs" />
     <Compile Include="Xaml\XamlNamespace\XDataDirective.cs" />
-    <Compile Include="Xaml\XamlNamespace\TypeMarkupExtension.cs" />
-    <Compile Include="Xaml\XamlNamespace\NullMarkupExtension.cs" />
-    <Compile Include="Xaml\XamlNamespace\StaticMarkupExtension.cs" />
+    <Compile Include="Xaml\XamlNamespace\TypeExtension.cs" />
+    <Compile Include="Xaml\XamlNamespace\NullExtension.cs" />
+    <Compile Include="Xaml\XamlNamespace\StaticExtension.cs" />
     <Compile Include="Xaml\Parser.cs" />
     <Compile Include="Utils\CalcHelper.cs" />
   </ItemGroup>
@@ -546,12 +557,7 @@
     <None Include="Skin\default\shaders\imagecontext_base.fx" />
     <None Include="Skin\default\shaders\imagecontext_default.fx" />
     <None Include="Skin\default\shaders\imagecontext_transition_base.fx" />
-    <None Include="Skin\default\shaders\lineargradient_opacity.fx" />
-    <None Include="Skin\default\shaders\radialgradient_opacity.fx" />
-    <None Include="Skin\default\shaders\solid_opacity.fx" />
-    <None Include="Skin\default\shaders\tile_opacity.fx" />
     <None Include="Skin\default\shaders\tile_simple.fx" />
-    <None Include="Skin\default\shaders\tile_simple_opacity.fx" />
     <None Include="Skin\default\shaders\transforms\none.fx" />
     <None Include="Skin\default\shaders\transforms\smart_zoom.fx" />
     <None Include="Skin\default\shaders\video_base.fx" />

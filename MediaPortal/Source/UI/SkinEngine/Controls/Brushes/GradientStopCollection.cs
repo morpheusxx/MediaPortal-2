@@ -35,7 +35,7 @@ using SharpDX;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 {
-  public class GradientStopCollection : IDisposable, IEnumerable<GradientStop>, IAddChild<GradientStop>, ISkinEngineManagedObject
+  public class GradientStopCollection : IDisposable, IEnumerable<GradientStop>, IAddChild<GradientStop>, ISkinEngineManagedObject, ICollection
   {
     #region Protected fields
 
@@ -229,5 +229,14 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
     {
       return StringUtils.Join(", ", _elements);
     }
+
+    public void CopyTo(Array array, int index)
+    {
+      _elements.ToArray().CopyTo(array, index);
+    }
+
+    public int Count { get { return _elements.Count; } }
+    public object SyncRoot { get { return this; } }
+    public bool IsSynchronized { get { return false; } }
   }
 }

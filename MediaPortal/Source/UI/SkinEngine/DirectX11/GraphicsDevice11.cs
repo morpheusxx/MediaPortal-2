@@ -47,9 +47,7 @@ using BitmapInterpolationMode = SharpDX.Direct2D1.BitmapInterpolationMode;
 using Device = SharpDX.Direct3D11.Device;
 using Device1 = SharpDX.Direct3D11.Device1;
 using DeviceContext = SharpDX.Direct2D1.DeviceContext;
-using DeviceContext1 = SharpDX.Direct2D1.DeviceContext1;
 using Factory = SharpDX.DirectWrite.Factory;
-using Factory2 = SharpDX.Direct2D1.Factory2;
 using FeatureLevel = SharpDX.Direct3D.FeatureLevel;
 using Format = SharpDX.DXGI.Format;
 using InterpolationMode = SharpDX.Direct2D1.InterpolationMode;
@@ -64,15 +62,14 @@ namespace MediaPortal.UI.SkinEngine.DirectX11
     private Device _device3D;
     private Device1 _device3D1;
     private SharpDX.DXGI.Device _deviceDXGI;
-    private SharpDX.Direct2D1.Device1 _device2D1;
+    private SharpDX.Direct2D1.Device _device2D1;
     private readonly D3DSetup _setup = new D3DSetup();
     private ScreenManager _screenManager = null;
 
     private SwapChain _swapChain;
     private Texture2D _backBufferTexture;
     private Surface1 _backBuffer;
-    private Factory2 _factoryD2D;
-    private DeviceContext1 _context2D;
+    private DeviceContext _context2D;
     private Bitmap1 _renderTarget2D;
     private Factory _factoryDW;
     private ImagingFactory2 _factoryWIC;
@@ -118,7 +115,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX11
       get { return _deviceDXGI; }
     }
 
-    public SharpDX.Direct2D1.Device1 Device2D1
+    public SharpDX.Direct2D1.Device Device2D1
     {
       get { return _device2D1; }
     }
@@ -188,6 +185,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX11
       // Init some performance / quality relevant properties
       InterpolationMode = BitmapInterpolationMode.Linear;
       ImageInterpolationMode = SharpDX.Direct2D1.InterpolationMode.Linear;
+      // TODO: AntialiasMode.Aliased;
     }
 
     public void CreateDevice()
@@ -233,10 +231,9 @@ namespace MediaPortal.UI.SkinEngine.DirectX11
       _device3D1 = _device3D.QueryInterface<Device1>(); // get a reference to the Direct3D 11.1 device
       _deviceDXGI = _device3D1.QueryInterface<SharpDX.DXGI.Device>(); // get a reference to DXGI device
 
-      _factoryD2D = new Factory2(FactoryType.MultiThreaded, DebugLevel.None);
-      _device2D1 = new SharpDX.Direct2D1.Device1(_factoryD2D, _deviceDXGI); // initialize the D2D device
+      _device2D1 = new SharpDX.Direct2D1.Device(_deviceDXGI); // initialize the D2D device
 
-      _context2D = new DeviceContext1(_device2D1, DeviceContextOptions.EnableMultithreadedOptimizations);
+      _context2D = new DeviceContext(_device2D1, DeviceContextOptions.EnableMultithreadedOptimizations);
 
       _renderTarget2D = new Bitmap1(_context2D, _backBuffer);
       _context2D.Target = _renderTarget2D;
@@ -433,7 +430,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX11
 
       TryDispose(ref _renderTarget2D);
       TryDispose(ref _context2D);
-      TryDispose(ref _factoryD2D);
 
       TryDispose(ref _factoryDW);
       TryDispose(ref _factoryWIC);

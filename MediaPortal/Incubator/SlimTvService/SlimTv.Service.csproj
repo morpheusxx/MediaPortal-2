@@ -50,8 +50,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Common.Utils, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\Common.Utils.dll</HintPath>
+    <Reference Include="Common.Utils, Version=1.8.0.0, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Common.Utils.dll</HintPath>
     </Reference>
     <Reference Include="Gentle.Common">
       <HintPath>References\Gentle.Common.dll</HintPath>
@@ -68,15 +69,45 @@
     <Reference Include="Gentle.Provider.SQLServer">
       <HintPath>References\Gentle.Provider.SQLServer.dll</HintPath>
     </Reference>
+    <Reference Include="Mediaportal.TV.Server.Plugins.Base">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.Plugins.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.SetupControls">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.SetupControls.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVControl">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVControl.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.Entities">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVDatabase.Entities.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.EntityModel">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVDatabase.EntityModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.Presentation">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVDatabase.Presentation.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVDatabase.TVBusinessLayer">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVDatabase.TVBusinessLayer.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Packages\MediaPortal.TvEngine.Interfaces.1.0.4\lib\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll</HintPath>
     </Reference>
-    <Reference Include="PluginBase, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\PluginBase.dll</HintPath>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary.Interfaces">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVLibrary.Interfaces.dll</HintPath>
     </Reference>
-    <Reference Include="SetupControls, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\SetupControls.dll</HintPath>
+    <Reference Include="Mediaportal.TV.Server.TVLibrary.Services">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVLibrary.Services.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TvLibrary.Utils">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TvLibrary.Utils.dll</HintPath>
+    </Reference>
+    <Reference Include="Mediaportal.TV.Server.TVService.Interfaces">
+      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core.1.0.4\lib\Mediaportal.TV.Server.TVService.Interfaces.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -87,30 +118,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TvBusinessLayer, Version=1.10.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvBusinessLayer.dll</HintPath>
-    </Reference>
-    <Reference Include="TvControl, Version=1.10.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvControl.dll</HintPath>
-    </Reference>
-    <Reference Include="TVDatabase, Version=1.10.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TVDatabase.dll</HintPath>
-    </Reference>
-    <Reference Include="TVLibrary, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TVLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="TvLibrary.Interfaces, Version=1.10.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvLibrary.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="TvLibrary.Utils, Version=1.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvLibrary.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="TvService, Version=1.10.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvService.exe</HintPath>
-    </Reference>
-    <Reference Include="TvThumbnails, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
-      <HintPath>..\..\Packages\MediaPortal.TvEngine.Core3.3.0.1\lib\TvThumbnails.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\Source\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">
@@ -130,53 +137,143 @@
     </Content>
     <Content Include="References\Castle.Core.dll" />
     <Content Include="References\Castle.Windsor.dll" />
-    <Content Include="References\Common.Utils.dll" />
-    <Content Include="References\Defaults\Paths.xml" />
     <Content Include="References\DirectShowLib.dll" />
-    <Content Include="References\Gentle.Common.dll" />
-    <Content Include="References\Gentle.Framework.dll" />
-    <Content Include="References\Gentle.Provider.MySQL.dll" />
-    <Content Include="References\Gentle.Provider.SQLite.dll" />
-    <Content Include="References\Gentle.Provider.SQLServer.dll" />
-    <Content Include="References\hauppauge.dll" />
-    <Content Include="References\hcwWinTVCI.dll" />
-    <Content Include="References\Ionic.Zip.dll" />
-    <Content Include="References\KNCBDACTRL.dll" />
-    <Content Include="References\log4net.dll" />
-    <Content Include="References\MediaInfo.dll" />
-    <Content Include="References\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll" />
-    <Content Include="References\MySql.Data.dll" />
-    <Content Include="References\PluginBase.dll" />
-    <Content Include="References\Plugins\Blaster.exe" />
-    <Content Include="References\Plugins\Common.Utils.dll" />
-    <Content Include="References\Plugins\ComSkipLauncher.dll" />
-    <Content Include="References\Plugins\ConflictsManager.dll" />
-    <Content Include="References\Plugins\Ionic.Zip.dll" />
-    <Content Include="References\Plugins\PluginBase.dll" />
-    <Content Include="References\Plugins\PowerScheduler.dll" />
-    <Content Include="References\Plugins\PowerScheduler.Interfaces.dll" />
-    <Content Include="References\Plugins\ServerBlaster.dll" />
-    <Content Include="References\Plugins\TvLibrary.Utils.dll" />
-    <Content Include="References\Plugins\TvMovie.dll" />
-    <Content Include="References\Plugins\WebEPG.dll" />
-    <Content Include="References\Plugins\WebEPGImport.dll" />
-    <Content Include="References\Plugins\XmlTvImport.dll" />
-    <Content Include="References\PowerScheduler.Interfaces.dll" />
-    <Content Include="References\SetupControls.dll" />
-    <Content Include="References\SetupTv.exe" />
+    <Content Include="References\EntityFramework.dll" />
+    <Content Include="References\MPIPTV_FILE.dll" />
+    <Content Include="References\MPIPTV_HTTP.dll" />
+    <Content Include="References\MPIPTV_RTP.dll" />
+    <Content Include="References\MPIPTV_RTSP.dll" />
+    <Content Include="References\MPIPTV_UDP.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Anysee.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.AutumnWave.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.AVerMedia.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Compro.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Conexant.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DigitalDevices.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DigitalEverywhere.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DvbSky.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DvbWorld.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Geniatech.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Genpix.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.GenpixOpenSource.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeBda.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeEcp.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeEncoder.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeRemote.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Knc.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Kworld.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MdPlugin.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftAtscQam.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftBdaDiseqc.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftEncoder.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftOldDiseqc.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftPidFilter.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.NetUp.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Omicom.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Prof.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.ProfUsb.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Realtek.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.SmarDtvUsbCi.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TechnoTrend.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TeVii.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Turbosight.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TurbosightRemote.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Twinhan.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TwinhanHidRemote.dll" />
+    <Content Include="References\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.ViXS.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\CIAPI.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\HauppaugeEcp.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\KNCBDACTRL.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\TbsCIapi.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\TbsNxpIrRcReceiver.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\TeVii.dll" />
+    <Content Include="References\Plugins\CustomDevices\Resources\ttBdaDrvApi_Dll.dll" />
+    <Content Include="References\Plugins\Ionic.Zip.Reduced.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.ComSkipLauncher.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.ConflictsManager.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.PowerScheduler.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.PowerScheduler.Interfaces.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.ServerBlaster.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.WebEPG.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.WebEPGImport.dll" />
+    <Content Include="References\Plugins\Mediaportal.TV.Server.Plugins.XmlTvImport.dll" />
+    <Content Include="References\SetupTv\Castle.Core.dll" />
+    <Content Include="References\SetupTv\Castle.Facilities.Logging.dll" />
+    <Content Include="References\SetupTv\Castle.Services.Logging.Log4netIntegration.dll" />
+    <Content Include="References\SetupTv\Castle.Windsor.dll" />
+    <Content Include="References\SetupTv\Common.Utils.dll" />
+    <Content Include="References\SetupTv\Defaults\Paths.xml" />
+    <Content Include="References\SetupTv\DirectShowLib.dll" />
+    <Content Include="References\SetupTv\EntityFramework.dll" />
+    <Content Include="References\SetupTv\log4net.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.Plugins.Base.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.Plugins.PowerScheduler.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.RuleBasedScheduler.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.SetupControls.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVControl.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.Entities.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.EntityModel.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.Presentation.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVDatabase.TVBusinessLayer.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVLibrary.Interfaces.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TvLibrary.Utils.dll" />
+    <Content Include="References\SetupTv\Mediaportal.TV.Server.TVService.Interfaces.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Anysee.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.AutumnWave.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.AVerMedia.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Compro.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Conexant.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DigitalDevices.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DigitalEverywhere.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DvbSky.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.DvbWorld.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Geniatech.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Genpix.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.GenpixOpenSource.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeBda.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeEcp.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeEncoder.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.HauppaugeRemote.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Knc.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Kworld.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MdPlugin.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftAtscQam.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftBdaDiseqc.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftEncoder.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftOldDiseqc.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.MicrosoftPidFilter.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.NetUp.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Omicom.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Prof.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.ProfUsb.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Realtek.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.SmarDtvUsbCi.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TechnoTrend.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TeVii.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Turbosight.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TurbosightRemote.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.Twinhan.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.TwinhanHidRemote.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Mediaportal.TV.Server.Plugins.TunerExtension.ViXS.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\CIAPI.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\HauppaugeEcp.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\KNCBDACTRL.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\TbsCIapi.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\TbsNxpIrRcReceiver.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\TeVii.dll" />
+    <Content Include="References\SetupTv\Plugins\CustomDevices\Resources\ttBdaDrvApi_Dll.dll" />
+    <Content Include="References\SetupTv\Plugins\Ionic.Zip.Reduced.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.ComSkipLauncher.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.ConflictsManager.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.PowerScheduler.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.PowerScheduler.Interfaces.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.ServerBlaster.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.WebEPG.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.WebEPGImport.dll" />
+    <Content Include="References\SetupTv\Plugins\Mediaportal.TV.Server.Plugins.XmlTvImport.dll" />
+    <Content Include="References\SetupTv\SetupTV.exe" />
     <Content Include="References\StreamingServer.dll" />
-    <Content Include="References\System.Data.SQLite.DLL" />
-    <Content Include="References\TeVii.dll" />
-    <Content Include="References\ttBdaDrvApi_Dll.dll" />
-    <Content Include="References\ttdvbacc.dll" />
-    <Content Include="References\TvBusinessLayer.dll" />
-    <Content Include="References\TvControl.dll" />
-    <Content Include="References\TVDatabase.dll" />
-    <Content Include="References\TVLibrary.dll" />
-    <Content Include="References\TvLibrary.Interfaces.dll" />
-    <Content Include="References\TvLibrary.Utils.dll" />
-    <Content Include="References\TvService.exe" />
-    <Content Include="References\TvThumbnails.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Core\MediaPortal.Backend\MediaPortal.Backend.csproj">
@@ -211,18 +308,15 @@
     </None>
     <None Include="packages.config" />
     <None Include="References\castle.config" />
-    <None Include="References\Gentle.config" />
-    <None Include="References\log4net.config" />
-    <None Include="References\mpFileWriter.ax" />
+    <None Include="References\filterConfig.ini" />
     <None Include="References\MPIPTVSource.ax" />
-    <None Include="References\PDMpgMux.ax" />
-    <None Include="References\Plugins\Blaster.exe.config" />
+    <None Include="References\ProgramData\MPIPTVSource.ini" />
     <None Include="References\ProgramData\ProgramData.zip" />
-    <None Include="References\SetupTv.exe.config" />
-    <None Include="References\TsReader.ax" />
+    <None Include="References\SetupTv\log4net.config" />
+    <None Include="References\SetupTv\SetupTV.exe.config" />
+    <None Include="References\SetupTv\TsReader.ax" />
+    <None Include="References\TsMuxer.ax" />
     <None Include="References\TsWriter.ax" />
-    <None Include="References\TvService.exe.config" />
-    <None Include="References\TvSetupLog.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="build.targets" />

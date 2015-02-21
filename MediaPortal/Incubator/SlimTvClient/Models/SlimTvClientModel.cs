@@ -724,7 +724,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
           if (context != null && context.Channel != null)
           {
             ChannelName = context.Channel.Name;
-            if (_tvHandler.ProgramInfo != null && _tvHandler.ProgramInfo.GetNowNextProgram(context.Channel, out currentProgram, out nextProgram))
+            if (_tvHandler.ProgramInfo != null && _tvHandler.ProgramInfo.GetNowNextProgram(context.Channel, out currentProgram, out nextProgram) && currentProgram != null)
             {
               double progress = (DateTime.Now - currentProgram.StartTime).TotalSeconds /
                                 (currentProgram.EndTime - currentProgram.StartTime).TotalSeconds * 100;

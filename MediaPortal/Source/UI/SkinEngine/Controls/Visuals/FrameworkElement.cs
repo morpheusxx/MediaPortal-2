@@ -2019,7 +2019,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         _updateOpacityMask = false;
       }
 
-      if (!opacityMask.TryAllocate())
+      if (!opacityMask.RenderBrush(localRenderContext) || !opacityMask.TryAllocate())
         return false;
 
       IRenderBrush renderBrush = opacityMask as IRenderBrush;

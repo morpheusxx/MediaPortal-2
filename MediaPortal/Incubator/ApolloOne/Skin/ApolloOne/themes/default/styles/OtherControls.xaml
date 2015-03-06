@@ -83,7 +83,7 @@
               </StackPanel>
             </Grid>
             <Grid x:Name="VerticalScrollBar" IsVisible="{TemplateBinding ScrollBarYVisible}" Grid.Row="0" Grid.Column="0"
-                Grid.ZIndex="0" Margin="-50,2,0,2"
+                Grid.ZIndex="0" Margin="-35,2,0,2"
                 RenderTransform="{DynamicResource ResourceKey=VerticalScrollbarRenderTransform}">
               <!-- RenderTransform can be applied by any ListView by defining a transform inside ResourceWrapper x:Key="VerticalScrollbarRenderTransform" -->
               <Grid.ColumnDefinitions>
@@ -524,7 +524,7 @@
 
   <!-- ListView style to be used for main menu -->
   <Style x:Key="HomeMenuListViewStyle" BasedOn="{ThemeResource MainMenuListViewStyle}">
-    <Setter Property="SelectionChanged" Value="{CommandStencil Source={StaticResource BackgroundManagerModel}, Path=SetSelectedItem}"/>
+    <EventSetter Event="SelectionChanged" Handler="{CommandStencil Source={StaticResource BackgroundManagerModel}, Path=SetSelectedItem}"/>
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type ListView}">
@@ -587,8 +587,7 @@
   <DataTemplate x:Key="HomeGroupDataTemplate" DataType="{x:Type collections:ListItem}">
     <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding Path=[Name], Converter={StaticResource StringCaseConverter}, ConverterParameter={x:Static apc:StringConversion.LowerCase}}" Margin="20,0,20,0"
         HorizontalAlignment="Center" VerticalAlignment="Center"
-        Color="{ThemeResource TextColor}"
-        Style="{ThemeResource HomeGroupLabelStyle}">
+        Style="{ThemeResource HomeGroupLabelStyle}" Color="{ThemeResource TextColor}">
       <Label.Opacity>
         <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0}?{1}:{2}">
           <Binding Path="Selected"/>

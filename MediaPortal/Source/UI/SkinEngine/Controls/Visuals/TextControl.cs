@@ -299,7 +299,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         _asset.SetFont(GetFontFamilyOrInherited(), GetFontWeightOrInherited(), GetFontStyleOrInherited(), GetFontSizeOrInherited());
     }
 
-    public override void OnKeyPreview(ref Key key)
+    internal override void OnKeyPreview(ref Key key)
     {
       // Clipboard handling is independent from actual input handler
       HandleClipboardKeys(ref key);
@@ -480,7 +480,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       _cursorShapeInvalid = false;
     }
 
-    public override void OnKeyPressed(ref Key key)
+    internal override void OnKeyPressed(ref Key key)
     {
       base.OnKeyPressed(ref key);
       if (HasFocus && key == Key.Ok)

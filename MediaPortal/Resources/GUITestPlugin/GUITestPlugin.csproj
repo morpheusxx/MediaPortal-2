@@ -17,6 +17,7 @@
     </UpgradeBackupLocation>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>d451d5ed</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -39,9 +40,14 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\Packages\MediaPortal.SharpDX.2.6.3\lib\SharpDX.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -88,9 +94,14 @@
       <Name>MediaPortal.Utilities</Name>
       <Private>False</Private>
     </ProjectReference>
+    <ProjectReference Include="..\..\Source\UI\SkinEngine\SkinEngine.csproj">
+      <Project>{7E943389-3589-40C9-B481-2E223554CC49}</Project>
+      <Name>SkinEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="build.targets" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\screens\test-focus-movement-2.xaml">
@@ -104,6 +115,11 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\default\screens\test-border.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\default\screens\test-eventmanager.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

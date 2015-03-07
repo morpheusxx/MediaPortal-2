@@ -10,4 +10,4 @@ using System.Reflection;
 [assembly: AssemblyVersion("2.0.0.1503")]
 [assembly: AssemblyFileVersion("2.0.0.1503")]
 // Note: This line will be filled by AssemblyInfoHelper in build process.
-[assembly: AssemblyInformationalVersion("Weekly_DX11_v3-19f31c")]
+[assembly: AssemblyInformationalVersion("Weekly_DX11_v3-66bef9")]

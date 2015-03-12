@@ -262,6 +262,7 @@
       <Image Width="{StaticResource MEDIA_POSTER_WIDTH}" Height="{StaticResource MEDIA_POSTER_HEIGHT}" Stretch="UniformToFill" FallbackSource="VideoLarge.png"
             OpacityMask="{ThemeResource MediaItemsOpacityBrush}">
         <Image.Source>
+<<<<<<< HEAD
           <fanart:FanArtImageSource fanart:FanArtMediaType="Movie" fanart:FanArtType="Poster" fanart:FanArtName="{Binding MediaItem.MediaItemId}"
                                     fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
         </Image.Source>
@@ -278,8 +279,108 @@
         </Image.Source>
       </Image> -->
       
+=======
+          <fanart:FanArtImageSource fanart:FanArtMediaType="Movie" fanart:FanArtType="Poster" fanart:FanArtName="{Binding SimpleTitle}"
+             fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
+        </Image.Source>
+      </Image>
+
+      <!-- Alternative for theme: Un-/Watched overlay symbols as alternative to red tabs
+      <Image HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" Width="40" Height="40">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
+            <Binding Path="PlayCount"/>
+            <Binding Source="unwatched_circle.png"/>
+            <Binding Source="watched_circle.png"/>
+          </MultiBinding>
+        </Image.Source>
+      </Image> -->
+      
     </Grid>
   </ControlTemplate>
+
+  <ControlTemplate x:Key="GridViewMovieItemTemplate">
+    <Grid>
+      <!-- GE2301: Unwatched marker added by red tab -->      
+      <Image Source="MediaItem_Unwatched.png" Margin="-7,-4,-8,-4">
+        <Image.IsVisible>
+          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
+        </Image.IsVisible>
+      </Image>
+      <!-- GE2301: Unwatched marker added by red tab -->      
+      <Control Template="{ThemeResource MovieCoverTemplate}"/>
+    </Grid>
+  </ControlTemplate>
+
+  <ControlTemplate x:Key="CoverViewMovieItemTemplate">
+    <Grid x:Name="ItemControl" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="550"  />
+      </Grid.RowDefinitions>
+
+      <Image Width="355" Height="459" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source="MediaItem_focus.png"/>
+            <Binding Source=""/>
+          </MultiBinding>
+        </Image.Source>
+      </Image>
+
+      <Image Width="349" Height="452" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source=""/>
+            <Binding Source="MediaItem_shadow.png"/>
+          </MultiBinding>
+        </Image.Source>
+      </Image>
+
+      <Image Width="310" Height="430" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0"
+       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" />
+
+      <!--Image Width="310" Height="400" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source="MediaItem_focus.png"/>
+            <Binding Source=""/>
+          </MultiBinding>
+        </Image.Source>
+      </Image>
+
+      <Image Width="304" Height="394" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+            <Binding Source=""/>
+            <Binding Source="MediaItem_shadow.png"/>
+          </MultiBinding>
+        </Image.Source>
+      </Image>
+
+      <Image Width="270" Height="375" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0"
+       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" /-->
+
+      <!-- Unwatched indicator -->
+      <!--Image HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" Width="35" Height="32" Opacity="1" Margin="5,5,0,0">
+        <Image.Source>
+          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
+            <Binding Path="PlayCount"/>
+            <Binding Source=""/>
+            <Binding Source="watched_circle.png"/>
+          </MultiBinding>
+        </Image.Source>
+      </Image-->
+>>>>>>> 6f7f7ee3377eeb4ce0f19724cf0febf5d95349a3
+    </Grid>
+  </ControlTemplate>
+  
 
   <ControlTemplate x:Key="GridViewMovieItemTemplate">
     <Grid>
@@ -1039,7 +1140,7 @@
   </Style>
 
   <Style x:Key="MediaItemsListListViewStyle" BasedOn="{ThemeResource ContentsMenuListViewStyle}">
-    <Setter Property="SelectionChanged" Value="{CommandStencil Source={StaticResource FanArtBackgroundModel}, Path=SetSelectedItem}"/>
+    <EventSetter Event="SelectionChanged" Handler="{CommandStencil Source={StaticResource FanArtBackgroundModel}, Path=SetSelectedItem}"/>
     <Setter Property="ItemTemplate"/>
     <!-- Don't inherit the ItemTemplate from ContentsMenuListViewStyle - It should remain null to make the SkinEngine choose an appropriate template -->
     <Setter Property="DataStringProvider" Value="{ThemeResource MediaItemDataStringProvider}"/>

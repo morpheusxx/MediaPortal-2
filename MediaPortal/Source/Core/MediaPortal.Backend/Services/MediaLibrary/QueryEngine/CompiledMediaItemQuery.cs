@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2014 Team MediaPortal
+#region Copyright (C) 2007-2013 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2014 Team MediaPortal
+    Copyright (C) 2007-2013 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -209,7 +209,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
 
         // 2. Main query
         MainQueryBuilder mainQueryBuilder = new MainQueryBuilder(_miaManagement,
-            _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation);
+            _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation, _limit, _offset);
 
         using (IDbCommand command = transaction.CreateCommand())
         {
@@ -405,7 +405,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       }
       result.Append("Main query:\r\n");
       MainQueryBuilder mainQueryBuilder = new MainQueryBuilder(_miaManagement,
-          _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation);
+          _mainSelectAttributes.Values, null, _necessaryRequestedMIAs, _optionalRequestedMIAs, _filter, _sortInformation, _limit, _offset);
       result.Append(mainQueryBuilder);
       return result.ToString();
     }
@@ -415,8 +415,9 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
   {
     public static IEnumerable<IDataReader> AsEnumerable(this IDataReader reader)
     {
-      while(reader.Read())
+      while (reader.Read())
         yield return reader;
     }
   }
 }
+

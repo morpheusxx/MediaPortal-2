@@ -196,17 +196,17 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
       SizeF targetSize = vertsBounds.Size;
 
-      lock (sdvPlayer.SurfaceLock)
+      lock (sdvPlayer.BitmapLock)
       {
-        var surface = sdvPlayer.Surface;
-        if (surface == null)
+        var bitmap = sdvPlayer.Bitmap;
+        if (bitmap == null)
         {
           _refresh = true;
           return false;
         }
 
-        _videoTextureClip = new RectangleF(cropVideoRect.X / (float)surface.Width, cropVideoRect.Y / (float)surface.Height,
-            cropVideoRect.Width / (float)surface.Width, cropVideoRect.Height / (float)surface.Height);
+        _videoTextureClip = new RectangleF(cropVideoRect.X / bitmap.Size.Width, cropVideoRect.Y / bitmap.Size.Height,
+            cropVideoRect.Width / bitmap.Size.Width, cropVideoRect.Height / bitmap.Size.Height);
       }
       _scaledVideoSize = cropVideoRect.Size.ToSize2F();
 
@@ -320,16 +320,16 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         return false;
 
 
-      lock (player.SurfaceLock)
+      lock (player.BitmapLock)
       {
         // Force a refresh of effekt parameters when real brush is set first
         if (!(_brush2D is BitmapBrush1))
           _refresh = true;
 
-        var playerSurface = player.Surface;
-        if (playerSurface != null && _videoBitmap != playerSurface.Bitmap)
+        var playerBitmap = player.Bitmap;
+        if (playerBitmap != null && _videoBitmap != playerBitmap)
         {
-          _videoBitmap = playerSurface.Bitmap;
+          _videoBitmap = playerBitmap;
         }
       }
 

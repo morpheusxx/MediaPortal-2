@@ -596,7 +596,7 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     #region Subtitle rendering
 
-    public void DrawOverlay(IBitmapAsset2D targetSurface)
+    public void DrawOverlay(Bitmap1 targetBitmap)
     {
       Subtitle currentSubtitle;
       Bitmap1 subTexture;
@@ -606,7 +606,7 @@ namespace MediaPortal.UI.Players.Video.Subtitles
         if (currentSubtitle == null)
           return;
         subTexture = currentSubtitle.SubTexture;
-        if (targetSurface == null || !targetSurface.IsAllocated || subTexture == null || subTexture.IsDisposed)
+        if (targetBitmap == null || targetBitmap.IsDisposed || subTexture == null || subTexture.IsDisposed)
         {
           if (_drawCount > 0)
             ServiceRegistration.Get<ILogger>().Debug("Draw count for last sub: {0}", _drawCount);
@@ -619,7 +619,7 @@ namespace MediaPortal.UI.Players.Video.Subtitles
       try
       {
         // Check the target texture dimensions and adjust scaling and translation
-        var desc = targetSurface.Bitmap.Size;
+        var desc = targetBitmap.Size;
         Matrix transform = Matrix.Identity;
         transform *= Matrix.Translation(currentSubtitle.HorizontalPosition, currentSubtitle.FirstScanLine, 0);
 
@@ -629,7 +629,7 @@ namespace MediaPortal.UI.Players.Video.Subtitles
         if (currentSubtitle.ScreenWidth != desc.Width)
           transform *= Matrix.Scaling((float)desc.Width / currentSubtitle.ScreenWidth, 1, 1);
 
-        using (new TemporaryRenderTarget2D(targetSurface.Bitmap))
+        using (new TemporaryRenderTarget2D(targetBitmap))
         {
           GraphicsDevice11.Instance.Context2D1.Transform = transform;
           GraphicsDevice11.Instance.Context2D1.DrawBitmap(subTexture, 1f, InterpolationMode.Linear);

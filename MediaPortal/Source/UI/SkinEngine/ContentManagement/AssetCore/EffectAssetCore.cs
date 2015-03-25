@@ -192,13 +192,16 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
           return;
       }
 
+      if (texture == null || texture.IsDisposed)
+        return;
+
       _effect.SetInput(0, texture, true);
       if (texture2 != null && _effect.InputCount == 2)
         _effect.SetInput(1, texture2, true);
 
       // Effect output is always located at (0, 0), so we need to adjust both size and position of render output to screen coordinates
       var oldTransform = GraphicsDevice11.Instance.Context2D1.Transform;
-      var newTransform = Matrix3x2.Scaling(renderContext.OccupiedTransformedBounds.Width / texture.Surface.Description.Width, renderContext.OccupiedTransformedBounds.Height / texture.Surface.Description.Height);
+      var newTransform = Matrix3x2.Scaling(renderContext.OccupiedTransformedBounds.Width / texture.Size.Width, renderContext.OccupiedTransformedBounds.Height / texture.Size.Height);
       newTransform *= Matrix3x2.Translation(renderContext.OccupiedTransformedBounds.TopLeft);
 
       GraphicsDevice11.Instance.Context2D1.Transform = newTransform;

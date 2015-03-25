@@ -44,15 +44,15 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     /// <summary>
     /// Constructs a <see cref="TemporaryRenderTarget"/> instance.
     /// </summary>
-    /// <param name="targetSurface">Target surface to render on</param>
-    public TemporaryRenderTarget2D(Bitmap1 targetSurface)
+    /// <param name="targetBitmap">Target surface to render on</param>
+    public TemporaryRenderTarget2D(Bitmap1 targetBitmap)
     {
       // Remember old RenderTarget
       _backBuffer = _context.Target;
       _transform = _context.Transform;
 
       // Set new target
-      _context.Target = targetSurface;
+      _context.Target = targetBitmap;
     }
 
     public void Dispose()

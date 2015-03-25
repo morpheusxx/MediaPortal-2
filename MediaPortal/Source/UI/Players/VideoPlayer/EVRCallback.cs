@@ -34,7 +34,7 @@ using System.Runtime.InteropServices;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
-using MediaPortal.UI.SkinEngine.ContentManagement;
+using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.SkinEngine.DirectX11;
 using SharpDX;
 using SharpDX.Direct2D1;
@@ -76,7 +76,7 @@ namespace MediaPortal.UI.Players.Video
     private readonly object _lock = new object();
     private Size _originalVideoSize;
     private SizeF _aspectRatio;
-    protected IBitmapAsset2D _bitmapAsset2D;
+    protected Bitmap1 _bitmap;
 
     private readonly RenderDlgt _renderDlgt;
     private readonly Action _onTextureInvalidated;
@@ -103,15 +103,15 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     public event VideoSizePresentDlgt VideoSizePresent;
 
-    public IBitmapAsset2D Surface
+    public Bitmap1 Bitmap
     {
       get
       {
-        return _bitmapAsset2D;
+        return _bitmap;
       }
     }
 
-    public object SurfaceLock
+    public object BitmapLock
     {
       get { return _lock; }
     }
@@ -132,17 +132,6 @@ namespace MediaPortal.UI.Players.Video
       get { return _aspectRatio; }
     }
 
-    /// <summary>
-    /// Sets the current presenter instance. This is used to generate an unique asset key.
-    /// </summary>
-    public IntPtr PresenterInstance
-    {
-      set
-      {
-        _instanceKey = "EVRCallbackSurface_" + value; // Unique texture per EVR instance
-      }
-    }
-
     #endregion
 
     #region IEVRPresentCallback implementation
@@ -161,17 +150,10 @@ namespace MediaPortal.UI.Players.Video
             _aspectRatio.Width = arx;
             _aspectRatio.Height = ary;
 
-            using (var tex = GraphicsDevice11.Instance.Device3D1.OpenSharedResource<Texture2D>(sharedHandle))
-            using (var surface = tex.QueryInterface<SharpDX.DXGI.Surface>())
-            using (var texBitmap = new Bitmap1(GraphicsDevice11.Instance.Context2D1, surface))
-            {
-              _bitmapAsset2D = ContentManager.Instance.GetRenderTarget2D(_instanceKey);
-              ((RenderTarget2DAsset)_bitmapAsset2D).AllocateRenderTarget(cx, cy);
-              if (!_bitmapAsset2D.IsAllocated)
-                return 0;
-
-              _bitmapAsset2D.Bitmap.CopyFromBitmap(texBitmap);
-            }
+            var tex = GraphicsDevice11.Instance.Device3D1.OpenSharedResource<Texture2D>(sharedHandle);
+            var surface = tex.QueryInterface<SharpDX.DXGI.Surface>();
+            FilterGraphTools.TryDispose(ref _bitmap);
+            _bitmap = new Bitmap1(GraphicsDevice11.Instance.Context2D1, surface);
           }
         }
 

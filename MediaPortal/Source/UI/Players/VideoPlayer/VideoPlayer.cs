@@ -40,7 +40,6 @@ using MediaPortal.UI.Presentation.Geometries;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine;
-using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
@@ -208,9 +207,6 @@ namespace MediaPortal.UI.Players.Video
         throw new VideoPlayerException("Initializing of EVR failed");
       }
 
-      // Set the instance
-      _evrCallback.PresenterInstance = _presenterInstance;
-
       // Set the number of video/subtitle/cc streams that are allowed to be connected to EVR. This has to be done after the custom presenter is initialized.
       IEVRFilterConfig config = (IEVRFilterConfig)_evr;
       config.SetNumberOfStreams(_streamCount);
@@ -279,36 +275,36 @@ namespace MediaPortal.UI.Players.Video
       get { return (_evrCallback == null) ? new System.Drawing.SizeF(1, 1) : _evrCallback.AspectRatio.ToDrawingSizeF(); }
     }
 
-    protected IBitmapAsset2D RawVideoSurface
+    protected Bitmap1 RawVideoBitmap
     {
-      get { return (_initialized && _evrCallback != null) ? _evrCallback.Texture : null; }
+      get { return (_initialized && _evrCallback != null) ? _evrCallback.Bitmap : null; }
     }
 
-    public object SurfaceLock
+    public object BitmapLock
     {
       get
       {
         EVRCallback callback = _evrCallback;
-        return callback == null ? _syncObj : callback.SurfaceLock;
+        return callback == null ? _syncObj : callback.BitmapLock;
       }
     }
 
-    public IBitmapAsset2D Surface
+    public Bitmap1 Bitmap
     {
       get
       {
-        lock (SurfaceLock)
+        lock (BitmapLock)
         {
-          IBitmapAsset2D videoSurface = RawVideoSurface;
+          var videoBitmap = RawVideoBitmap;
           if (!_textureInvalid)
-            return videoTexture;
+            return videoBitmap;
 
-          if (videoSurface == null || !videoSurface.IsAllocated)
+          if (videoBitmap == null || videoBitmap.IsDisposed)
             return null;
 
-          PostProcessTexture(videoTexture);
+          PostProcessBitmap(videoBitmap);
           _textureInvalid = false;
-          return videoTexture;
+          return videoBitmap;
         }
       }
     }
@@ -319,11 +315,11 @@ namespace MediaPortal.UI.Players.Video
     }
 
     /// <summary>
-    /// PostProcessTexture allows video players to post process the video frame texture,
+    /// PostProcessBitmap allows video players to post process the video frame texture,
     /// i.e. for overlaying subtitles or OSD menus.
     /// </summary>
-    /// <param name="targetTexture"></param>
-    protected virtual void PostProcessTexture(IBitmapAsset2D targetTexture)
+    /// <param name="targetBitmap"></param>
+    protected virtual void PostProcessBitmap(Bitmap1 targetBitmap)
     { }
 
     public IGeometry GeometryOverride

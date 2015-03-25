@@ -51,9 +51,9 @@ namespace MediaPortal.UI.SkinEngine.Players
     bool SetRenderDelegate(RenderDlgt dlgt);
 
     /// <summary>
-    /// Returns the render texture for the current frame. May be <c>null</c>.
+    /// Returns the render bitmap for the current frame. May be <c>null</c>.
     /// </summary>
-    IBitmapAsset2D Surface { get; } 
+    Bitmap1 Bitmap { get; } 
 
     /// <summary>
     /// Gets the rectangle out of the video frame <see cref="Surface"/> which should be presented.
@@ -68,7 +68,7 @@ namespace MediaPortal.UI.SkinEngine.Players
     /// <summary>
     /// Returns a mutex object to lock while accessing the <see cref="Texture"/>.
     /// </summary>
-    object SurfaceLock { get; }
+    object BitmapLock { get; }
 
     /// <summary>
     /// Releases any GUI resources.

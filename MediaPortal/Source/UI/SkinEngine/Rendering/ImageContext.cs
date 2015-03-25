@@ -273,7 +273,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
 
     protected override bool StartRender(RenderContext renderContext, Color borderColor, Vector4 frameData)
     {
-      if (_effect == null || _lastTexture == null)
+      if (_effect == null || _lastTexture == null || _lastTexture.IsDisposed)
         return false;
 
       if (!_effect.IsAllocated)

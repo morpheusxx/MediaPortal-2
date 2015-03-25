@@ -435,7 +435,7 @@ namespace MediaPortal.UI.Players.Video
     /// <summary>
     /// Render BluRay OSD on video surface if available.
     /// </summary>
-    protected override void PostProcessTexture(IBitmapAsset2D targetSurface)
+    protected override void PostProcessBitmap(Bitmap1 targetSurface)
     {
       //_osdRenderer.DrawOverlay(targetSurface);
       //_subtitleRenderer.DrawOverlay(targetSurface);

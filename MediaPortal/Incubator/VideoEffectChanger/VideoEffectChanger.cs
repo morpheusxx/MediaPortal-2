@@ -140,10 +140,10 @@ namespace MediaPortal.UiComponents.VideoEffectChanger
 
       lock (player.SurfaceLock)
       {
-        if (player.Surface == null)
+        if (player.Texture == null)
           return;
 
-        var videoFrameHeight = player.Surface.Description.Height;
+        var videoFrameHeight = player.Texture.GetLevelDescription(0).Height;
         player.EffectOverride = videoFrameHeight <= _settings.Settings.ResolutionLimit ?
           _settings.Settings.LowerResolutionEffect :
           _settings.Settings.HigherResolutionEffect;

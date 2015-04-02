@@ -32,10 +32,10 @@ using SharpDX.WIC;
 namespace MediaPortal.Extensions.MetadataExtractors.WICThumbnailProvider
 {
   /// <summary>
-  /// ShellThumbnailProvider extracts thumbnails for image and video files using the Windows provided thumbnail creation and
+  /// WICThumbnailProvider extracts thumbnails for image and video files using the Windows provided thumbnail creation and
   /// caching feature.
   /// </summary>
-  public class WICShellThumbnailProvider : IThumbnailProvider
+  public class WICThumbnailProvider : IThumbnailProvider
   {
     /// <summary>
     /// Extracts a thumbnail for a given <paramref name="fileName"/> and returns the best matching resolution from the windows thumbs cache.

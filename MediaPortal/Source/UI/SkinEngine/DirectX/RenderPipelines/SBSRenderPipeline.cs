@@ -35,8 +35,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
   {
     public SBSRenderPipeline()
     {
-      _firstFrameTargetRect = new Rectangle(0, 0, _backbuffer.PixelSize.Width / 2, _backbuffer.PixelSize.Height);
-      _secondFrameTargetRect = new Rectangle(_backbuffer.PixelSize.Width / 2, 0, _backbuffer.PixelSize.Width / 2, _backbuffer.PixelSize.Height);
+      _firstFrameTargetRect = new RectangleF(0, 0, _backbuffer.PixelSize.Width / 2, _backbuffer.PixelSize.Height);
+      _secondFrameTargetRect = new RectangleF(_backbuffer.PixelSize.Width / 2, 0, _backbuffer.PixelSize.Width / 2, _backbuffer.PixelSize.Height);
       InitMasks();
     }
 

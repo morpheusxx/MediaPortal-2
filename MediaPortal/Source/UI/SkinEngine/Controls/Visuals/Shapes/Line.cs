@@ -28,6 +28,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
 using RectangleF = SharpDX.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
@@ -138,7 +139,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
       using (PathGeometry lineRaw = GetLine())
       using (var line = CalculateTransformedPath(lineRaw, new RectangleF(0, 0, totalSize.Width, totalSize.Height)))
       {
-        var bounds = line.GetBounds();
+        var bounds = line.GetBounds().ToRectangleF();
         return new Size2F(bounds.Width, bounds.Height);
       }
     }

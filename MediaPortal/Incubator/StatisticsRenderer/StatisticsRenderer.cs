@@ -40,6 +40,7 @@ using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.DirectWrite;
 using SharpDX.DXGI;
+using SharpDX.Mathematics.Interop;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -289,15 +290,15 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       if (topLeft.X + size.Width >= width)
         topLeft.X = 0;
 
-      Rectangle rcTearing = SharpDXExtensions.CreateRectangle(topLeft, size);
+      var rcTearing = new RawRectangleF(topLeft.X, topLeft.Y, topLeft.X + size.Width, topLeft.Y + size.Height);
 
       _device.Context2D1.DrawRectangle(rcTearing, _whiteBrush);
 
-      topLeft = new Point((rcTearing.Right + 15) % width, 0);
+      topLeft = new Point((int)(rcTearing.Right + 15) % width, 0);
       if (topLeft.X + size.Width >= width)
         topLeft.X = 0;
 
-      rcTearing = SharpDXExtensions.CreateRectangle(topLeft, size);
+      rcTearing = new RawRectangleF(topLeft.X, topLeft.Y, topLeft.X + size.Width, topLeft.Y + size.Height);
       _device.Context2D1.DrawRectangle(rcTearing, _grayBrush);
 
       _tearingPos = (_tearingPos + 7) % width;
@@ -309,7 +310,7 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       using (var layout = new TextLayout(_device.FactoryDW, text, _textFormat, SkinContext.BackBufferWidth, SkinContext.BackBufferHeight))
       {
 
-        Rectangle rcTextField = new Rectangle(RENDER_OFFSET_LEFT, 0, SkinContext.BackBufferWidth - RENDER_OFFSET_LEFT, (int)Math.Ceiling(layout.Metrics.Height));
+        RawRectangleF rcTextField = new RawRectangleF(RENDER_OFFSET_LEFT, 0, SkinContext.BackBufferWidth - RENDER_OFFSET_LEFT, (int)Math.Ceiling(layout.Metrics.Height));
         _device.Context2D1.DrawText(text, _textFormat, rcTextField, _redBrush);
       }
     }

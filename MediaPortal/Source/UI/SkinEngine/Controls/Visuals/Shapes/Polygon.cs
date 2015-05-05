@@ -28,6 +28,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
 using SharpDX.Direct2D1;
 using MediaPortal.Utilities.DeepCopy;
+using SharpDX.Mathematics.Interop;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
 {
@@ -106,7 +107,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
       using (PathGeometry pathRaw = GetPolygon())
       using (var p = CalculateTransformedPath(pathRaw, new RectangleF(0, 0, 0, 0)))
       {
-        var bounds = p.GetBounds();
+        var bounds = p.GetBounds().ToRectangleF();
         return new Size2F(bounds.Width, bounds.Height);
       }
     }
@@ -122,11 +123,11 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
       PathGeometry path = new PathGeometry(GraphicsDevice11.Instance.Context2D1.Factory);
       using (var sink = path.Open())
       {
-        sink.BeginFigure(points[0], FigureBegin.Filled);
+        sink.BeginFigure((Vector2)points[0], FigureBegin.Filled);
 
         for (int i = 1; i < points.Length; i++)
         {
-          sink.AddLine(points[i]);
+          sink.AddLine((Vector2)points[i]);
         }
 
         sink.EndFigure(FigureEnd.Closed);

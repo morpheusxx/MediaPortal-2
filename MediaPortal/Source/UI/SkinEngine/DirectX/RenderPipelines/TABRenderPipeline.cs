@@ -35,8 +35,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
   {
     public TABRenderPipeline()
     {
-      _firstFrameTargetRect = new Rectangle(0, 0, _backbuffer.PixelSize.Width, _backbuffer.PixelSize.Height / 2);
-      _secondFrameTargetRect = new Rectangle(0, _backbuffer.PixelSize.Height / 2, _backbuffer.PixelSize.Width, _backbuffer.PixelSize.Height / 2);
+      _firstFrameTargetRect = new RectangleF(0, 0, _backbuffer.PixelSize.Width, _backbuffer.PixelSize.Height / 2);
+      _secondFrameTargetRect = new RectangleF(0, _backbuffer.PixelSize.Height / 2, _backbuffer.PixelSize.Width, _backbuffer.PixelSize.Height / 2);
       InitMasks();
     }
 

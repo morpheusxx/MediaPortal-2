@@ -296,7 +296,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
         _geometry = geometry;
 
         // Calculate the real occupied area, required for brushes that need exact dimensions
-        _strokeRect = geometry.GetWidenedBounds((float)StrokeThickness);
+        _strokeRect = geometry.GetWidenedBounds((float)StrokeThickness).ToRectangleF();
       }
     }
 
@@ -329,7 +329,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
       SharpDX.Direct2D1.Geometry result = path;
       Matrix m = Matrix.Identity;
       //RectangleF bounds = result.GetBounds();
-      RectangleF bounds = result.GetWidenedBounds((float)StrokeThickness);
+      RectangleF bounds = result.GetWidenedBounds((float)StrokeThickness).ToRectangleF();
       _fillDisabled = bounds.Width < StrokeThickness || bounds.Height < StrokeThickness;
       if (Width > 0) baseRect.Width = (float)Width;
       if (Height > 0) baseRect.Height = (float)Height;
@@ -366,7 +366,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
 
       m *= Matrix.Translation(baseRect.X, baseRect.Y, 0);
 
-      result = new TransformedGeometry(path.Factory, path, m);
+      result = new TransformedGeometry(path.Factory, path, (Matrix3x2)m);
       return result;
     }
   }

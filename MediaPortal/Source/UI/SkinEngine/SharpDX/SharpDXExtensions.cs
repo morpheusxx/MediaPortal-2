@@ -23,6 +23,7 @@
 #endregion
 
 using SharpDX;
+using SharpDX.Mathematics.Interop;
 
 namespace MediaPortal.UI.SkinEngine
 {
@@ -75,6 +76,16 @@ namespace MediaPortal.UI.SkinEngine
     public static RectangleF CreateRectangleF(Vector2 location, Size2F size)
     {
       return new RectangleF(location.X, location.Y, size.Width, size.Height);
+    }
+    /// <summary>
+    /// Performs an explicit conversion to <see cref="RawRectangleF"/> structure.
+    /// </summary>
+    /// <remarks>Performs direct float to int conversion, any fractional data is truncated.</remarks>
+    /// <param name="value">The source <see cref="RectangleF"/> value.</param>
+    /// <returns>A converted <see cref="Rectangle"/> structure.</returns>
+    public static RectangleF ToRectangleF(this RawRectangleF value)
+    {
+      return new RectangleF(value.Left, value.Top, value.Right - value.Left, value.Bottom - value.Top);
     }
   }
 }

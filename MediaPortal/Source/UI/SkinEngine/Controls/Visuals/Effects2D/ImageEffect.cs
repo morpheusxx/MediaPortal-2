@@ -25,6 +25,7 @@
 using System.Runtime.InteropServices;
 using SharpDX;
 using SharpDX.Direct2D1;
+using SharpDX.Mathematics.Interop;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
 {
@@ -33,11 +34,11 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
   [StructLayout(LayoutKind.Sequential)]
   public struct ImageEffectParams
   {
-    public Matrix WorldTransform;
-    public Matrix RelativeTransform;
-    public Vector4 ImageTransform;
-    public Vector4 FrameData;
-    public Color4 BorderColor;
+    public RawMatrix WorldTransform;
+    public RawMatrix RelativeTransform;
+    public RawVector4 ImageTransform;
+    public RawVector4 FrameData;
+    public RawColor4 BorderColor;
     public float Opacity;
  }
 
@@ -76,7 +77,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
     /// Gets or sets the RelativeTransform.
     /// </summary>
     [PropertyBinding((int)ParamIndexI.WorldTransform, "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", Type = PropertyType.Matrix4x4)]
-    public Matrix WorldTransform
+    public RawMatrix WorldTransform
     {
       get { return _effectParams.WorldTransform; }
       set { _effectParams.WorldTransform = value; }
@@ -100,7 +101,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
     /// Gets or sets the RelativeTransform.
     /// </summary>
     [PropertyBinding((int)ParamIndexI.RelativeTransform, "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", "(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)", Type = PropertyType.Matrix4x4)]
-    public Matrix RelativeTransform
+    public RawMatrix RelativeTransform
     {
       get { return _effectParams.RelativeTransform; }
       set { _effectParams.RelativeTransform = value; }
@@ -110,7 +111,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
     /// Gets or sets the ImageTransform.
     /// </summary>
     [PropertyBinding((int)ParamIndexI.ImageTransform, "(0,0,0,0)", "(1,1,1,1)", "(0,0,0,0)")]
-    public Vector4 ImageTransform
+    public RawVector4 ImageTransform
     {
       get { return _effectParams.ImageTransform; }
       set { _effectParams.ImageTransform = value; }
@@ -120,7 +121,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
     /// Gets or sets the ImageTransform.
     /// </summary>
     [PropertyBinding((int)ParamIndexI.BorderColor, "(0,0,0,0)", "(1,1,1,1)", "(0,0,0,0)")]
-    public Color4 BorderColor
+    public RawColor4 BorderColor
     {
       get { return _effectParams.BorderColor; }
       set { _effectParams.BorderColor = value; }
@@ -130,7 +131,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Effects2D
     /// Gets or sets the frame data.
     /// </summary>
     [PropertyBinding((int)ParamIndexI.FrameData, "(0,0,0,0)", "(1,1,1,1)", "(0,0,0,0)")]
-    public Vector4 FrameData
+    public RawVector4 FrameData
     {
       get { return _effectParams.FrameData; }
       set { _effectParams.FrameData = value; }

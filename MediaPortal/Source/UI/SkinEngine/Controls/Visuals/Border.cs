@@ -376,7 +376,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         innerBorderRect.Width += (float)BorderThickness;
         innerBorderRect.Height += (float)BorderThickness;
         _borderGeometry = CreateBorderRectPath(innerBorderRect);
-        _strokeRect = _borderGeometry.GetWidenedBounds((float)BorderThickness);
+        _strokeRect = _borderGeometry.GetWidenedBounds((float)BorderThickness).ToRectangleF();
       }
       else
       {

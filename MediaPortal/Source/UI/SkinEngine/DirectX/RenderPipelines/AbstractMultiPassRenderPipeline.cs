@@ -35,8 +35,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
   {
     protected Bitmap1 _backbuffer = null;
     protected Rectangle _renderRect;
-    protected Rectangle _firstFrameTargetRect;
-    protected Rectangle _secondFrameTargetRect;
+    protected RectangleF _firstFrameTargetRect;
+    protected RectangleF _secondFrameTargetRect;
     protected LayerParameters1 _layerParams1;
     protected LayerParameters1 _layerParams2;
     protected SolidColorBrush _opacityBrush;

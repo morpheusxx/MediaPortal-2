@@ -208,7 +208,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         _videoTextureClip = new RectangleF(cropVideoRect.X / (float)surface.Width, cropVideoRect.Y / (float)surface.Height,
             cropVideoRect.Width / (float)surface.Width, cropVideoRect.Height / (float)surface.Height);
       }
-      _scaledVideoSize = cropVideoRect.Size.ToSize2F();
+      _scaledVideoSize = new Size2F(cropVideoRect.Width, cropVideoRect.Height);
 
       // Correct aspect ratio for anamorphic video
       if (!aspectRatio.IsEmpty() && geometry.RequiresCorrectAspectRatio)

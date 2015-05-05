@@ -36,6 +36,7 @@ using Microsoft.CSharp;
 using SharpDX;
 using SharpDX.Direct2D1;
 using SharpDX.Direct3D11;
+using SharpDX.Mathematics.Interop;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -225,17 +226,17 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         return false;
 
       // Apply effect parameters
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.WorldTransform, renderContext.Transform);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.WorldTransform, (RawMatrix)renderContext.Transform);
       _effectTransition.Effect.SetValue((int)ParamIndexIT.Opacity, (float)renderContext.Opacity);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.RelativeTransform, _inverseRelativeTransformCache);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransform, _imageTransform);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransform, new Vector4(0, 0, 1, 1));
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.FrameData, endFrameData);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.RelativeTransform, (RawMatrix)_inverseRelativeTransformCache);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransform, (RawVector4)_imageTransform);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransform, (RawVector4)new Vector4(0, 0, 1, 1));
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.FrameData, (RawVector4)endFrameData);
       _effectTransition.Effect.SetValue((int)ParamIndexIT.MixAB, mixValue);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.RelativeTransformA, startContext._inverseRelativeTransformCache);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransformA, startContext._imageTransform);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.FrameDataA, startFrameData);
-      _effectTransition.Effect.SetValue((int)ParamIndexIT.BorderColor, borderColor.ToColor4());
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.RelativeTransformA, (RawMatrix)startContext._inverseRelativeTransformCache);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.ImageTransformA, (RawVector4)startContext._imageTransform);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.FrameDataA, (RawVector4)startFrameData);
+      _effectTransition.Effect.SetValue((int)ParamIndexIT.BorderColor, (RawColor4)borderColor.ToColor4());
 
       // Render
       _effectTransition.StartRender(startContext._lastTexture, renderContext, endTexture);
@@ -283,12 +284,12 @@ namespace MediaPortal.UI.SkinEngine.Rendering
           return false;
       }
 
-      _effect.Effect.SetValue((int)ParamIndexI.WorldTransform, renderContext.Transform);
+      _effect.Effect.SetValue((int)ParamIndexI.WorldTransform, (RawMatrix)renderContext.Transform);
       _effect.Effect.SetValue((int)ParamIndexI.Opacity, (float)renderContext.Opacity);
-      _effect.Effect.SetValue((int)ParamIndexI.RelativeTransform, _inverseRelativeTransformCache);
-      _effect.Effect.SetValue((int)ParamIndexI.ImageTransform, _imageTransform);
-      _effect.Effect.SetValue((int)ParamIndexI.FrameData, frameData);
-      _effect.Effect.SetValue((int)ParamIndexI.BorderColor, (Color4)borderColor);
+      _effect.Effect.SetValue((int)ParamIndexI.RelativeTransform, (RawMatrix)_inverseRelativeTransformCache);
+      _effect.Effect.SetValue((int)ParamIndexI.ImageTransform, (RawVector4)_imageTransform);
+      _effect.Effect.SetValue((int)ParamIndexI.FrameData, (RawVector4)frameData);
+      _effect.Effect.SetValue((int)ParamIndexI.BorderColor, (RawColor4)borderColor);
 
       // Render
       _effect.StartRender(_lastTexture, renderContext);

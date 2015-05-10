@@ -224,7 +224,7 @@
           </MultiBinding>
         </Label.Opacity>
       </Label>
-    
+
       <Control x:Name="ListViewCover" Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Margin="0,0,10,0"
                Template="{ThemeResource GridViewMovieFilterItemTemplate}" RenderTransformOrigin="0.5,0.5"
                IsVisible="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}},Path=HasFocus}">
@@ -277,118 +277,19 @@
           </MultiBinding>
         </Image.Source>
       </Image> -->
-      
-=======
-             fanart:MaxWidth="{StaticResource FANART_POSTER_WIDTH}" fanart:MaxHeight="{StaticResource FANART_POSTER_HEIGHT}"/>
-        </Image.Source>
-      </Image>
 
-      <!-- Alternative for theme: Un-/Watched overlay symbols as alternative to red tabs
-      <Image HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" Width="40" Height="40">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source="unwatched_circle.png"/>
-            <Binding Source="watched_circle.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image> -->
-      
     </Grid>
   </ControlTemplate>
 
   <ControlTemplate x:Key="GridViewMovieItemTemplate">
     <Grid>
-      <!-- GE2301: Unwatched marker added by red tab -->      
+      <!-- GE2301: Unwatched marker added by red tab -->
       <Image Source="MediaItem_Unwatched.png" Margin="-7,-4,-8,-4">
         <Image.IsVisible>
           <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
         </Image.IsVisible>
       </Image>
-      <!-- GE2301: Unwatched marker added by red tab -->      
-      <Control Template="{ThemeResource MovieCoverTemplate}"/>
-    </Grid>
-  </ControlTemplate>
-
-  <ControlTemplate x:Key="CoverViewMovieItemTemplate">
-    <Grid x:Name="ItemControl" VerticalAlignment="Center">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="550"  />
-      </Grid.RowDefinitions>
-
-      <Image Width="355" Height="459" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source="MediaItem_focus.png"/>
-            <Binding Source=""/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="349" Height="452" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source=""/>
-            <Binding Source="MediaItem_shadow.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="310" Height="430" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0"
-       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" />
-
-      <!--Image Width="310" Height="400" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source="MediaItem_focus.png"/>
-            <Binding Source=""/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="304" Height="394" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source=""/>
-            <Binding Source="MediaItem_shadow.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="270" Height="375" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0"
-       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" /-->
-
-      <!-- Unwatched indicator -->
-      <!--Image HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" Width="35" Height="32" Opacity="1" Margin="5,5,0,0">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source=""/>
-            <Binding Source="watched_circle.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image-->
->>>>>>> 6f7f7ee3377eeb4ce0f19724cf0febf5d95349a3
-    </Grid>
-  </ControlTemplate>
-  
-
-  <ControlTemplate x:Key="GridViewMovieItemTemplate">
-    <Grid>
-      <!-- GE2301: Unwatched marker added by red tab -->      
-      <Image Source="MediaItem_Unwatched.png" Margin="-7,-4,-8,-4">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
-      <!-- GE2301: Unwatched marker added by red tab -->      
+      <!-- GE2301: Unwatched marker added by red tab -->
       <Control Template="{ThemeResource MovieCoverTemplate}"/>
     </Grid>
   </ControlTemplate>
@@ -460,88 +361,7 @@
       </Image-->
     </Grid>
   </ControlTemplate>
-  
-  <ControlTemplate x:Key="GridViewMovieItemTemplate">
-    <Grid>
-      <!-- GE2301: Unwatched marker added by red tab -->      
-      <Image Source="MediaItem_Unwatched.png" Margin="-7,-4,-8,-4">
-        <Image.IsVisible>
-          <Binding Path="PlayCount" Converter="{StaticResource ExpressionValueConverter}" ConverterParameter="{}{0} == 0"/>
-        </Image.IsVisible>
-      </Image>
-      <!-- GE2301: Unwatched marker added by red tab -->      
-      <Control Template="{ThemeResource MovieCoverTemplate}"/>
-    </Grid>
-  </ControlTemplate>
 
-  <ControlTemplate x:Key="CoverViewMovieItemTemplate">
-    <Grid x:Name="ItemControl" VerticalAlignment="Center">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto"/>
-      </Grid.ColumnDefinitions>
-      <Grid.RowDefinitions>
-        <RowDefinition Height="550"  />
-      </Grid.RowDefinitions>
-
-      <Image Width="355" Height="459" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source="MediaItem_focus.png"/>
-            <Binding Source=""/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="349" Height="452" Stretch="Fill" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source=""/>
-            <Binding Source="MediaItem_shadow.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="310" Height="430" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0"
-       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" />
-
-      <!--Image Width="310" Height="400" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-17,-12,-17,-12">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source="MediaItem_focus.png"/>
-            <Binding Source=""/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="304" Height="394" Stretch="Fill" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0" Margin="-15,-7,-13,-14">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
-            <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
-            <Binding Source=""/>
-            <Binding Source="MediaItem_shadow.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image>
-
-      <Image Width="270" Height="375" Stretch="Fill" FallbackSource="VideoLarge.png" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Row="0"
-       Source="{Binding MediaItem}" OpacityMask="{ThemeResource MediaItemsOpacityBrush}" /-->
-
-      <!-- Unwatched indicator -->
-      <!--Image HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="Fill" Width="35" Height="32" Opacity="1" Margin="5,5,0,0">
-        <Image.Source>
-          <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} == 0 ? {1} : {2}">
-            <Binding Path="PlayCount"/>
-            <Binding Source=""/>
-            <Binding Source="watched_circle.png"/>
-          </MultiBinding>
-        </Image.Source>
-      </Image-->
-    </Grid>
-  </ControlTemplate>
-  
 
   <ControlTemplate x:Key="ListViewMovieItemTemplate">
     <Grid x:Name="ItemControl" Margin="8,0,8,0">
@@ -601,7 +421,7 @@
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
         <!-- GE2301: Unwatched marker added by symbol -->
         <Image HorizontalAlignment="Left" VerticalAlignment="Center" Stretch="Fill" Width="37" Height="24"  >
           <Image.Source>
@@ -613,7 +433,7 @@
           </Image.Source>
         </Image>
         <!-- GE2301: Unwatched marker added by symbol -->
-        
+
         <media:VideoAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="0">
           <media:VideoAspectWrapper.Template>
             <ControlTemplate>
@@ -737,7 +557,7 @@
           </Image.Source>
         </Image>
         <!-- GE2301: Unwatched marker added by symbol -->
-        
+
         <media:VideoAspectWrapper MediaItem="{Binding MediaItem}" Grid.Column="0">
           <media:VideoAspectWrapper.Template>
             <ControlTemplate>

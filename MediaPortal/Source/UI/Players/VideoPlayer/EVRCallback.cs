@@ -34,7 +34,6 @@ using System.Runtime.InteropServices;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
-using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.SkinEngine.DirectX11;
 using SharpDX;
 using SharpDX.Direct2D1;

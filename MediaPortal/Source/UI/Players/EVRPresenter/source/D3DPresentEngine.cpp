@@ -21,7 +21,7 @@ m_DeviceResetToken(0),
 m_pD3D9(NULL),
 m_pDevice(d3DDevice),
 m_pDeviceManager(NULL),
-m_pTextureRepaint(NULL),
+m_pSurfaceRepaint(NULL),
 m_EVRCallback(callback),
 m_Width(0),
 m_Height(0)
@@ -40,7 +40,7 @@ m_Height(0)
 D3DPresentEngine::~D3DPresentEngine()
 {
   SAFE_RELEASE(m_pDevice);
-  SAFE_RELEASE(m_pTextureRepaint);
+  SAFE_RELEASE(m_pSurfaceRepaint);
   SAFE_RELEASE(m_pDeviceManager);
   SAFE_RELEASE(m_pD3D9);
 }
@@ -240,7 +240,7 @@ HRESULT D3DPresentEngine::CreateVideoSamples(IMFMediaType *pFormat, VideoSampleL
 // Released Direct3D resources used by this object. 
 void D3DPresentEngine::ReleaseResources()
 {
-  SAFE_RELEASE(m_pTextureRepaint);
+  SAFE_RELEASE(m_pSurfaceRepaint);
 }
 
 
@@ -296,7 +296,7 @@ HRESULT D3DPresentEngine::CheckDeviceState(DeviceState *pState)
 HRESULT D3DPresentEngine::PresentSample(IMFSample* pSample, LONGLONG llTarget)
 {
   HRESULT hr = S_OK;
-
+  IDirect3DSurface9* pSurface = NULL;
   IMFMediaBuffer* pBuffer = NULL;
   DWORD sharedResourceHandle;
   DWORD dataSize;

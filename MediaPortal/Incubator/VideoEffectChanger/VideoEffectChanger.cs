@@ -139,9 +139,9 @@ namespace MediaPortal.UiComponents.VideoEffectChanger
       if (player == null)
         return;
 
-      lock (player.SurfaceLock)
+      lock (player.BitmapLock)
       {
-        if (player.Texture == null)
+        if (player.Bitmap == null)
           return;
 
         var videoFrameHeight = player.VideoSize.Height;

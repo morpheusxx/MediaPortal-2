@@ -69,7 +69,7 @@ namespace CustomActions
 
       public override void WriteLine(string value)
       {
- 	       _session.Log(value);
+        _session.Log(value);
       }
 
       public override Encoding Encoding
@@ -108,8 +108,8 @@ namespace CustomActions
 
       HomeServerData result = new HomeServerData
         {
-            HomeServerName = new LocalizedUPnPDeviceInformation().GetFriendlyName(CultureInfo.InvariantCulture),
-            HomeServerSystemId = backendSystemResolver.LocalSystemId
+          HomeServerName = new LocalizedUPnPDeviceInformation().GetFriendlyName(CultureInfo.InvariantCulture),
+          HomeServerSystemId = backendSystemResolver.LocalSystemId
         };
 
       pluginManager.Shutdown();
@@ -250,7 +250,7 @@ namespace CustomActions
       session.Log("Former installation directory '{0}' read from registry key '{1}'", installDir, regValue);
       return true;
     }
-    
+
     /// <summary>
     /// Reads the path files from a former installation for client or server and sets them in the given installation <paramref name="session"/>.
     /// </summary>

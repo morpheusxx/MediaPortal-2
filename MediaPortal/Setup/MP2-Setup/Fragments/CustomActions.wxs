@@ -9,5 +9,9 @@
     <CustomAction Id="AttachClientToServer" BinaryKey="Custom_Action_Dll" DllEntry="AttachClientToServer" Execute="immediate" Return="check" />
 
     <CustomAction Id="InstallLAVFilters" BinaryKey="Custom_Action_Dll" DllEntry="InstallLAVFilters" Impersonate="no" Execute="deferred" Return="ignore" />
+
+    <CustomAction Id="InstallVC2008SP1" BinaryKey="Custom_Action_Dll" DllEntry="InstallVC2008SP1" Impersonate="no" Execute="deferred" Return="check" />
+    <CustomAction Id="InstallVC2010" BinaryKey="Custom_Action_Dll" DllEntry="InstallVC2010" Impersonate="no" Execute="deferred" Return="check" />
+    <CustomAction Id="InstallVC2013" BinaryKey="Custom_Action_Dll" DllEntry="InstallVC2013" Impersonate="no" Execute="deferred" Return="check" />
   </Fragment>
 </Wix>

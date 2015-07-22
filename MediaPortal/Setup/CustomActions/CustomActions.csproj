@@ -44,6 +44,8 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="CustomActions.cs" />
+    <Compile Include="AbstractDownloadAndInstall.cs" />
+    <Compile Include="VCRedists.cs" />
     <Compile Include="LAVFilters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Content Include="CustomAction.config" />

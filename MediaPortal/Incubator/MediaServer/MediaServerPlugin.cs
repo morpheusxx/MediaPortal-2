@@ -1,0 +1,126 @@
+﻿#region Copyright (C) 2007-2012 Team MediaPortal
+
+/*
+    Copyright (C) 2007-2012 Team MediaPortal
+    http://www.team-mediaportal.com
+
+    This file is part of MediaPortal 2
+
+    MediaPortal 2 is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MediaPortal 2 is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with MediaPortal 2. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#endregion
+
+using MediaPortal.Backend.BackendServer;
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
+using MediaPortal.Common.MediaManagement;
+using MediaPortal.Common.Messaging;
+using MediaPortal.Common.PluginManager;
+using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Runtime;
+using MediaPortal.Extensions.MediaServer.Objects.MediaLibrary;
+using MediaPortal.Extensions.MediaServer.Objects.Basic;
+using MediaPortal.Extensions.MediaServer.ResourceAccess;
+
+namespace MediaPortal.Extensions.MediaServer
+{
+  public class MediaServerPlugin : IPluginStateTracker, IMessageReceiver
+  {
+    private readonly UPnPMediaServerDevice _device;
+
+    public const string DEVICE_UUID = "45F2C54D-8C0A-4736-AA04-E6F91CD45457";
+
+    public static BasicContainer RootContainer { get; private set; }
+
+    public MediaServerPlugin()
+    {
+      _device = new UPnPMediaServerDevice(DEVICE_UUID.ToLower());
+      InitialiseContainerTree();
+    }
+
+    private static void InitialiseContainerTree()
+    {
+      RootContainer = new BasicContainer("0") { Title = "MediaPortal Media Library" };
+
+      var audioContainer = new BasicContainer("A") { Title = "Audio" };
+      audioContainer.Add(new MediaLibraryAlbumContainer("AA") { Title = "Albums" });
+      RootContainer.Add(audioContainer);
+
+      var pictureContainer = new BasicContainer("P") { Title = "Picture" };
+      RootContainer.Add(pictureContainer);
+
+      var videoContainer = new BasicContainer("V") { Title = "Video" };
+      RootContainer.Add(videoContainer);
+
+      videoContainer.Add(new MediaLibraryGenreContainer("VG") { Title = "Genres" });
+
+      RootContainer.Add(new MediaLibraryShareContainer("M") { Title = "Media" });
+    }
+
+    public void Activated(PluginRuntime pluginRuntime)
+    {
+      var meta = pluginRuntime.Metadata;
+      Logger.Info(string.Format("{0} v{1} [{2}] by {3}", meta.Name, meta.PluginVersion, meta.Description, meta.Author));
+
+      ServiceRegistration.Get<IMessageBroker>().RegisterMessageReceiver(SystemMessaging.CHANNEL, this);
+
+      Logger.Debug("MediaServerPlugin: Adding UPNP device as a root device");
+      ServiceRegistration.Get<IBackendServer>().UPnPBackendServer.AddRootDevice(_device);
+    }
+
+    public bool RequestEnd()
+    {
+      return true;
+    }
+
+    public void Stop()
+    {
+    }
+
+    public void Continue()
+    {
+    }
+
+    public void Shutdown()
+    {
+    }
+
+    internal static ILogger Logger
+    {
+      get { return ServiceRegistration.Get<ILogger>(); }
+    }
+
+    public void Receive(SystemMessage message)
+    {
+      if (message.MessageType is SystemMessaging.MessageType)
+      {
+        if (((SystemMessaging.MessageType)message.MessageType) == SystemMessaging.MessageType.SystemStateChanged)
+        {
+          SystemState newState = (SystemState) message.MessageData[SystemMessaging.NEW_STATE];
+          if (newState == SystemState.Running)
+          {
+            RegisterWithServices();
+          }
+        }
+      }
+    }
+
+    protected void RegisterWithServices()
+    {
+      Logger.Debug("MediaServerPlugin: Registering DLNA HTTP resource access module");
+      ServiceRegistration.Get<IResourceServer>().AddHttpModule(new DlnaResourceAccessModule());
+    }
+  }
+}

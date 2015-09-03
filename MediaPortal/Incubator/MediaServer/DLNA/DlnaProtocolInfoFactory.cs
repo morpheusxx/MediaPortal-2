@@ -134,7 +134,9 @@ namespace MediaPortal.Extensions.MediaServer.DLNA
             }
 
             Logger.Warn("No DLNA media type for MIME type {0}", mimeType);
-            return null;
+            // I don't think it is a goof idea to return "null". The control point should check if the renderer supports the protocols offered by the server.
+            // We could introduce some transcoding at a later point
+            return mimeType;
         }
 
         internal static ILogger Logger

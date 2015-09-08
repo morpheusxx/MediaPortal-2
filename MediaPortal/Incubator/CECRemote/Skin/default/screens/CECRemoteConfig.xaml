@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"    
+    Source="screens\master_dialog_bare.xaml"
+    >
+  <Include.Resources>
+    <Model x:Key="CECRemoteConfigurationModel" Id="14428A8D-3831-42A4-8A53-8BE3120054EA"/>       
+    <ResourceWrapper x:Key="Header_Text" Resource="[CECRemote.ConfigScreenTitle]"/>
+
+    <!-- Contents -->
+    <ControlTemplate x:Key="Contents_Template">
+      <StackPanel DataContext="{Binding Source={StaticResource CECRemoteConfigurationModel}}">
+        <!-- <Label Content="[CECRemote.HDMI]" Color="{ThemeResource TextColor}" Margin="10,10,10,0"/> -->
+        <!-- <TextBox Text="{Binding Path=HDMIPort,Mode=TwoWay}" Margin="10" Style="{ThemeResource TextBoxStyle}"/> -->
+
+        <!-- OK & Abort button -->
+        <Grid HorizontalAlignment="Stretch">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <Button Name="ButtonOk"
+            Grid.Column="0"
+            Grid.Row="0"
+            Style="{ThemeResource DialogButtonStyle}"
+            Content="[System.Ok]"
+            HorizontalAlignment="Center">
+            <Button.Command>
+              <CommandList>
+                <Command Path="SaveSettings" />
+                <Command Source="{Service ScreenManager}" Path="CloseTopmostDialog" />
+              </CommandList>
+            </Button.Command>
+          </Button>
+
+          <Button Name="ButtonCancel"
+            Grid.Column="1"
+            Grid.Row="0"
+            Style="{ThemeResource DialogButtonStyle}"
+            Content="[System.Cancel]"
+            HorizontalAlignment="Center"
+            Command="{Command Source={Service ScreenManager},Path=CloseTopmostDialog}" />
+        </Grid>                          
+      </StackPanel>
+    </ControlTemplate>
+  </Include.Resources>
+</Include>

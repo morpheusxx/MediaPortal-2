@@ -1,0 +1,66 @@
+<Plugin
+    DescriptorVersion="1.0"
+    Name="CECRemote"
+    PluginId="{E2956899-422E-4283-86F3-27FCFF5C8EEF}"
+    Author="-manfred-"
+    Copyright="GPL"
+    AutoActivate="true"
+    Description="CEC remote plugin">
+
+  <Version
+    PluginVersion="1.0"
+    ReleaseDate="2015-09-08 01:00:00 GMT+01:00"
+    CurrentAPI="1"/>
+
+  <Runtime>
+    <Assembly FileName="CECRemote.dll"/>
+    <PluginStateTracker ClassName="MediaPortal.UiComponents.CECRemote.CECRemotePlugin"/>
+  </Runtime>
+
+  <DependsOn>
+    <CoreDependency Name="MediaPortal.Common" CompatibleAPI="1" />
+    <CoreDependency Name="MediaPortal.UI" CompatibleAPI="1" />
+    <PluginReference PluginId="{1AFF4467-64B0-4ca1-AF28-9AEDF3525BCE}" CompatibleAPI="1" /> <!-- ConfigurationManager -->
+  </DependsOn>
+
+  <Register Location="/Resources/Language">
+    <Resource Id="CECRemoteLanguage" Directory="Language" Type="Language"/>
+  </Register>
+
+  <!--
+  <Register Location="/Resources/Skin">
+    <Resource Id="CECRemoteSkin" Directory="Skin" Type="Skin"/>
+  </Register>
+  
+  <Register Location="/Models">
+    <Model Id="14428A8D-3831-42A4-8A53-8BE3120054EA" Name="CECRemoteConfigurationModel" ClassName="MediaPortal.UiComponents.CECRemote.Models.CECRemoteConfigurationModel"/>
+  </Register>
+  
+  <Register Location="/Workflow/States">    
+    <DialogState Id="6F377A78-564D-4D93-96D0-87EE7DBFA9E4" Name="CECRemote" DialogScreen="dialogCECRemoteConfiguration"
+      DisplayLabel="[CECRemote.ConfigScreenTitle]"  WorkflowModel="14428A8D-3831-42A4-8A53-8BE3120054EA"/>
+  </Register>
+  -->
+  <!-- Registration of our configuration section -->
+  <Register Location="/Configuration/Settings/Plugins">
+    <ConfigSection
+        Id="CECRemote"
+        Redundant="true"
+        Text="CECRemote"/>
+  </Register>
+
+  <Register Location="/Configuration/Settings/Plugins/CECRemote">
+    <!-- /Configuration/Settings/General/System -->
+    <ConfigSetting
+        Id="CECRemoteHDMIPort"
+        Text="[CECRemote.HDMIport]"
+        HelpText="[CECRemote.HDMIport.Help]"
+        ClassName="MediaPortal.UiComponents.CECRemote.Settings.HDMIport"/>
+    <!--  <CustomConfigSetting 
+      Id="CECRemoteConfiguration" 
+      Text="[CECRemote.ConfigScreenTitle]" 
+      HelpText="[CECRemote.ConfigScreenTitle.Help]"
+      ClassName="MediaPortal.UiComponents.CECRemote.Settings.CECRemoteDialogSetting" 
+      AdditionalData="WorkflowState=6F377A78-564D-4D93-96D0-87EE7DBFA9E4,ConfAppPanel=..."/> -->
+  </Register>
+</Plugin>

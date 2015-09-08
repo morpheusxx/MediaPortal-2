@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="CECRemote.HDMIport">HDMI port</string>
+  <string name="CECRemote.HDMIport.Help">Set port value to match used HDMI port in TV or AV receiver</string>
+</resources>

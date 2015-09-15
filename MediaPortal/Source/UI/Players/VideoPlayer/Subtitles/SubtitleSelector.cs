@@ -22,7 +22,13 @@
 
 #endregion
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
+using MediaPortal.UI.Players.Video.Interfaces;
 
 namespace MediaPortal.UI.Players.Video.Subtitles
 {
@@ -37,20 +43,20 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
   public class SubtitleOption
   {
-    public SubtitleType type;
-    public TeletextPageEntry entry; // only for teletext
-    public int bitmapIndex; // index among bitmap subs, only for bitmap subs :)
-    public string language;
-    public bool isAuto;
+    public SubtitleType Type;
+    public TeletextPageEntry Entry; // only for teletext
+    public int BitmapIndex; // index among bitmap subs, only for bitmap subs :)
+    public string Language;
+    public bool IsAuto;
 
     public override string ToString()
     {
-      switch (type)
+      switch (Type)
       {
         case SubtitleType.Bitmap:
-          return "Bitmap Lang " + language;
+          return "Bitmap Lang " + Language;
         case SubtitleType.Teletext:
-          return "Teletext Lang\t" + entry.Language + "\tpage: " + entry.Page;
+          return "Teletext Lang\t" + Entry.Language + "\tpage: " + Entry.Page;
         case SubtitleType.None:
           return "None";
         default:
@@ -65,131 +71,144 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     public override bool Equals(object o)
     {
-      if (o == null) return false;
-      if (o is SubtitleOption)
-      {
-        SubtitleOption other = o as SubtitleOption;
-        if (other.type != type) return false;
-        if (other.bitmapIndex != bitmapIndex) return false;
-        if (!other.language.Equals(language)) return false;
-        if ((entry != null && !entry.Equals(other.entry)) || entry == null && other.entry != null) return false;
-        return true;
-      }
-      return false;
+      if (!(o is SubtitleOption))
+        return false;
+      SubtitleOption other = (SubtitleOption)o;
+      if (other.Type != Type) return false;
+      if (other.BitmapIndex != BitmapIndex) return false;
+      if (!other.Language.Equals(Language)) return false;
+      if ((Entry != null && !Entry.Equals(other.Entry)) || Entry == null && other.Entry != null) return false;
+      return true;
     }
   }
 
   [StructLayout(LayoutKind.Sequential, Pack = 1)]
-  struct SUBTITLESTREAM
+  struct SubtitleStream
   {
-    public int pid;
-    public int subtitleType;
-    public byte lang0, lang1, lang2;
-    public byte termChar;
+    public int Pid;
+    public int SubtitleType;
+    public byte Lang0, Lang1, Lang2;
+    public byte TermChar;
   }
-#if NOTUSED
+
   class SubtitleSelector
   {
-    private SubtitleOption autoSelectOption;
+    private readonly SubtitleOption _autoSelectOption;
     private delegate int SubtitleStreamEventCallback(int count, IntPtr pOpts, ref int bitmapindex);
-    private SubtitleStreamEventCallback subStreamCallback;
-    private object syncLock = new object();
+    private SubtitleStreamEventCallback _subStreamCallback;
+    private readonly object _syncLock = new object();
+
+    private readonly ISubtitleStream _dvbStreams;
+    private readonly SubtitleRenderer _subRender;
+    private readonly List<string> _preferedLanguages;
+    private int _lastSubtitleIndex;
+    private SubtitleOption _currentOption;
+    private readonly Dictionary<int, TeletextPageEntry> _pageEntries;
+
+    private readonly List<SubtitleOption> _bitmapSubtitleCache;
 
     public SubtitleSelector(ISubtitleStream dvbStreams, SubtitleRenderer subRender, TeletextSubtitleDecoder subDecoder)
     {
-      Log.Debug("SubtitleSelector ctor");
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: SubtitleSelector ctor");
       if (subRender == null)
       {
         throw new Exception("Nullpointer input not allowed ( SubtitleRenderer)");
       }
       else
       {
-        this.dvbStreams = dvbStreams;
-        this.subRender = subRender;
+        this._dvbStreams = dvbStreams;
+        this._subRender = subRender;
       }
 
       // load preferences
-      using (MediaPortal.Profile.Settings reader = new MediaPortal.Profile.Settings(MediaPortal.Configuration.Config.GetFile(MediaPortal.Configuration.Config.Dir.Config, "MediaPortal.xml")))
-      {
-        preferedLanguages = new List<string>();
-        string languages = reader.GetValueAsString("tvservice", "preferredsublanguages", "");
-        Log.Debug("SubtitleSelector: sublangs entry content: " + languages);
-        StringTokenizer st = new StringTokenizer(languages, ";");
-        while (st.HasMore)
-        {
-          string lang = st.NextToken();
-          if (lang.Length != 3)
-          {
-            Log.Warn("Language {0} is not in the correct format!", lang);
-          }
-          else
-          {
-            preferedLanguages.Add(lang);
-            Log.Info("Prefered language {0} is {1}", preferedLanguages.Count, lang);
-          }
-        }
-      }
+      //using (MediaPortal.Profile.Settings reader = new MediaPortal.Profile.Settings(MediaPortal.Configuration.Config.GetFile(MediaPortal.Configuration.Config.Dir.Config, "MediaPortal.xml")))
+      //{
+      //  preferedLanguages = new List<string>();
+      //  string languages = reader.GetValueAsString("tvservice", "preferredsublanguages", "");
+      //  ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: SubtitleSelector: sublangs entry content: " + languages);
+      //  StringTokenizer st = new StringTokenizer(languages, ";");
+      //  while (st.HasMore)
+      //  {
+      //    string lang = st.NextToken();
+      //    if (lang.Length != 3)
+      //    {
+      //      ServiceRegistration.Get<ILogger>().Warn("Language {0} is not in the correct format!", lang);
+      //    }
+      //    else
+      //    {
+      //      preferedLanguages.Add(lang);
+      //      ServiceRegistration.Get<ILogger>().Info("Prefered language {0} is {1}", preferedLanguages.Count, lang);
+      //    }
+      //  }
+      //}
 
-      pageEntries = new Dictionary<int, TeletextPageEntry>();
+      // TODO: Access MP2 VideoSettings.PreferredSubtitleLanguage ?
+      _preferedLanguages = new List<string>();
 
-      bitmapSubtitleCache = new List<SubtitleOption>();
+      _pageEntries = new Dictionary<int, TeletextPageEntry>();
 
-      lock (syncLock)
+      _bitmapSubtitleCache = new List<SubtitleOption>();
+
+      lock (_syncLock)
       {
         if (subDecoder != null)
         {
-          subDecoder.SetPageInfoCallback(new MediaPortal.Player.Subtitles.TeletextSubtitleDecoder.PageInfoCallback(OnPageInfo));
+          subDecoder.SetPageInfoCallback(OnPageInfo);
         }
 
         if (dvbStreams != null)
         {
           RetrieveBitmapSubtitles();
-          subStreamCallback = new SubtitleStreamEventCallback(OnSubtitleReset);
-          IntPtr pSubStreamCallback = Marshal.GetFunctionPointerForDelegate(subStreamCallback);
-          Log.Debug("Calling SetSubtitleStreamEventCallback");
+          _subStreamCallback = OnSubtitleReset;
+          IntPtr pSubStreamCallback = Marshal.GetFunctionPointerForDelegate(_subStreamCallback);
+          ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Calling SetSubtitleStreamEventCallback");
           dvbStreams.SetSubtitleResetCallback(pSubStreamCallback);
         }
 
-        if (preferedLanguages.Count > 0)
+        if (_preferedLanguages.Count > 0)
         {
-          autoSelectOption = new SubtitleOption();
-          autoSelectOption.language = "None";
-          autoSelectOption.isAuto = true;
-          autoSelectOption.type = SubtitleType.None;
+          _autoSelectOption = new SubtitleOption
+          {
+            Language = "None",
+            IsAuto = true,
+            Type = SubtitleType.None
+          };
 
           SetOption(0); // the autoselect mode will have index 0 (ugly)
         }
       }
-      Log.Debug("End SubtitleSelector ctor");
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: End SubtitleSelector ctor");
     }
 
     // ONLY call from MP main thread!
     private void RetrieveBitmapSubtitles()
     {
-      bitmapSubtitleCache.Clear();
+      _bitmapSubtitleCache.Clear();
 
       try
       {
         // collect dvb bitmap subtitle options
         int streamCount = 0;
-        dvbStreams.GetSubtitleStreamCount(ref streamCount);
+        _dvbStreams.GetSubtitleStreamCount(ref streamCount);
         Debug.Assert(streamCount >= 0 && streamCount <= 100);
 
         for (int i = 0; i < streamCount; i++)
         {
-          TSReaderPlayer.SUBTITLE_LANGUAGE subLang = new TSReaderPlayer.SUBTITLE_LANGUAGE();
-          dvbStreams.GetSubtitleStreamLanguage(i, ref subLang);
-          SubtitleOption option = new SubtitleOption();
-          option.type = SubtitleType.Bitmap;
-          option.language = subLang.lang;
-          option.bitmapIndex = i;
-          bitmapSubtitleCache.Add(option);
-          Log.Debug("Retrieved bitmap option Lang : " + option.ToString());
+          var subLang = new SubtitleLanguage();
+          _dvbStreams.GetSubtitleStreamLanguage(i, ref subLang);
+          SubtitleOption option = new SubtitleOption
+          {
+            Type = SubtitleType.Bitmap,
+            Language = subLang.lang,
+            BitmapIndex = i
+          };
+          _bitmapSubtitleCache.Add(option);
+          ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Retrieved bitmap option Lang : " + option);
         }
       }
       catch (Exception e)
       {
-        Log.Error(e);
+        ServiceRegistration.Get<ILogger>().Error(e);
       }
     }
 
@@ -197,52 +216,54 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     private int OnSubtitleReset(int count, IntPtr pOpts, ref int selected_bitmap_index)
     {
-      Log.Debug("OnSubtitleReset");
-      Log.Debug("selected_bitmap_index " + selected_bitmap_index);
-      lock (syncLock)
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: OnSubtitleReset");
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: selected_bitmap_index " + selected_bitmap_index);
+      lock (_syncLock)
       {
-        bitmapSubtitleCache.Clear();
-        pageEntries.Clear();
+        _bitmapSubtitleCache.Clear();
+        _pageEntries.Clear();
 
-        Log.Debug("Number of bitmap options {0}", count);
+        ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Number of bitmap options {0}", count);
         IntPtr current = pOpts;
         for (int i = 0; i < count; i++)
         {
-          Log.Debug("Bitmap index " + i);
-          SUBTITLESTREAM bOpt = (SUBTITLESTREAM)Marshal.PtrToStructure(current, typeof(SUBTITLESTREAM));
-          SubtitleOption opt = new SubtitleOption();
-          opt.bitmapIndex = i;
-          opt.type = SubtitleType.Bitmap;
-          opt.language = "" + (char)bOpt.lang0 + (char)bOpt.lang1 + (char)bOpt.lang2;
-          Log.Debug(opt.ToString());
-          bitmapSubtitleCache.Add(opt);
+          ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Bitmap index " + i);
+          SubtitleStream bOpt = (SubtitleStream)Marshal.PtrToStructure(current, typeof(SubtitleStream));
+          SubtitleOption opt = new SubtitleOption
+          {
+            BitmapIndex = i,
+            Type = SubtitleType.Bitmap,
+            Language = "" + (char)bOpt.Lang0 + (char)bOpt.Lang1 + (char)bOpt.Lang2
+          };
+          ServiceRegistration.Get<ILogger>().Debug(opt.ToString());
+          _bitmapSubtitleCache.Add(opt);
           current = (IntPtr)(((int)current) + Marshal.SizeOf(bOpt));
         }
 
         selected_bitmap_index = -1; // we didnt select a bitmap index
 
-        if (currentOption != null && currentOption.isAuto)
+        if (_currentOption != null && _currentOption.IsAuto)
         {
           SubtitleOption prefered = CheckForPreferedLanguage();
           if (prefered != null)
           {
-            currentOption.bitmapIndex = prefered.bitmapIndex;
-            currentOption.entry = prefered.entry;
-            currentOption.language = prefered.language;
-            currentOption.type = prefered.type;
-            Log.Debug("Auto-selection of " + currentOption);
+            _currentOption.BitmapIndex = prefered.BitmapIndex;
+            _currentOption.Entry = prefered.Entry;
+            _currentOption.Language = prefered.Language;
+            _currentOption.Type = prefered.Type;
+            ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Auto-selection of " + _currentOption);
           }
           else
           {
-            currentOption.language = "None";
-            currentOption.type = SubtitleType.None;
+            _currentOption.Language = "None";
+            _currentOption.Type = SubtitleType.None;
           }
 
-          subRender.SetSubtitleOption(currentOption);
-          if (currentOption.type == SubtitleType.Bitmap)
+          _subRender.SetSubtitleOption(_currentOption);
+          if (_currentOption.Type == SubtitleType.Bitmap)
           {
-            selected_bitmap_index = currentOption.bitmapIndex;
-            Log.Debug("Returns selected_bitmap_index == {0} to ISubStream", selected_bitmap_index);
+            selected_bitmap_index = _currentOption.BitmapIndex;
+            ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Returns selected_bitmap_index == {0} to ISubStream", selected_bitmap_index);
           }
         }
 
@@ -252,29 +273,29 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     private void OnPageInfo(TeletextPageEntry entry)
     {
-      lock (syncLock)
+      lock (_syncLock)
       {
-        if (!pageEntries.ContainsKey(entry.page))
+        if (!_pageEntries.ContainsKey(entry.Page))
         {
-          pageEntries.Add(entry.page, entry);
-          if (currentOption != null && currentOption.isAuto)
+          _pageEntries.Add(entry.Page, entry);
+          if (_currentOption != null && _currentOption.IsAuto)
           {
             SubtitleOption prefered = CheckForPreferedLanguage();
             if (prefered != null)
             {
-              currentOption.bitmapIndex = prefered.bitmapIndex;
-              currentOption.entry = prefered.entry;
-              currentOption.language = prefered.language;
-              currentOption.type = prefered.type;
-              Log.Debug("Auto-selection of " + currentOption);
+              _currentOption.BitmapIndex = prefered.BitmapIndex;
+              _currentOption.Entry = prefered.Entry;
+              _currentOption.Language = prefered.Language;
+              _currentOption.Type = prefered.Type;
+              ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Auto-selection of " + _currentOption);
             }
             else
             {
-              currentOption.type = SubtitleType.None;
-              currentOption.language = "None";
+              _currentOption.Type = SubtitleType.None;
+              _currentOption.Language = "None";
             }
 
-            subRender.SetSubtitleOption(currentOption);
+            _subRender.SetSubtitleOption(_currentOption);
             // we cannot update the bitmap sub stream here
           }
         }
@@ -287,9 +308,9 @@ namespace MediaPortal.UI.Players.Video.Subtitles
     /// </summary>
     private SubtitleOption CheckForPreferedLanguage()
     {
-      Log.Debug("SubtitleSelector: CheckForPreferedLanguage");
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: SubtitleSelector: CheckForPreferedLanguage");
       List<SubtitleOption> options = CollectOptions();
-      Log.Debug("Has {0} options", options.Count);
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Has {0} options", options.Count);
 
       SubtitleOption prefered = null;
       int priority = int.MaxValue;
@@ -298,12 +319,12 @@ namespace MediaPortal.UI.Players.Video.Subtitles
       for (int optIndex = 1; optIndex < options.Count; optIndex++)
       {
         SubtitleOption opt = options[optIndex];
-        int index = preferedLanguages.IndexOf(opt.language);
-        Log.Debug(opt + " Pref index " + index);
+        int index = _preferedLanguages.IndexOf(opt.Language);
+        ServiceRegistration.Get<ILogger>().Debug(opt + " Pref index " + index);
 
         if (index >= 0 && index < priority)
         {
-          Log.Debug("Setting as pref");
+          ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Setting as pref");
           prefered = opt;
           priority = index;
           prefOptIndex = optIndex;
@@ -314,25 +335,27 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     private List<SubtitleOption> CollectOptions()
     {
-      //Log.Debug("SubtitleSelector: CollectOptions");
+      //ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: SubtitleSelector: CollectOptions");
       List<SubtitleOption> options = new List<SubtitleOption>();
 
-      if (autoSelectOption != null)
+      if (_autoSelectOption != null)
       {
-        options.Add(autoSelectOption);
+        options.Add(_autoSelectOption);
       }
 
-      options.AddRange(bitmapSubtitleCache);
+      options.AddRange(_bitmapSubtitleCache);
 
       // collect teletext options
-      foreach (KeyValuePair<int, TeletextPageEntry> p in pageEntries)
+      foreach (KeyValuePair<int, TeletextPageEntry> p in _pageEntries)
       {
-        SubtitleOption option = new SubtitleOption();
-        option.type = SubtitleType.Teletext;
-        option.language = p.Value.language;
-        option.entry = p.Value;
+        SubtitleOption option = new SubtitleOption
+        {
+          Type = SubtitleType.Teletext,
+          Language = p.Value.Language,
+          Entry = p.Value
+        };
         options.Add(option);
-        Log.Debug("Added Teletext option Lang : " + option.ToString());
+        ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Added Teletext option Lang : " + option);
       }
       return options;
     }
@@ -345,7 +368,7 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     public int GetCurrentOption()
     {
-      return lastSubtitleIndex;
+      return _lastSubtitleIndex;
     }
 
     /// <summary>
@@ -354,72 +377,62 @@ namespace MediaPortal.UI.Players.Video.Subtitles
     /// <param name="index"></param>
     public void SetOption(int index)
     {
-      Log.Debug("SetOption {0}", index);
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: SetOption {0}", index);
       List<SubtitleOption> options = CollectOptions();
       if (index >= options.Count)
       {
-        Log.Error("SetOption with too large index!");
+        ServiceRegistration.Get<ILogger>().Error("SetOption with too large index!");
         return;
       }
       SubtitleOption option = options[index];
-      lastSubtitleIndex = index;
-      currentOption = option;
+      _lastSubtitleIndex = index;
+      _currentOption = option;
 
-      if (option.isAuto)
+      if (option.IsAuto)
       {
-        Log.Debug("SubtitleSelector : Set autoselect mode");
+        ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector:  Set autoselect mode");
         SubtitleOption prefered = CheckForPreferedLanguage();
         if (prefered != null)
         {
-          option.bitmapIndex = prefered.bitmapIndex;
-          option.entry = prefered.entry;
-          option.language = prefered.language;
-          option.type = prefered.type;
-          Log.Debug("Auto-selection of " + option);
+          option.BitmapIndex = prefered.BitmapIndex;
+          option.Entry = prefered.Entry;
+          option.Language = prefered.Language;
+          option.Type = prefered.Type;
+          ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Auto-selection of " + option);
         }
         else
         {
-          option.type = SubtitleType.None;
-          currentOption.language = "None";
-          subRender.SetSubtitleOption(option);
+          option.Type = SubtitleType.None;
+          _currentOption.Language = "None";
+          _subRender.SetSubtitleOption(option);
         }
       }
 
-      if (option.type == SubtitleType.Bitmap)
+      if (option.Type == SubtitleType.Bitmap)
       {
-        dvbStreams.SetSubtitleStream(option.bitmapIndex);
+        _dvbStreams.SetSubtitleStream(option.BitmapIndex);
       }
-      Log.Debug("Subtitle is now " + currentOption.ToString());
-      subRender.SetSubtitleOption(option);
+      ServiceRegistration.Get<ILogger>().Debug("SubtitleSelector: Subtitle is now " + _currentOption.ToString());
+      _subRender.SetSubtitleOption(option);
     }
 
     public string GetCurrentLanguage()
     {
-      if (currentOption == null)
+      if (_currentOption == null)
       {
-        Log.Error("Calling GetCurrentLanguage with no subtitle set!");
-        return Strings.Unknown;
+        ServiceRegistration.Get<ILogger>().Error("Calling GetCurrentLanguage with no subtitle set!");
+        return "Unknown";
       }
-      else if (currentOption.isAuto)
+      else if (_currentOption.IsAuto)
       {
-        return "Auto:" + currentOption.language;
+        return "Auto:" + _currentOption.Language;
       }
-      else if (currentOption.type == SubtitleType.Teletext && currentOption.entry.language.Trim().Length == 0)
+      else if (_currentOption.Type == SubtitleType.Teletext && _currentOption.Entry.Language.Trim().Length == 0)
       {
-        return "p" + currentOption.entry.page;
+        return "p" + _currentOption.Entry.Page;
       }
-      else return currentOption.language;
+      else return _currentOption.Language;
     }
-
-    private MediaPortal.Player.TSReaderPlayer.ISubtitleStream dvbStreams;
-    private SubtitleRenderer subRender;
-    private List<string> preferedLanguages;
-    private int lastSubtitleIndex;
-    private SubtitleOption currentOption;
-    private Dictionary<int, TeletextPageEntry> pageEntries;
-
-    private List<SubtitleOption> bitmapSubtitleCache;
   }
 
-#endif
 }

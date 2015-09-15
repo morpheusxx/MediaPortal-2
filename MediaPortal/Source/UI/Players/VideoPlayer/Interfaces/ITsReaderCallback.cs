@@ -90,6 +90,7 @@ namespace MediaPortal.UI.Players.Video.Interfaces
     void GetSubtitleStreamCount(ref Int32 count);
     void GetCurrentSubtitleStream(ref Int32 stream);
     void GetSubtitleStreamLanguage(Int32 stream, ref SubtitleLanguage szLanguage);
+    void SetSubtitleResetCallback(IntPtr callBack);
   }
 
   [Guid("b9559486-E1BB-45D3-A2A2-9A7AFE49B24F"),

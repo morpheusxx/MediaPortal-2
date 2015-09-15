@@ -327,21 +327,21 @@ namespace MediaPortal.UI.Players.Video.Subtitles
 
     public void SetSubtitleOption(SubtitleOption option)
     {
-      if (option.type == SubtitleType.None)
+      if (option.Type == SubtitleType.None)
       {
         _useBitmap = false;
         _activeSubPage = 0;
       }
-      else if (option.type == SubtitleType.Teletext)
+      else if (option.Type == SubtitleType.Teletext)
       {
         _useBitmap = false;
-        _activeSubPage = option.entry.Page;
-        ServiceRegistration.Get<ILogger>().Debug("SubtitleRender: Now rendering {0} teletext subtitle page {1}", option.language, _activeSubPage);
+        _activeSubPage = option.Entry.Page;
+        ServiceRegistration.Get<ILogger>().Debug("SubtitleRender: Now rendering {0} teletext subtitle page {1}", option.Language, _activeSubPage);
       }
-      else if (option.type == SubtitleType.Bitmap)
+      else if (option.Type == SubtitleType.Bitmap)
       {
         _useBitmap = true;
-        ServiceRegistration.Get<ILogger>().Debug("SubtitleRender: Now rendering bitmap subtitles in language {0}", option.language);
+        ServiceRegistration.Get<ILogger>().Debug("SubtitleRender: Now rendering bitmap subtitles in language {0}", option.Language);
       }
       else
       {

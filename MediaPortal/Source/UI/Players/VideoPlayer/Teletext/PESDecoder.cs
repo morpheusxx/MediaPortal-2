@@ -89,7 +89,7 @@ namespace MediaPortal.UI.Players.Video.Teletext
       }
 
 
-      // Assume that correct pid is passed!
+      // Assume that correct Pid is passed!
       /*if (header.Pid != m_pid) 
       {
           ServiceRegistration.Get<ILogger>().Debug("Header Pid is %i, expected %i", header.Pid, m_pid);
@@ -98,7 +98,7 @@ namespace MediaPortal.UI.Players.Video.Teletext
 
       if (header.SyncByte != TS_PACKET_SYNC)
       {
-        ServiceRegistration.Get<ILogger>().Debug("pesdecoder pid:%x sync error", _pid);
+        ServiceRegistration.Get<ILogger>().Debug("pesdecoder Pid:%x sync error", _pid);
         return false;
       }
 
@@ -107,7 +107,7 @@ namespace MediaPortal.UI.Players.Video.Teletext
         _bStart = false;
         _iWritePos = 0;
         _iPesLength = 0;
-        ServiceRegistration.Get<ILogger>().Debug("pesdecoder pid:%x transport error", _pid);
+        ServiceRegistration.Get<ILogger>().Debug("pesdecoder Pid:%x transport error", _pid);
         return false;
       }
 

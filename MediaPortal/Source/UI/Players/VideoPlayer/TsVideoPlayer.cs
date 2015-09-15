@@ -33,6 +33,7 @@ using MediaPortal.Common.Settings;
 using MediaPortal.UI.Players.Video.Interfaces;
 using MediaPortal.UI.Players.Video.Settings;
 using MediaPortal.UI.Players.Video.Subtitles;
+using MediaPortal.UI.Players.Video.Teletext;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.Utilities.Exceptions;
 using SharpDX.Direct3D9;
@@ -122,6 +123,9 @@ namespace MediaPortal.UI.Players.Video
       {
         _subtitleRenderer.RenderSubtitles = true;
         _subtitleRenderer.SetPlayer(this);
+
+        TeletextSubtitleDecoder ttxtDecoder = new TeletextSubtitleDecoder(_subtitleRenderer);
+        _teletextReceiver = new TeletextReceiver((ITeletextSource)_sourceFilter, ttxtDecoder);
       }
 
       if (_resourceLocator.NativeResourcePath.IsNetworkResource)

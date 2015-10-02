@@ -166,7 +166,9 @@ namespace MediaPortal.Common.Services.ResourceAccess
       HttpServer.HttpServer server;
       if (_httpServers.TryGetValue(ipAddress, out server))
         return server.Port;
-      return 0;
+
+      server = _httpServers.Values.FirstOrDefault(s => ipAddress.AddressFamily == AddressFamily.InterNetwork ? s.IsIPv4 : s.IsIPv6);
+      return server != null ? server.Port : 0;
     }
 
     public void Startup()

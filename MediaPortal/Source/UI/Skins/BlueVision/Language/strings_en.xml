@@ -24,6 +24,7 @@
   <string name="General.Title">General</string>
   <string name="CastCrew.Title">Cast + Crew</string>
   <string name="MediaInfo.Title">Media Info</string>
+  <string name="ShutdownManager.ShutdownDialogStateDisplayLabel">Shutdown Menu</string>
 
   <string name="Media.AudioAlbumArtistsLabel">Album Artists:</string>
   <string name="Media.AudioTrackLabel">Track:</string>

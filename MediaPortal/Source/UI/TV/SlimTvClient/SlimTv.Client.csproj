@@ -103,7 +103,6 @@
   <ItemGroup>
     <Content Include="plugin.xml" />
     <Compile Include="..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">
-
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Controls\EpgGrid.cs" />
@@ -301,6 +300,16 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="Skin\BlueVision\themes\default\styles\SlimTvStyles.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\BlueVision\screens\SlimTvClient-main.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Skin\BlueVision\screens\CurrentlyPlayingTv.xaml">
       <SubType>Designer</SubType>
     </Content>
   </ItemGroup>

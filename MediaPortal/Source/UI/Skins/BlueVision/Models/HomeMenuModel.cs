@@ -67,6 +67,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
     protected bool _noSettingsRefresh;
     protected bool _isPlayerActive;
     protected string _lastActiveGroup;
+    protected readonly object _syncObj = new object();
 
     #endregion
 
@@ -195,11 +196,14 @@ namespace MediaPortal.UiComponents.BlueVision.Models
     private void OnSettingsChanged(object sender, EventArgs e)
     {
       // Invoked from internal update, so skip refreshs
-      if (_noSettingsRefresh)
-        return;
-      ReadPositions();
-      CreateMenuGroupItems();
-      CreatePositionedItems();
+      lock (_syncObj)
+      {
+        if (_noSettingsRefresh)
+          return;
+        ReadPositions();
+        CreateMenuGroupItems();
+        CreatePositionedItems();
+      }
     }
 
     protected void MenuItemsOnObjectChanged(IObservable observable)
@@ -392,7 +396,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
 
       try
       {
-        _noSettingsRefresh = true;
+        lock (_syncObj) _noSettingsRefresh = true;
         ServiceRegistration.Get<ISettingsManager>().Save(_menuSettings.Settings);
         if (isShortCut)
         {
@@ -407,7 +411,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       }
       finally
       {
-        _noSettingsRefresh = false;
+        lock (_syncObj) _noSettingsRefresh = false;
       }
     }
 
@@ -502,6 +506,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       var menuSettings = _menuSettings.Settings;
       try
       {
+        lock (_syncObj) _noSettingsRefresh = true;
         if (menuSettings.MainMenuShortCuts.Count == 0)
         {
           menuSettings.MainMenuShortCuts = new List<GroupItemSetting>
@@ -579,7 +584,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       }
       finally
       {
-        _noSettingsRefresh = false;
+        lock (_syncObj) _noSettingsRefresh = false;
       }
     }
 

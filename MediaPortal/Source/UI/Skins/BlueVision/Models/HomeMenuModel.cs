@@ -564,7 +564,6 @@ namespace MediaPortal.UiComponents.BlueVision.Models
 
           ServiceRegistration.Get<ISettingsManager>().Save(menuSettings);
         }
-        //_menuSettings = menuSettings;
         if (_menuSettings.Settings.MainMenuGroupNames.All(key => key.Name != MenuSettings.MENU_NAME_OTHERS))
         {
           _menuSettings.Settings.MainMenuGroupNames.Add(new GroupItemSetting { Name = MenuSettings.MENU_NAME_OTHERS, Id = new Guid(MenuSettings.MENU_ID_OTHERS) });

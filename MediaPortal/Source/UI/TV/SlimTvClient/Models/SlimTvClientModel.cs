@@ -794,6 +794,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     /// </summary>
     public void UpdateChannelsMiniGuide()
     {
+      if (!_isInitialized) InitModel();
       UpdateChannels();
     }
     protected virtual void UpdateGuiProperties()

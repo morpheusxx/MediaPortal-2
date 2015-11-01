@@ -65,6 +65,7 @@
   <string name="SlimTvClient.Schedules.Help">See which schedules for recording you have set up. You may also delete schedules here.</string>
   <string name="SlimTvClient.ExtendedSchedule">Extended scheduling</string>
   <string name="SlimTvClient.ScheduleManagement">Manage schedules</string>
+  <string name="SlimTvClient.ScheduleModeSeries">Manage series schedules</string>
 
   <string name="SlimTvClient.ErrorNoTvProvider">No TV provider available (yet)</string>
 

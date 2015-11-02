@@ -59,7 +59,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
         <Button.Triggers>
           <Trigger Property="HasFocus" Value="True">
             <Trigger.Setters>
-              <Setter Property="Opacity" Value="1"/>
+              <Setter Property="Opacity" Value="2"/>
             </Trigger.Setters>
           </Trigger>
         </Button.Triggers>
@@ -135,7 +135,17 @@ Parameters which have to be accessible by a DynamicResource lookup:
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
 
-          <Rectangle Grid.Row="0" Grid.Column="0" Fill="White" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+          <Rectangle Grid.Row="0" Grid.Column="0" Fill="{ThemeResource DialogBorderBrush}" RadiusY="{ThemeResource DialogBorderCornerRadius}" RadiusX="{ThemeResource DialogBorderCornerRadius}"
+          Margin="-100" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Opacity="0.9">
+            <Rectangle.Fill>
+              <ImageBrush ImageSource="blur.png" Stretch="Fill"/>
+            </Rectangle.Fill>
+            <Rectangle.Effect>
+              <ZoomBlurEffect BlurAmount="0.1" />
+            </Rectangle.Effect>
+          </Rectangle>
+
+          <!--Rectangle Grid.Row="0" Grid.Column="0" Fill="White" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                      Margin="-1" Opacity="0.02" RadiusY="12" RadiusX="12" />
           <Rectangle Grid.Row="0" Grid.Column="0" Fill="White" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                      Margin="-2" Opacity="0.02" RadiusY="13" RadiusX="13" />
@@ -208,7 +218,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
           <Rectangle Grid.Row="0" Grid.Column="0" Fill="White" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                      Margin="-63.2" Opacity="0.02" RadiusY="47" RadiusX="47" />
           <Rectangle Grid.Row="0" Grid.Column="0" Fill="White" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
-                     Margin="-67.4" Opacity="0.02" RadiusY="48" RadiusX="48" />
+                     Margin="-67.4" Opacity="0.02" RadiusY="48" RadiusX="48" /-->
 
 
           <Border Grid.Row="0" Grid.Column="0" x:Name="DialogBorder"

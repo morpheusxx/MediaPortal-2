@@ -54,7 +54,6 @@ namespace MediaPortal.Plugins.SlimTv.Service
   public class SlimTvService : AbstractSlimTvService
   {
     private TvServiceThread _tvServiceThread;
-    protected readonly Dictionary<string, IUser> _tvUsers = new Dictionary<string, IUser>();
     protected IController _tvControl;
     protected TvBusinessLayer _tvBusiness;
     protected Thread _serviceThread;
@@ -601,7 +600,7 @@ namespace MediaPortal.Plugins.SlimTv.Service
         throw new ArgumentNullException("userName");
       }
 
-      IUser currentUser = UserFactory.CreateBasicUser(userName, -1);
+      IUser currentUser = UserFactory.CreateBasicUser(userName);
       ServiceRegistration.Get<ILogger>().Debug("Starting timeshifiting with username {0} on channel id {1}", userName, channelId);
 
       // actually start timeshifting
@@ -619,23 +618,6 @@ namespace MediaPortal.Plugins.SlimTv.Service
         return null;
       }
       return userName.StartsWith(LOCAL_USERNAME + "-") ? card.TimeShiftFileName : card.RTSPUrl;
-    }
-
-    protected IUser GetUserByUserName(string userName, bool create = false)
-    {
-      if (userName == null)
-      {
-        ServiceRegistration.Get<ILogger>().Warn("Used user with null name");
-        return null;
-      }
-
-      if (!_tvUsers.ContainsKey(userName) && !create)
-        return null;
-
-      if (!_tvUsers.ContainsKey(userName) && create)
-        _tvUsers.Add(userName, new User(userName, false));
-
-      return _tvUsers[userName];
     }
 
     #endregion

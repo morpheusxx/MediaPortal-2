@@ -440,7 +440,7 @@
   <DataTemplate x:Key="MainMenuItemDataTemplateHover">
     <Grid>
       <!-- SHADOW -->
-      <Control Style="{ThemeResource Shadow_4_24}" />
+      <Control Style="{ThemeResource Shadow_3_23}" />
       <!-- SHADOW -->
 
       <Grid x:Name="ItemControl">
@@ -651,6 +651,7 @@
 
   <!-- ListView style to be used for main groups menu -->
   <Style x:Key="HomeGroupListViewStyle" BasedOn="{ThemeResource MenuListViewStyle}">
+    <EventSetter Event="SelectionChanged" Handler="{CommandStencil Source={StaticResource BackgroundManagerModel}, Path=SetSelectedItem}"/>
     <Setter Property="ItemsPanel">
       <Setter.Value>
         <ItemsPanelTemplate>
@@ -727,7 +728,7 @@
       </Grid.Width-->
 
       <!-- SHADOW -->
-      <Control Style="{ThemeResource Shadow_3_18}" />
+      <Control Style="{ThemeResource Shadow_3_20}" />
       <!-- SHADOW -->
 
       <Grid>

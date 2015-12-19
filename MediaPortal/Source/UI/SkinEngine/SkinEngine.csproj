@@ -18,7 +18,7 @@
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
+    <NuGetPackageImportStamp>f532db6e</NuGetPackageImportStamp>
     <NuGetPackageImportStamp>5eb49d55</NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -138,6 +138,7 @@
     <Compile Include="Controls\Animations\Timeline.cs" />
     <Compile Include="Controls\Animations\TimelineGroup.cs" />
     <Compile Include="Controls\Brushes\VideoBrush.cs" />
+    <Compile Include="Controls\ImageSources\ImageSourceWrapper.cs" />
     <Compile Include="Controls\ImageSources\ResourceAccessorTextureImageSource.cs" />
     <Compile Include="Controls\Brushes\Animation\AbstractKenBurnsEffect.cs" />
     <Compile Include="Controls\Brushes\Animation\IImageAnimator.cs" />
@@ -386,6 +387,7 @@
     <Compile Include="ScreenManagement\ScreenManagerMessaging.cs" />
     <Compile Include="Controls\Visuals\VirtualKeyboardControl.cs" />
     <Compile Include="ScreenManagement\SuperLayerManager.cs" />
+    <Compile Include="Settings\Configuration\Appearance\SkinSounds.cs" />
     <Compile Include="Settings\Configuration\Appearance\StartupScreen.cs" />
     <Compile Include="Settings\Configuration\General\ApplicationSuspendLevel.cs" />
     <Compile Include="Settings\Configuration\Appearance\InterpolationModes.cs" />
@@ -622,8 +624,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Language\strings_en.xml" />
-    <Content Include="plugin.xml" />
+    <Content Include="Language\strings_en.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="plugin.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="GUI\MainForm.resx">

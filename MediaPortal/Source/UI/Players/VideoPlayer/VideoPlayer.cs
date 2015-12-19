@@ -90,7 +90,8 @@ namespace MediaPortal.UI.Players.Video
 
     public const string RES_PLAYBACK_CHAPTER = "[Playback.Chapter]";
 
-    public const string VSFILTER_CLSID = "{93A22E7A-5091-45EF-BA61-6DA26156A5D0}";
+    // Auto loading version of VSFilter
+    public const string VSFILTER_CLSID = "{9852A670-F845-491b-9BE6-EBD841B8A613}";
     public const string VSFILTER_NAME = "xy-VSFilter";
     public const string VSFILTER_FILENAME = "VSFilter.dll";
 
@@ -178,11 +179,15 @@ namespace MediaPortal.UI.Players.Video
       AddEvr();
     }
 
-    protected override void AddSourceFilter()
+    protected override void AddSubtitleFilter()
     {
       var vsFilter = FilterLoader.LoadFilterFromDll(VSFILTER_FILENAME, new Guid(VSFILTER_CLSID), true);
+      if (vsFilter == null)
+      {
+        ServiceRegistration.Get<ILogger>().Warn("{0}: Failed to add {1} to graph", PlayerTitle, VSFILTER_NAME);
+        return;
+      }
       _graphBuilder.AddFilter(vsFilter, VSFILTER_NAME);
-      base.AddSourceFilter();
     }
 
     #endregion
@@ -202,7 +207,7 @@ namespace MediaPortal.UI.Players.Video
       int hr = EvrInit(_evrCallback, (uint)upDevice.ToInt32(), _evr, SkinContext.Form.Handle, out _presenterInstance);
       if (hr != 0)
       {
-        EvrDeinit(_presenterInstance);
+        SafeEvrDeinit();
         FilterGraphTools.TryRelease(ref _evr);
         throw new VideoPlayerException("Initializing of EVR failed");
       }
@@ -242,7 +247,7 @@ namespace MediaPortal.UI.Players.Video
       ReleaseStreamSelectors();
 
       // Free EVR
-      EvrDeinit(_presenterInstance);
+      SafeEvrDeinit();
       FreeEvrCallback();
       FilterGraphTools.TryRelease(ref _evr);
 
@@ -254,6 +259,17 @@ namespace MediaPortal.UI.Players.Video
 
       FilterGraphTools.TryDispose(ref _rot);
       FilterGraphTools.TryRelease(ref _graphBuilder, true);
+    }
+
+    /// <summary>
+    /// Helper method to deinit the EVR instance. This method checks if the deinit has happened before to avoid access violations.
+    /// </summary>
+    protected void SafeEvrDeinit()
+    {
+      if (_presenterInstance == IntPtr.Zero)
+        return;
+      EvrDeinit(_presenterInstance);
+      _presenterInstance = IntPtr.Zero;
     }
 
     #endregion
@@ -398,9 +414,13 @@ namespace MediaPortal.UI.Players.Video
       StreamInfo streamInfo = null;
       if (preferredAudioLCID != 0)
       {
-        CultureInfo ci = new CultureInfo(preferredAudioLCID);
-        string languagePart = ci.EnglishName.Substring(0, ci.EnglishName.IndexOf("(") - 1);
-        streamInfo = audioStreams.FindSimilarStream(languagePart);
+        try
+        {
+          CultureInfo ci = new CultureInfo(preferredAudioLCID);
+          string languagePart = ci.EnglishName.Substring(0, ci.EnglishName.IndexOf("(") - 1);
+          streamInfo = audioStreams.FindSimilarStream(languagePart);
+        }
+        catch { }
       }
 
       // Still no matching languages? Then select the first that matches channelCountPreference.
@@ -658,7 +678,7 @@ namespace MediaPortal.UI.Players.Video
         FilterGraphTools.TryRelease(ref _evr);
       }
 
-      EvrDeinit(_presenterInstance);
+      SafeEvrDeinit();
       FreeEvrCallback();
     }
 

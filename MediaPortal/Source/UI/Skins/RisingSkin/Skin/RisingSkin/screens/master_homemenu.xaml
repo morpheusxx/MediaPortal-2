@@ -59,7 +59,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
           <Model x:Key="MenuModel" Id="9E9D0CD9-4FDB-4c0f-A0C4-F356E151BDE0"/>
         </Grid.Resources>
 
-        <ListView x:Name="MainMenu" Grid.Column="1" Grid.Row="1" Style="{ThemeResource MyMainMenuListViewStyle}"
+        <ListView x:Name="MainMenu" Grid.Column="0" Grid.Row="1" Style="{ThemeResource MyMainMenuListViewStyle}"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SetFocusPrio="DefaultHigh"
               ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=MenuItems,Mode=OneTime}"
               Opacity="0.0">
@@ -93,7 +93,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
             <TranslateTransform X="470"/>
           </Rectangle.RenderTransform>
         </Rectangle>
-        
+
         <!-- Order matters here: The content grid has to be the last control to fill the rest of the space -->
         <Grid x:Name="ContentPanel" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" SetFocusPrio="Default">
           <Grid.ColumnDefinitions>
@@ -105,6 +105,15 @@ Parameters which have to be accessible by a DynamicResource lookup:
           <Control Margin="10,0,10,10" x:Name="ContentViewer" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
               Template="{DynamicResource ResourceKey=Contents_Template}" SetFocus="true"/>
         </Grid>
+
+        <ListView  Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"  x:Name="SubItemsListViewHome" 
+                   ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=SubItems,Mode=OneTime}"
+                   Style="{ThemeResource SubMenuListViewStyle}">
+        </ListView>
+
+        <KeyBinding Key="Up" Command="{Command Source={StaticResource HomeMenuModel},Path=MovePrevious}"/>
+        <KeyBinding Key="Down" Command="{Command Source={StaticResource HomeMenuModel},Path=MoveNext}"/>
+
       </Grid>
 
     </ControlTemplate>

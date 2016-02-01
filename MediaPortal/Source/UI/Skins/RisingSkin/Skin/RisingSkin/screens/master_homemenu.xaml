@@ -37,6 +37,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
 
     <!-- Background Manager for menu hovers -->
     <Model x:Key="BackgroundManagerModel" Id="1F4CAEDE-7108-483d-B5C8-18BEC7EC58E5"/>
+    <Model x:Key="HomeMenuModel" Id="2EAA2DAB-241F-432F-A487-CDD35CCD4309"/>
 
     <!-- Header has to be defined by the includer: "Header_Text" -->
 
@@ -58,9 +59,9 @@ Parameters which have to be accessible by a DynamicResource lookup:
           <Model x:Key="MenuModel" Id="9E9D0CD9-4FDB-4c0f-A0C4-F356E151BDE0"/>
         </Grid.Resources>
 
-        <ListView x:Name="MainMenu" Grid.Column="1" Grid.Row="1" Style="{ThemeResource MainMenuListViewStyle}"
+        <ListView x:Name="MainMenu" Grid.Column="1" Grid.Row="1" Style="{ThemeResource MyMainMenuListViewStyle}"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SetFocusPrio="DefaultHigh"
-              ItemsSource="{Binding Source={StaticResource MenuModel},Path=MenuItems,Mode=OneTime}"
+              ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=MenuItems,Mode=OneTime}"
               Opacity="0.0">
           <ListView.Resources>
             <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>

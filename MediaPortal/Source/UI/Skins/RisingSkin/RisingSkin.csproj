@@ -52,6 +52,8 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Models\HomeMenuModel.cs" />
+    <Compile Include="Models\NavigationList.cs" />
+    <Compile Include="Models\NestedItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

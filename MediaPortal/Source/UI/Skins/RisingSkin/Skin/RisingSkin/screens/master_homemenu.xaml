@@ -62,7 +62,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
         <ListView x:Name="MainMenu" Grid.Column="0" Grid.Row="1" Style="{ThemeResource MyMainMenuListViewStyle}"
               Margin="50,0,0,0"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SetFocusPrio="DefaultHigh"
-              ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=MenuItems,Mode=OneTime}"
+              ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=NestedMenuItems,Mode=OneTime}"
               Opacity="0.0">
           <ListView.Resources>
             <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
@@ -111,6 +111,9 @@ Parameters which have to be accessible by a DynamicResource lookup:
                    Margin="50,0,0,0"
                    ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=SubItems,Mode=OneTime}"
                    Style="{ThemeResource SubMenuListViewStyle}">
+          <ListView.Resources>
+            <CommandBridge x:Key="Menu_Command" Command="{Binding Path=Command,Mode=OneTime}"/>
+          </ListView.Resources>
         </ListView>
 
         <KeyBinding Key="Up" Command="{Command Source={StaticResource HomeMenuModel},Path=MovePrevious}"/>

@@ -23,151 +23,34 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
 using System.Windows.Forms;
-using MediaPortal.Common.General;
+using MediaPortal.Common;
+using MediaPortal.Common.Commands;
+using MediaPortal.Common.Messaging;
 using MediaPortal.UiComponents.SkinBase.General;
+using MediaPortal.UiComponents.SkinBase.Models;
 using MediaPortal.UI.Presentation.DataObjects;
+using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.Utilities;
+using MediaPortal.Utilities.Events;
 
 namespace MediaPortal.UiComponents.RisingSkin.Models
 {
-  public class NestedItem : ListItem
+  public class HomeMenuModel: MenuModel
   {
-    public NestedItem(string name, string value):
-      base(name, value)
-    {
-      SubItems = new ItemsList();
-    }
-    public NestedItem()
-    {
-      SubItems = new ItemsList();
-    }
-    public ItemsList SubItems { get; private set; }
-  }
-
-
-  /// <summary>
-  /// <see cref="NavigationList{T}"/> provides navigation features for moving inside a <see cref="List{T}"/> and exposing <see cref="Current"/> item.
-  /// </summary>
-  /// <typeparam name="T"></typeparam>
-  public class NavigationList<T> : List<T>, IObservable
-  {
-    public delegate void CurrentChangedEvent(int oldIndex, int newIndex);
-    public CurrentChangedEvent OnCurrentChanged;
-    public EventHandler OnListChanged;
-    protected WeakEventMulticastDelegate _objectChanged = new WeakEventMulticastDelegate();
-
-    /// <summary>
-    /// Event which gets fired when the collection changes.
-    /// </summary>
-    public event ObjectChangedDlgt ObjectChanged
-    {
-      add { _objectChanged.Attach(value); }
-      remove { _objectChanged.Detach(value); }
-    }
-
-    public void FireChange()
-    {
-      _objectChanged.Fire(new object[] { this });
-    }
-
-    private int _current;
-
-    public T Current
-    {
-      get { return Count > 0 && _current < Count ? this[_current] : default(T); }
-    }
-
-    public int CurrentIndex
-    {
-      get { return Count > 0 ? _current : -1; }
-      set
-      {
-        if (Count == 0 || value < 0 || value >= Count)
-          return;
-        int oldIndex = CurrentIndex;
-        _current = value;
-        FireCurrentChanged(oldIndex);
-      }
-    }
-
-    public void MoveNext()
-    {
-      if (Count == 0)
-        return;
-      int oldIndex = CurrentIndex;
-      _current++;
-      if (_current >= Count)
-        _current = 0;
-      FireCurrentChanged(oldIndex);
-    }
-
-    public void MovePrevious()
-    {
-      if (Count == 0)
-        return;
-      int oldIndex = CurrentIndex;
-      _current--;
-      if (_current < 0)
-        _current = Count - 1;
-      FireCurrentChanged(oldIndex);
-    }
-
-    public void SetIndex(int index)
-    {
-      if (Count == 0 || index < 0 || index >= Count)
-        return;
-      int oldIndex = CurrentIndex;
-      _current = index;
-      FireCurrentChanged(oldIndex);
-    }
-
-    public bool MoveTo(Predicate<T> condition)
-    {
-      int oldIndex = CurrentIndex;
-      for (int index = 0; index < Count; index++)
-      {
-        T item = this[index];
-        if (!condition.Invoke(item))
-          continue;
-        _current = index;
-        return true;
-      }
-      FireCurrentChanged(oldIndex);
-      return false;
-    }
-
-    public void FireCurrentChanged(int oldIndex)
-    {
-      var currentIndex = CurrentIndex;
-      if (OnCurrentChanged != null && oldIndex != currentIndex)
-        OnCurrentChanged(oldIndex, currentIndex);
-    }
-
-    public void FireListChanged()
-    {
-      if (OnListChanged != null)
-        OnListChanged(this, EventArgs.Empty);
-    }
-  }
-
-  public class HomeMenuModel
-  {
-    public NavigationList<NestedItem> MenuItems { get; private set; }
+    private readonly DelayedEvent _delayedMenueUpdateEvent;
+    public NavigationList<ListItem> NestedMenuItems { get; private set; }
     public ItemsList SubItems { get; private set; }
 
     public void MoveNext()
     {
-      MenuItems.MoveNext();
+      NestedMenuItems.MoveNext();
     }
 
     public void MovePrevious()
     {
-      MenuItems.MovePrevious();
+      NestedMenuItems.MovePrevious();
     }
 
     public void SetSelectedItem(object sender, SelectionChangedEventArgs e)
@@ -176,12 +59,33 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
       SetSubItems(item);
     }
 
-    private void SetSubItems(NestedItem item)
+    private void SetSubItems(ListItem item)
     {
       if (item != null)
       {
         SubItems.Clear();
-        CollectionUtils.AddAll(SubItems, item.SubItems);
+        // Add self reference
+        SubItems.Add(item);
+        object oAction;
+        if (item.AdditionalProperties.TryGetValue(Consts.KEY_ITEM_ACTION, out oAction))
+        {
+          PushNavigationTransition wfAction = oAction as PushNavigationTransition;
+          if (wfAction != null)
+          {
+            var wf = ServiceRegistration.Get<IWorkflowManager>();
+            foreach (var workflowAction in wf.MenuStateActions.Values)
+            {
+              if (workflowAction.SourceStateIds != null && workflowAction.SourceStateIds.Contains(wfAction.TargetStateId))
+              {
+                var action = workflowAction;
+                var listItem = new ListItem(Consts.KEY_NAME, action.DisplayTitle);
+                listItem.AdditionalProperties[Consts.KEY_ITEM_ACTION] = action;
+                listItem.Command = new MethodDelegateCommand(() => action.Execute());
+                SubItems.Add(listItem);
+              }
+            }
+          }
+        }
         SubItems.FireChange();
       }
     }
@@ -193,31 +97,57 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
 
     public HomeMenuModel()
     {
-      MenuItems = new NavigationList<NestedItem>();
+      NestedMenuItems = new NavigationList<ListItem>();
       SubItems = new ItemsList();
-      for (int i = 0; i < 10; i++)
-      {
-        NestedItem item = new NestedItem(Consts.KEY_NAME, "Main " + i);
-        for (int j = 0; j < new Random(i).Next(5); j++)
-        {
-          var subItem = new ListItem(Consts.KEY_NAME, "Sub " + j);
-          item.SubItems.Add(subItem);
-        }
-        MenuItems.Add(item);
-      }
-      SetSubItems(MenuItems.Current);
-      MenuItems.FireChange();
-      SetSelection(-1, 0);
-      MenuItems.OnCurrentChanged += SetSelection;
+
+      SubscribeToMessages();
+
+      _delayedMenueUpdateEvent = new DelayedEvent(200); // Update menu items only if no more requests are following after 200 ms
+      _delayedMenueUpdateEvent.OnEventHandler += ReCreateMenuItems;
+
+      NestedMenuItems.OnCurrentChanged += SetSelection;
+    }
+
+    private void ReCreateMenuItems(object sender, EventArgs e)
+    {
+      var previousSelected = NestedMenuItems.Current;
+      NestedMenuItems.Clear();
+      CollectionUtils.AddAll(NestedMenuItems, MenuItems);
+      NestedMenuItems.MoveTo(item => item == previousSelected);
+      NestedMenuItems.FireChange();
     }
 
     private void SetSelection(int oldindex, int newindex)
     {
-      foreach (var nestedItem in MenuItems)
+      foreach (var nestedItem in NestedMenuItems)
       {
-        nestedItem.Selected = nestedItem == MenuItems.Current;
+        nestedItem.Selected = nestedItem == NestedMenuItems.Current;
       }
-      SetSubItems(MenuItems.Current);
+      SetSubItems(NestedMenuItems.Current);
+    }
+
+
+    private void SubscribeToMessages()
+    {
+      if (_messageQueue == null)
+        return;
+      _messageQueue.MessageReceived += OnMessageReceived;
+    }
+
+    private void OnMessageReceived(AsynchronousMessageQueue queue, SystemMessage message)
+    {
+      //if (message.ChannelName == MenuModelMessaging.CHANNEL)
+      //{
+      //  if (((MenuModelMessaging.MessageType)message.MessageType) == MenuModelMessaging.MessageType.UpdateMenu)
+        {
+          UpdateMenu();
+        }
+      //}
+    }
+
+    private void UpdateMenu()
+    {
+      _delayedMenueUpdateEvent.EnqueueEvent(this, EventArgs.Empty);
     }
   }
 }

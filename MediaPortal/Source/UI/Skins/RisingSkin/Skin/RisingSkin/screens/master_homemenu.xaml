@@ -60,6 +60,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
         </Grid.Resources>
 
         <ListView x:Name="MainMenu" Grid.Column="0" Grid.Row="1" Style="{ThemeResource MyMainMenuListViewStyle}"
+              Margin="50,0,0,0"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" SetFocusPrio="DefaultHigh"
               ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=MenuItems,Mode=OneTime}"
               Opacity="0.0">
@@ -107,6 +108,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
         </Grid>
 
         <ListView  Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"  x:Name="SubItemsListViewHome" 
+                   Margin="50,0,0,0"
                    ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=SubItems,Mode=OneTime}"
                    Style="{ThemeResource SubMenuListViewStyle}">
         </ListView>

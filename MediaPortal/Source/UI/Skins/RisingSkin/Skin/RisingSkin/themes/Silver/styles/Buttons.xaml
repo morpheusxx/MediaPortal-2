@@ -306,6 +306,59 @@
     </Setter>
   </Style>
 
+  <Style x:Key="SubItemButtonStyle" TargetType="{x:Type Button}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="240"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="130"/>
+              <RowDefinition Height="35"/>
+            </Grid.RowDefinitions>
+            <Label x:Name="ItemLabelUnfocused" Grid.Column="0" Grid.Row="0" Content="{Binding [Name]}"
+                   HorizontalAlignment="Left" VerticalAlignment="Bottom" Opacity="0.4" Color="{ThemeResource TextColor}"/>
+            <Image x:Name="ButtonControlGrid" Grid.Column="0" Grid.Row="0" Source="STARTMENU.QUICKLINK.BACKGROUND.PNG" Stretch="Fill" IsVisible="False"/>
+            <Label x:Name="ItemLabel" Grid.Column="0" Grid.Row="1" Content="{Binding [Name]}" IsVisible="False"
+                   HorizontalAlignment="Left" VerticalAlignment="Center" Color="{ThemeResource TextColor}"/>
+            <ContentPresenter x:Name="ButtonContentPresenter" Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <!--Trigger Property="HasFocus" Value="True">
+              <Trigger.EnterActions>
+                <BeginStoryboard x:Name="Focused_BeginStoryboard" Storyboard="{ThemeResource FocusedMenuButtonWideStoryboard}"/>
+                <SoundPlayerAction Source="navigate.wav" DisableOnAudioOutput="True"/>
+              </Trigger.EnterActions>
+              <Trigger.ExitActions>
+                <StopStoryboard BeginStoryboardName="Focused_BeginStoryboard"/>
+              </Trigger.ExitActions>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Trigger.EnterActions>
+                <BeginStoryboard x:Name="Pressed_BeginStoryboard" Storyboard="{ThemeResource PressedButtonWideStoryboard}"
+                    HandoffBehavior="TemporaryReplace"/>
+                <SoundPlayerAction Source="click.wav" DisableOnAudioOutput="True"/>
+              </Trigger.EnterActions>
+              <Trigger.ExitActions>
+                <StopStoryboard BeginStoryboardName="Pressed_BeginStoryboard"/>
+              </Trigger.ExitActions>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Trigger.EnterActions>
+                <BeginStoryboard x:Name="Disabled_BeginStoryBoard" Storyboard="{ThemeResource DisabledButtonStoryboard}"/>
+              </Trigger.EnterActions>
+              <Trigger.ExitActions>
+                <StopStoryboard BeginStoryboardName="Disabled_BeginStoryBoard"/>
+              </Trigger.ExitActions>
+            </Trigger-->
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <Style x:Key="ButtonWideStyle" TargetType="{x:Type Button}">
     <Setter Property="Template">
       <Setter.Value>

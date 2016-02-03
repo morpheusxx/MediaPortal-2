@@ -17,7 +17,6 @@
     <ImageBrush x:Name="BackdropImageBackground" ImageSource="darkBackground.jpg" />
   </ResourceWrapper>
 
-
   <Style x:Key="AutoCenterScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
     <Setter Property="Template">
       <Setter.Value>
@@ -32,26 +31,26 @@
               <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <!-- Content -->
-            <ScrollContentPresenter Grid.Row="0" Grid.Column="0" Grid.ZIndex="100" AutoCentering="Vertical"
+            <ScrollContentPresenter Grid.Row="0" Grid.Column="0" Grid.ZIndex="100" AutoCentering="None"
                 VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
             <Grid x:Name="HorizontalScrollBar" IsVisible="{TemplateBinding ScrollBarXVisible}" Grid.Row="1" Grid.Column="0"
                 Grid.ZIndex="0" Margin="2,10,2,2"
                 RenderTransform="{DynamicResource ResourceKey=HorizontalScrollBarRenderTransform}">
-              <!-- RenderTransform can be applied by any ListView by defining a transform inside ResourceWrapper x:Key="HorizontalScrollBarRenderTransform" -->
+
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
-              <!-- Background -->
+
               <Rectangle x:Name="ScrollBarXBackground" Grid.Row="0" Grid.Column="0"
                   Stroke="{ThemeResource ScrollBarStrokeColor}" RadiusX="4" RadiusY="4"
                   Height="{ThemeResource ScrollBarWidth}"
                   ActualWidth="{TemplateBinding Path=ScrollBarXSize,Mode=OneWayToSource}"
                   Fill="{ThemeResource ScrollBarBackgroundColor}">
               </Rectangle>
-              <!-- Knob -->
+
               <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
                 <StackPanel Width="{TemplateBinding ScrollBarXKnobPos}"/>
                 <Rectangle x:Name="ScrollBarXKnob" Width="{TemplateBinding ScrollBarXKnobWidth}" Height="{ThemeResource ScrollBarKnobWidth}"
@@ -63,21 +62,21 @@
             <Grid x:Name="VerticalScrollBar" IsVisible="{TemplateBinding ScrollBarYVisible}" Grid.Row="0" Grid.Column="1"
                 Grid.ZIndex="0" Margin="10,2,2,2"
                 RenderTransform="{DynamicResource ResourceKey=VerticalScrollbarRenderTransform}">
-              <!-- RenderTransform can be applied by any ListView by defining a transform inside ResourceWrapper x:Key="VerticalScrollbarRenderTransform" -->
+
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
               </Grid.RowDefinitions>
-              <!-- Background -->
+
               <Rectangle x:Name="ScrollBarYBackground" Grid.Row="0" Grid.Column="0"
                   Stroke="{ThemeResource ScrollBarStrokeColor}" RadiusX="4" RadiusY="4"
                   Width="{ThemeResource ScrollBarWidth}"
                   ActualHeight="{TemplateBinding Path=ScrollBarYSize,Mode=OneWayToSource}"
                   Fill="{ThemeResource ScrollBarBackgroundColor}">
               </Rectangle>
-              <!-- Knob -->
+
               <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
                 <StackPanel Height="{TemplateBinding ScrollBarYKnobPos}"/>
                 <Rectangle x:Name="ScrollBarYKnob" Width="{ThemeResource ScrollBarKnobWidth}" Height="{TemplateBinding ScrollBarYKnobHeight}"
@@ -92,13 +91,37 @@
     </Setter>
   </Style>
 
+  <Style x:Key="SubItemContainerStyle" BasedOn="{ThemeResource DefaultItemContainerStyle}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListViewItem}">
+          <Button Style="{ThemeResource SubItemButtonStyle}"
+              Command="{DynamicResource ResourceKey=Menu_Command}"
+              IsEnabled="{Binding Enabled}" SetFocus="{Binding Path=Selected,Mode=OneTime}">
+            <Button.Triggers>
+              <Trigger Property="HasFocus" Value="True">
+                <Setter TargetName="ButtonControlGrid" Property="IsVisible" Value="True"/>
+                <Setter TargetName="ItemLabelUnfocused" Property="IsVisible" Value="False"/>
+                <Setter TargetName="ItemLabelUnfocused" Property="Opacity" Value="1"/>
+                <Setter TargetName="ItemLabel" Property="IsVisible" Value="True"/>
+                <!--Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource TextColor}"/-->
+                <!--Setter TargetName="ItemLabel" Property="Scroll" Value="Auto"/-->
+                <Setter Property="StackPanel.ZIndex" Value="100.0"/>
+              </Trigger>
+            </Button.Triggers>
+          </Button>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  
   <!-- ListView style to be used for main menu -->
   <DataTemplate x:Key="SubMenuItemDataTemplate">
-    <DockPanel x:Name="ItemControl" LastChildFill="False">
+    <!--DockPanel x:Name="ItemControl" LastChildFill="False">
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding [Name]}"
           HorizontalAlignment="Left" VerticalAlignment="Center"
           Color="{ThemeResource TextColor}"/>
-    </DockPanel>
+    </DockPanel-->
   </DataTemplate>
 
   <Style x:Key="SubMenuListViewStyle" BasedOn="{ThemeResource DefaultListViewStyle}">
@@ -112,7 +135,7 @@
     </Setter>
     <Setter Property="ItemTemplate" Value="{ThemeResource SubMenuItemDataTemplate}"/>
     <Setter Property="DataStringProvider" Value="{ThemeResource MainMenuItemDataStringProvider}"/>
-    <Setter Property="ItemContainerStyle" Value="{ThemeResource DefaultMenuItemContainerStyle}"/>
+    <Setter Property="ItemContainerStyle" Value="{ThemeResource SubItemContainerStyle}"/>
   </Style>
 
   <DataTemplate x:Key="MyMainMenuItemDataTemplate">
@@ -137,7 +160,7 @@
         <Label.Margin>
           <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
             <Binding Path="Selected"/>
-            <Binding Source="0"/>
+            <Binding Source="0,0,0,50"/>
             <Binding Source="20,0,0,0"/>
           </MultiBinding>
         </Label.Margin>
@@ -151,20 +174,20 @@
   <Style x:Key="MyMainMenuListViewStyle" BasedOn="{ThemeResource DefaultListViewStyle}">
     <EventSetter Event="SelectionChanged" Handler="{CommandStencil Source={StaticResource HomeMenuModel}, Path=SetSelectedItem}"/>
     <!--<EventSetter Event="KeyPressed" Handler="{CommandStencil Source={StaticResource HomeMenuModel}, Path=OnKeyPress}"/>-->
-    <!--<Setter Property="Template">
+    <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type ListView}">
-          <ScrollViewer CanContentScroll="True" Margin="5" Style="{ThemeResource AutoCenterScrollViewerStyle}"
-               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
+          <ScrollViewer CanContentScroll="True" Margin="5" Style="{ThemeResource AutoCenterScrollViewerStyle}" 
+               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled" >
             <ItemsPresenter VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
           </ScrollViewer>
         </ControlTemplate>
       </Setter.Value>
-    </Setter>-->
+    </Setter>
     <Setter Property="ItemsPanel">
       <Setter.Value>
         <ItemsPanelTemplate>
-          <StackPanel x:Name="ListItemsHost" IsItemsHost="True" LoopScroll="True"
+          <StackPanel x:Name="ListItemsHost" IsItemsHost="True" LoopScroll="True" Orientation="Vertical"
                       KeyPress="{CommandStencil Source={StaticResource HomeMenuModel}, Path=OnKeyPress}"/>
         </ItemsPanelTemplate>
       </Setter.Value>
@@ -172,7 +195,6 @@
     <Setter Property="ItemTemplate" Value="{ThemeResource MyMainMenuItemDataTemplate}"/>
     <Setter Property="DataStringProvider" Value="{ThemeResource MainMenuItemDataStringProvider}"/>
     <Setter Property="ItemContainerStyle" Value="{ThemeResource DefaultItemContainerStyle}"/>
-    <!--<Setter Property="ItemContainerStyle" Value="{ThemeResource DefaultMenuItemContainerStyle}"/>-->
   </Style>
 
 </ResourceDictionary>

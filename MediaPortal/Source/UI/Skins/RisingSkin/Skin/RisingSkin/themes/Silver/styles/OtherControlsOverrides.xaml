@@ -5,12 +5,14 @@
     xmlns:system="clr-namespace:System"
     xmlns:collections="clr-namespace:MediaPortal.UI.Presentation.DataObjects;assembly=MediaPortal.UI"
     xmlns:mp_special_controls="clr-namespace:MediaPortal.UI.SkinEngine.SpecialElements.Controls;assembly=SkinEngine"
+    xmlns:bgm="clr-namespace:MediaPortal.UiComponents.BackgroundManager.Converter;assembly=BackgroundManager"
     DependsOnStyleResources="Colors,Buttons,Consts,OtherControls"
     >
 
   <!-- BackgroundManager model -->
   <Model x:Key="BackgroundManagerModel" Id="1F4CAEDE-7108-483d-B5C8-18BEC7EC58E5"/>
   <Model x:Key="HomeMenuModel" Id="2EAA2DAB-241F-432F-A487-CDD35CCD4309"/>
+  <bgm:ListItemActionIdConverter x:Key="ListItemActionIdConverter"/>
 
   <!-- default brush used to paint the background of a page/window -->
   <ResourceWrapper x:Key="BackgroundBrush">
@@ -117,6 +119,17 @@
   
   <!-- ListView style to be used for main menu -->
   <DataTemplate x:Key="SubMenuItemDataTemplate">
+    <Image VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="UniformToFill" Margin="5"
+               Source="{Binding Converter={StaticResource ListItemActionIdConverter}, ConverterParameter=.jpg}">
+      <Image.Opacity>
+        <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
+          <Binding RelativeSource="{RelativeSource Mode=FindAncestor,AncestorType={x:Type Button}}" Path="HasFocus"/>
+          <Binding Source="1.0"/>
+          <Binding Source="0.4"/>
+        </MultiBinding>
+      </Image.Opacity>
+    </Image>
+
     <!--DockPanel x:Name="ItemControl" LastChildFill="False">
       <Label x:Name="ItemLabel" DockPanel.Dock="Center" Content="{Binding [Name]}"
           HorizontalAlignment="Left" VerticalAlignment="Center"

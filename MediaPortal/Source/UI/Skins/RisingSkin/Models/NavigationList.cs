@@ -49,6 +49,16 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
       }
     }
 
+    public T GetAt(int index)
+    {
+      if (Count == 0 || index < 0)
+        return default(T);
+
+      //if (index < 0)
+      //  index += Count;
+      return this[index % Count];
+    }
+
     public void MoveNext()
     {
       if (Count == 0)
@@ -89,9 +99,10 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
         if (!condition.Invoke(item))
           continue;
         _current = index;
+        if (_current != oldIndex)
+          FireCurrentChanged(oldIndex);
         return true;
       }
-      FireCurrentChanged(oldIndex);
       return false;
     }
 

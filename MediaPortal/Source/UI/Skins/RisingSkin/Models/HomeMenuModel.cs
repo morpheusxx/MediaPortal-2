@@ -23,6 +23,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Commands;
@@ -37,20 +38,21 @@ using MediaPortal.Utilities.Events;
 
 namespace MediaPortal.UiComponents.RisingSkin.Models
 {
-  public class HomeMenuModel: MenuModel
+  public class HomeMenuModel : MenuModel
   {
     private readonly DelayedEvent _delayedMenueUpdateEvent;
-    public NavigationList<ListItem> NestedMenuItems { get; private set; }
+    private NavigationList<ListItem> _navigationList;
+    public ItemsList NestedMenuItems { get; private set; }
     public ItemsList SubItems { get; private set; }
 
     public void MoveNext()
     {
-      NestedMenuItems.MoveNext();
+      _navigationList.MoveNext();
     }
 
     public void MovePrevious()
     {
-      NestedMenuItems.MovePrevious();
+      _navigationList.MovePrevious();
     }
 
     public void SetSelectedItem(object sender, SelectionChangedEventArgs e)
@@ -92,12 +94,13 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
 
     public void OnKeyPress(object sender, KeyPressEventArgs e)
     {
-      
+
     }
 
     public HomeMenuModel()
     {
-      NestedMenuItems = new NavigationList<ListItem>();
+      _navigationList = new NavigationList<ListItem>();
+      NestedMenuItems = new ItemsList();
       SubItems = new ItemsList();
 
       SubscribeToMessages();
@@ -105,27 +108,46 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
       _delayedMenueUpdateEvent = new DelayedEvent(200); // Update menu items only if no more requests are following after 200 ms
       _delayedMenueUpdateEvent.OnEventHandler += ReCreateMenuItems;
 
-      NestedMenuItems.OnCurrentChanged += SetSelection;
+      _navigationList.OnCurrentChanged += SetSelection;
     }
 
     private void ReCreateMenuItems(object sender, EventArgs e)
     {
-      var previousSelected = NestedMenuItems.Current;
+      UpdateList(true);
+    }
+
+    private void UpdateList(bool recreateList)
+    {
+      // Get new menu entries from base list
+      if (recreateList)
+      {
+        var previousSelected = _navigationList.Current;
+        _navigationList.Clear();
+        CollectionUtils.AddAll(_navigationList, MenuItems);
+        if (!_navigationList.MoveTo(i => i == previousSelected))
+          _navigationList.CurrentIndex = 0;
+      }
+      var currentIndex = _navigationList.CurrentIndex;
       NestedMenuItems.Clear();
-      CollectionUtils.AddAll(NestedMenuItems, MenuItems);
-      NestedMenuItems.MoveTo(item => item == previousSelected);
+      int fillItems = 6;
+      var count = _navigationList.Count;
+      for (int i = currentIndex - fillItems; i < currentIndex + count; i++)
+      {
+        var item = _navigationList.GetAt(i) ?? new NestedItem(Consts.KEY_NAME, ""); /* Placeholder for empty space before current list item */
+        NestedMenuItems.Add(item);
+      }
+      foreach (var nestedItem in NestedMenuItems)
+      {
+        nestedItem.Selected = nestedItem == _navigationList.Current;
+      }
       NestedMenuItems.FireChange();
+      SetSubItems(_navigationList.Current);
     }
 
     private void SetSelection(int oldindex, int newindex)
     {
-      foreach (var nestedItem in NestedMenuItems)
-      {
-        nestedItem.Selected = nestedItem == NestedMenuItems.Current;
-      }
-      SetSubItems(NestedMenuItems.Current);
+      UpdateList(false);
     }
-
 
     private void SubscribeToMessages()
     {
@@ -139,9 +161,9 @@ namespace MediaPortal.UiComponents.RisingSkin.Models
       //if (message.ChannelName == MenuModelMessaging.CHANNEL)
       //{
       //  if (((MenuModelMessaging.MessageType)message.MessageType) == MenuModelMessaging.MessageType.UpdateMenu)
-        {
-          UpdateMenu();
-        }
+      {
+        UpdateMenu();
+      }
       //}
     }
 

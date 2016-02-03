@@ -173,7 +173,7 @@
         <Label.Margin>
           <MultiBinding Converter="{StaticResource ExpressionMultiValueConverter}" ConverterParameter="{}{0} ? {1} : {2}">
             <Binding Path="Selected"/>
-            <Binding Source="0,0,0,50"/>
+            <Binding Source="0,0,0,150"/>
             <Binding Source="20,0,0,0"/>
           </MultiBinding>
         </Label.Margin>

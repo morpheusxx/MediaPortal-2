@@ -53,7 +53,9 @@ namespace AssemblyInfoHelper
 
       using (Repository repo = new Repository(path))
       {
-        Branch branch = repo.Head.TrackedBranch ?? repo.Head;
+        Branch branch = repo.Head.TrackedBranch;
+        if (branch == null || !branch.IsRemote)
+          branch = repo.Head;
         int commits = branch.Commits.Count();
         string versionInfo = string.Format("{0}-{1}", branch.Name, branch.Tip.Sha.Substring(0, 6));
         WriteToFile(path, versionInfo, commits);

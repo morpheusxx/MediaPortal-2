@@ -53,6 +53,12 @@ namespace AssemblyInfoHelper
 
       using (Repository repo = new Repository(path))
       {
+        Console.WriteLine("repo.Head: {0}", repo.Head);
+        Console.WriteLine("repo.Head.TrackedBranch: {0} ", repo.Head.TrackedBranch);
+        Console.WriteLine("repo.Head.TrackedBranch.IsRemote: {0} ", repo.Head.TrackedBranch != null ? repo.Head.TrackedBranch.IsRemote.ToString() : "null");
+        Console.WriteLine("repo.Head.TrackedBranch.IsTracking: {0} ", repo.Head.TrackedBranch != null ? repo.Head.TrackedBranch.IsTracking.ToString() : "null");
+        Console.WriteLine("repo.Head.IsRemote: {0} ", repo.Head != null ? repo.Head.IsRemote.ToString() : "null");
+        Console.WriteLine("repo.Head.IsTracking: {0} ", repo.Head != null ? repo.Head.IsTracking.ToString() : "null");
         Branch branch = repo.Head.TrackedBranch;
         if (branch == null || !branch.IsRemote)
           branch = repo.Head;

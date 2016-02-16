@@ -43,14 +43,14 @@ Parameters which have to be accessible by a DynamicResource lookup:
 
     <!-- Client_Template -->
     <ControlTemplate x:Key="Client_Template">
-      <Grid x:Name="MainLayoutPanel" Margin="50,0,0,10" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+      <Grid x:Name="MainLayoutPanel" Margin="200,50,0,10" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
           <RowDefinition Height="*"/>
-          <RowDefinition Height="320"/>
+          <RowDefinition Height="280"/>
           <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.Resources>
@@ -65,7 +65,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
           </ListView.Resources>
         </ListView>
 
-        <ListView  Grid.Row="2" Grid.Column="0" x:Name="SubItemsListViewHome" 
+        <ListView  Grid.Row="2" Grid.Column="0" Margin="0,0,0,0" x:Name="SubItemsListViewHome" 
                    SetFocusPrio="DefaultHigh"
                    ItemsSource="{Binding Source={StaticResource HomeMenuModel},Path=SubItems,Mode=OneTime}"
                    Style="{ThemeResource SubMenuListViewStyle}">
@@ -101,7 +101,7 @@ Parameters which have to be accessible by a DynamicResource lookup:
         </Rectangle>-->
 
         <!-- Order matters here: The content grid has to be the last control to fill the rest of the space -->
-        <Grid x:Name="ContentPanel" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" SetFocusPrio="Default">
+        <Grid x:Name="ContentPanel" Grid.Row="2" Grid.Column="0" SetFocusPrio="Default">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
           </Grid.ColumnDefinitions>

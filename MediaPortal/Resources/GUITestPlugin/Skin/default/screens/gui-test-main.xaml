@@ -14,7 +14,8 @@
       <DockPanel LastChildFill="True">
         <UniformGrid Columns="2" DockPanel.Dock="Center">
           <UniformGrid.Resources>
-            <Model x:Key="Model" Id="F4FC1599-F412-40d0-82BF-46FC352E93BE"/> <!-- GUI-Test-Model -->
+            <Model x:Key="Model" Id="F4FC1599-F412-40d0-82BF-46FC352E93BE"/>
+            <!-- GUI-Test-Model -->
           </UniformGrid.Resources>
           <StackPanel Orientation="Vertical" Margin="0,0,5,0">
             <Button Style="{StaticResource ButtonWideStyle}" Content="Brushes/transforms test 1"
@@ -67,6 +68,9 @@
             <Button Style="{StaticResource ButtonWideStyle}" Content="Loop scroll test"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 Command="{Command Source={StaticResource Model},Path=ShowScreenInTransientState,Parameters=test-loopscroll}"/>
+            <Button Style="{StaticResource ButtonWideStyle}" Content="Effect test"
+                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                Command="{Command Source={StaticResource Model},Path=ShowScreenInTransientState,Parameters=test-effect}"/>
           </StackPanel>
         </UniformGrid>
       </DockPanel>

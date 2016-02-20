@@ -1,0 +1,14 @@
+<Screen
+    xmlns="www.team-mediaportal.com/2008/mpf/directx"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    >
+  <StackPanel>
+    <Rectangle Fill="#A0FF0000" Width="595" Height="240" Margin="10">
+      <Rectangle.Effect>
+        <DropShadowEffect Alpha="1.0"/>
+      </Rectangle.Effect>
+    </Rectangle>
+    <Rectangle Fill="#A0FF0000" Width="595" Height="240" Margin="10">
+    </Rectangle>
+  </StackPanel>
+</Screen>

@@ -363,14 +363,38 @@ namespace MediaPortal.UI.SkinEngine.GUI
       TopMost = _forceOnTop;
 #else
       TopMost = !_disableTopMost && (_forceOnTop || IsFullScreen && (force || this == ActiveForm));
+      ServiceRegistration.Get<ILogger>().Info("SkinEngine MainForm: TopMost: {0}, force: {1}", TopMost, force);
+
       if (force)
       {
-        this.SafeActivate();
+        SafeActivate();
         BringToFront();
       }
 #endif
     }
 
+    public void SafeActivate()
+    {
+      if (this == ActiveForm)
+      {
+        ServiceRegistration.Get<ILogger>().Info("SkinEngine MainForm: SafeActivate: Form is already active");
+        return;
+      }
+      Activate();
+      if (this != ActiveForm)
+      {
+        ServiceRegistration.Get<ILogger>().Info("SkinEngine MainForm: SafeActivate: Form is not active!");
+        // Make Mediaportal window focused
+        if (NativeMethods.SetForegroundWindow(Handle, true))
+        {
+          ServiceRegistration.Get<ILogger>().Info("SkinEngine MainForm: SafeActivate: SetForegroundWindow successful.");
+        }
+        else
+        {
+          ServiceRegistration.Get<ILogger>().Warn("SkinEngine MainForm: SafeActivate: SetForegroundWindow failed.");
+        }
+      }
+    }
     protected void StartRenderThread_Async()
     {
       if (SkinContext.RenderThread != null)
@@ -456,7 +480,7 @@ namespace MediaPortal.UI.SkinEngine.GUI
 
     public void Start()
     {
-      this.SafeActivate();
+      SafeActivate();
       CheckTopMost(true);
       StartUI();
       ServiceRegistration.Get<ILogger>().Debug("SkinEngine MainForm: Running");
@@ -542,7 +566,7 @@ namespace MediaPortal.UI.SkinEngine.GUI
       SkinContext.WindowSize = ClientSize;
 
       Update();
-      this.SafeActivate();
+      SafeActivate();
       CheckTopMost();
 
       StartUI();
@@ -902,7 +926,7 @@ namespace MediaPortal.UI.SkinEngine.GUI
         // Restore if minimized
         Restore();
         // Set active window
-        this.SafeActivate();
+        SafeActivate();
         CheckTopMost();
         return;
       }

@@ -287,7 +287,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
 
     private void SetFocusOnNewPage()
     {
-      var visibleItems = PositionedMenuItems.OfType<GridListItem>().Where(item => item.IsVisible);
+      var visibleItems = PositionedMenuItems.OfType<GridListItem>().Where(item => item.IsVisible && item.Enabled);
       GridListItem nextFocusItem = null;
       int gridCol = BeginNavigation == NavigationTypeEnum.PageLeft  ? - 1 : 100;
       foreach (GridListItem item in visibleItems)
@@ -297,12 +297,13 @@ namespace MediaPortal.UiComponents.BlueVision.Models
           gridCol = item.GridColumn + item.GridColumnSpan;
           nextFocusItem = item;
         }
-        if (BeginNavigation == NavigationTypeEnum.PageRight && (nextFocusItem == null || item.GridColumn < gridCol))
+        if ((BeginNavigation == NavigationTypeEnum.PageRight || BeginNavigation == NavigationTypeEnum.None) && (nextFocusItem == null || item.GridColumn < gridCol))
         {
           gridCol = item.GridColumn;
           nextFocusItem = item;
         }
       }
+      ServiceRegistration.Get<ILogger>().Info("HomeMenuModel: Nav: {0}, SetFocusOnNewPage to '{1}'", BeginNavigation, nextFocusItem);
       PositionedMenuItems.OfType<GridListItem>().ToList().ForEach(item => item.Selected = item == nextFocusItem);
     }
 
@@ -534,6 +535,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
           }
         }
       }
+      SetFocusOnNewPage();
       list.FireChange();
     }
 

@@ -31,8 +31,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MediaPortal.Common;
 using MediaPortal.UI.Control.InputManager;
 using MediaPortal.Common.General;
+using MediaPortal.Common.Logging;
 using MediaPortal.UI.SkinEngine.Commands;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.Controls.Transforms;
@@ -634,7 +636,12 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     public bool SetFocus
     {
       get { return _setFocusPrio > SetFocusPriority.None; }
-      set { _setFocusPrio = value ? SetFocusPriority.Default : SetFocusPriority.None; }
+      set
+      {
+        _setFocusPrio = value ? SetFocusPriority.Default : SetFocusPriority.None;
+        if (value)
+          ServiceRegistration.Get<ILogger>().Info("Set focus to {0} ({1})", this, Name);
+      }
     }
 
     public AbstractProperty HasFocusProperty

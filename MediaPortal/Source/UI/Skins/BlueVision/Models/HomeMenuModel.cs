@@ -285,7 +285,7 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       }
     }
 
-    private void SetFocusOnNewPage()
+    private void SetFocusOnNewPage(bool fireChanged = false)
     {
       var visibleItems = PositionedMenuItems.OfType<GridListItem>().Where(item => item.IsVisible && item.Enabled);
       GridListItem nextFocusItem = null;
@@ -305,6 +305,8 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       }
       ServiceRegistration.Get<ILogger>().Info("HomeMenuModel: Nav: {0}, SetFocusOnNewPage to '{1}'", BeginNavigation, nextFocusItem);
       PositionedMenuItems.OfType<GridListItem>().ToList().ForEach(item => item.Selected = item == nextFocusItem);
+      if (fireChanged)
+        PositionedMenuItems.FireChange();
     }
 
     private void OnSettingsChanged(object sender, EventArgs e)
@@ -326,6 +328,8 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       ReadPositions();
       CreateMenuGroupItems();
       CreatePositionedItems();
+      if (firstTimeOnly)
+        SetFocusOnNewPage(true);
     }
 
     protected void MenuItemsOnObjectChanged(IObservable observable)
@@ -458,9 +462,9 @@ namespace MediaPortal.UiComponents.BlueVision.Models
       var nextIndex = GetNextIndex(CurrentKey, pageDirection);
       var newKey = mainMenuGroupNames[nextIndex].Name;
       CreatePositionedItems(_nextPageItems, newKey, GetPositions(newKey));
-
       SetGroup(mainMenuGroupNames[nextIndex].Id.ToString(), true);
     }
+
     protected void CyclePositionedItems()
     {
       var tmpItems = _nextPageItems.ToList();

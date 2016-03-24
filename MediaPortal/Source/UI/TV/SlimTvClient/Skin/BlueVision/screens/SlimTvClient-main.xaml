@@ -16,8 +16,8 @@
 
     <!-- Contents -->
     <ControlTemplate x:Key="Contents_Template">
-      <Grid x:Name="MainGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  
-            DataContext="{Binding Source={StaticResource SlimTvClient}}" Margin="-30,0,-75,-230">
+      <Grid x:Name="MainGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+            DataContext="{Binding Source={StaticResource SlimTvClient}}" Margin="-30,0,-100,-230">
 
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="300"/>
@@ -36,29 +36,29 @@
               HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal">
           <Button x:Name="PrevGroupButton" Style="{StaticResource SmallButtonStyle}" Content=" &lt; "
               Command="{Command PrevGroup}" >
-            <Image Source="details_arrow_left.png" HorizontalAlignment="Center" VerticalAlignment="Center" 
+            <Image Source="details_arrow_left.png" HorizontalAlignment="Center" VerticalAlignment="Center"
                    Height="20" Stretch="Uniform" Margin="5"/>
-          </Button>  
+          </Button>
           <Button x:Name="NextGroupButton" Style="{StaticResource SmallButtonStyle}" Content=" &gt; "
               Command="{Command NextGroup}" Margin="7,0,0,0">
             <Image Source="details_arrow_right.png" HorizontalAlignment="Center" VerticalAlignment="Center"
                    Height="20" Stretch="Uniform" Margin="5"/>
           </Button>
           <Label x:Name="CurrentGroupNameLabel" Content="{Binding CurrentGroupName}" VerticalAlignment="Center"
-                 Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="7,0,0,0"/> 
+                 Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="7,0,0,0"/>
         </StackPanel>
 
         <Label x:Name="CurrentProgramLabel" Content="[SlimTvClient.CurrentProgram]" VerticalAlignment="Center" Grid.Column="1"
-               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="165,0,10,0"/>
+               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="160,0,10,0"/>
         <Label x:Name="NextProgramLabel" Content="[SlimTvClient.NextProgram]" VerticalAlignment="Center" Grid.Column="1"
-               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="690,0,10,0"/>
+               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="695,0,10,0"/>
         <Label x:Name="ProgressLabel" Content="[SlimTvClient.Progress]" VerticalAlignment="Center" Grid.Column="1"
-               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="1205,0,10,0"/>
+               Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}" Margin="1222,0,10,0"/>
 
         <StackPanel x:Name="PiPControl" Margin="20,9,20,8" Grid.Column="1" Grid.Row="0"
                      HorizontalAlignment="Left" VerticalAlignment="Center" Orientation="Horizontal"
                      IsVisible="{Binding PiPAvailable}">
-          <Button x:Name="EnablePiPButton" Style="{StaticResource SmallButtonStyle}" 
+          <Button x:Name="EnablePiPButton" Style="{StaticResource SmallButtonStyle}"
                     Content="PiP enabled:" Command="{Command TogglePiP}" Margin="5,0,5,0" />
           <Label x:Name="PiPStatusLabel" Margin="5,0,0,0" Content="{Binding PiPEnabled}" VerticalAlignment="Center"
                 Color="{ThemeResource TextColor}" FontSize="{ThemeResource SmallFontSize}"/>
@@ -66,7 +66,7 @@
         </StackPanel>
 
         <ListView  x:Name="ProgramsListView" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2"
-              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="-10,0,-10,0"
+              HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="-10,0,15,0"
               Style="{ThemeResource ChannelWithLogoAndProgramListViewStyle}"
               ItemsSource="{Binding Path=CurrentGroupChannels}"
               SelectionChanged="{CommandStencil UpdateProgram}">
@@ -75,7 +75,7 @@
           </ListView.Resources>
         </ListView>
 
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="Description_details" 
+        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="Description_details"
               HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="-30,30,30,0">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -113,12 +113,12 @@
                  Wrap="True" Scroll="Auto"
                  Content="{Binding Path=SelectedCurrentProgram.Description}"
                  Color="{ThemeResource TextColor}" Margin="0,0,0,5" />
-          
+
         </Grid>
-        
-      </Grid>  
-    </ControlTemplate>           
-     
+
+      </Grid>
+    </ControlTemplate>
+
   </Include.Resources>
 </Include>
-    
+

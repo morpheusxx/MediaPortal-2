@@ -45,6 +45,7 @@ using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.UI.SkinEngine.Settings;
 using MediaPortal.UI.SkinEngine.Utils;
+using MediaPortal.Utilities.Events;
 using MediaPortal.Utilities.Process;
 using MediaPortal.Utilities.Screens;
 using MediaPortal.Utilities.SystemAPI;
@@ -102,6 +103,8 @@ namespace MediaPortal.UI.SkinEngine.GUI
 
     private bool _adaptToSizeEnabled;
     private bool _disableTopMost;
+
+    private DelayedEvent _screenResized = new DelayedEvent(500);
 
     public MainForm(ScreenManager screenManager)
     {
@@ -172,6 +175,9 @@ namespace MediaPortal.UI.SkinEngine.GUI
       // Read and apply ScreenSaver settings
       _screenSaverTimeOut = TimeSpan.FromMinutes(appSettings.ScreenSaverTimeoutMin);
       _isScreenSaverEnabled = appSettings.ScreenSaverEnabled;
+
+      // Screen resize
+      _screenResized.OnEventHandler += DoScreenResize;
 
       _applicationSuspendLevel = appSettings.SuspendLevel;
       UpdateSystemSuspendLevel_MainThread(); // Don't use UpdateSystemSuspendLevel() here because the window handle was not created yet
@@ -921,7 +927,7 @@ namespace MediaPortal.UI.SkinEngine.GUI
           _screenSize = new Size(screenWidth, screenHeight);
           _screenBpp = bitDepth;
           ServiceRegistration.Get<ILogger>().Info("SkinEngine MainForm: Display changed to {0}x{1}@{2}.", screenWidth, screenHeight, bitDepth);
-          GraphicsDevice.Reset();
+          HandleScreenResize();
         }
         else
         {
@@ -1003,6 +1009,21 @@ namespace MediaPortal.UI.SkinEngine.GUI
       // Send windows message through the system if any component needs to access windows messages
       WindowsMessaging.BroadcastWindowsMessage(ref m);
       base.WndProc(ref m);
+    }
+
+    protected void HandleScreenResize()
+    {
+      _screenResized.EnqueueEvent(this, EventArgs.Empty);
+    }
+
+    protected void DoScreenResize(object sender, EventArgs eventArgs)
+    {
+      AdaptToSize();
+      // Adjust form size to new screen dimensions...
+      //if (_mode == ScreenMode.FullScreen)
+      //  SwitchToFullscreen(GetScreenNum());
+      // then reset the DX device
+      //GraphicsDevice.Reset();
     }
 
     [StructLayout(LayoutKind.Sequential)]

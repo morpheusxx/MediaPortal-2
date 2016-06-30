@@ -66,6 +66,10 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="BaseDXPlayer.cs" />
+    <Compile Include="Tools\InvokeHelper.cs" />
+    <Compile Include="VideoRenderer\MadVR.cs" />
+    <Compile Include="VideoRenderer\Evr.cs" />
+    <Compile Include="VideoRenderer\IVideoRenderer.cs" />
     <Compile Include="PlayerRegistration.cs" />
     <Compile Include="Settings\Configuration\AudioCodecAAC.cs" />
     <Compile Include="Settings\Configuration\GenericCodecSelection.cs" />
@@ -114,6 +118,7 @@
     <Compile Include="VideoPlayerBuilder.cs" />
     <Compile Include="EVRCallback.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="VideoPlayerWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj">

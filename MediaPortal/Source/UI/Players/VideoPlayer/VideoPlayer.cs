@@ -28,7 +28,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security;
 using DirectShow;
 using DirectShow.Helper;
 using MediaPortal.Common;
@@ -39,13 +38,13 @@ using MediaPortal.Common.Settings;
 using MediaPortal.UI.Players.Video.Settings;
 using MediaPortal.UI.Players.Video.Subtitles;
 using MediaPortal.UI.Players.Video.Tools;
+using MediaPortal.UI.Players.Video.VideoRenderer;
 using MediaPortal.UI.Presentation.Geometries;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine;
 using MediaPortal.UI.SkinEngine.MpfElements.Converters;
 using MediaPortal.UI.SkinEngine.Players;
-using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
 using SharpDX;
 using SharpDX.Direct3D9;
@@ -56,36 +55,7 @@ namespace MediaPortal.UI.Players.Video
 {
   public class VideoPlayer : BaseDXPlayer, ISharpDXVideoPlayer, ISubtitlePlayer, IChapterPlayer, ITitlePlayer, IResumablePlayer
   {
-    #region Classes & interfaces
-
-    [ComImport, Guid("fa10746c-9b63-4b6c-bc49-fc300ea5f256")]
-    public class EnhancedVideoRenderer { }
-
-    [ComImport, SuppressUnmanagedCodeSecurity,
-     Guid("83E91E85-82C1-4ea7-801D-85DC50B75086"),
-     InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    public interface IEVRFilterConfig
-    {
-      int SetNumberOfStreams(uint dwMaxStreams);
-      int GetNumberOfStreams(ref uint pdwMaxStreams);
-    }
-
-    #endregion
-
-    #region DLL imports
-
-    [DllImport("EVRPresenter.dll", ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern int EvrInit(IEVRPresentCallback callback, uint dwD3DDevice, IBaseFilter evrFilter, IntPtr monitor, out IntPtr presenterInstance);
-
-    [DllImport("EVRPresenter.dll", ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern void EvrDeinit(IntPtr presenterInstance);
-
-    #endregion
-
     #region Consts
-
-    protected const string EVR_FILTER_NAME = "Enhanced Video Renderer";
-    protected IntPtr _presenterInstance;
 
     // The default name for "No subtitles available" or "Subtitles disabled".
     protected internal const string NO_SUBTITLES = "No subtitles";
@@ -102,12 +72,8 @@ namespace MediaPortal.UI.Players.Video
 
     #region Variables
 
-    // DirectShow objects
-    protected IBaseFilter _evr;
-    protected EVRCallback _evrCallback;
     protected GraphRebuilder _graphRebuilder;
     protected IBaseFilter _subsFilter = null;
-
     // Managed Direct3D Resources
     protected Size _displaySize = new Size(100, 100);
 
@@ -148,6 +114,9 @@ namespace MediaPortal.UI.Players.Video
     protected MpcSubsRenderer _mpcSubsRenderer;
     private FilterFileWrapper _ccFilter;
 
+    protected IVideoRenderer _videoRenderer;
+    protected EVRCallback _evrCallback;
+
     #endregion
 
     #region Ctor & dtor
@@ -182,10 +151,6 @@ namespace MediaPortal.UI.Players.Video
 
     protected override void AddPresenter()
     {
-      // Create the Allocator / Presenter object
-      FreeEvrCallback();
-      CreateEvrCallback();
-
       AddEvr();
     }
 
@@ -242,29 +207,19 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     protected virtual void AddEvr()
     {
-      ServiceRegistration.Get<ILogger>().Debug("{0}: Initialize EVR", PlayerTitle);
+      FilterGraphTools.TryDispose(ref _videoRenderer);
+      _videoRenderer = new MadVR();
+      //var evr = new Evr(RenderFrame, OnTextureInvalidated, OnVideoSizePresent);
+      //_evrCallback = evr.EvrCallback;
+      //_videoRenderer = evr;
+      ServiceRegistration.Get<ILogger>().Debug("{0}: Initialize {1}", PlayerTitle, _videoRenderer.GetType().Name);
+      _videoRenderer.AddToGraph(_graphBuilder, _streamCount);
+    }
 
-      _evr = (IBaseFilter)new EnhancedVideoRenderer();
-
-      IntPtr upDevice = SkinContext.Device.NativePointer;
-      int hr = EvrInit(_evrCallback, (uint)upDevice.ToInt32(), _evr, SkinContext.Form.Handle, out _presenterInstance);
-      if (hr != 0)
-      {
-        SafeEvrDeinit();
-        FilterGraphTools.TryRelease(ref _evr);
-        throw new VideoPlayerException("Initializing of EVR failed");
-      }
-
-      // Check if CC is enabled, in this case the EVR needs one more input pin
-      VideoSettings settings = ServiceRegistration.Get<ISettingsManager>().Load<VideoSettings>();
-      if (settings.EnableClosedCaption)
-        _streamCount++;
-
-      // Set the number of video/subtitle/cc streams that are allowed to be connected to EVR. This has to be done after the custom presenter is initialized.
-      IEVRFilterConfig config = (IEVRFilterConfig)_evr;
-      config.SetNumberOfStreams(_streamCount);
-
-      _graphBuilder.AddFilter(_evr, EVR_FILTER_NAME);
+    protected override void OnGraphRunning()
+    {
+      base.OnGraphRunning();
+      _videoRenderer.OnGraphRunning();
     }
 
     #endregion
@@ -298,9 +253,7 @@ namespace MediaPortal.UI.Players.Video
       ReleaseStreamSelectors();
 
       // Free EVR
-      SafeEvrDeinit();
-      FreeEvrCallback();
-      FilterGraphTools.TryRelease(ref _evr);
+      ReleaseVideoRenderer();
 
       base.FreeCodecs();
 
@@ -311,17 +264,6 @@ namespace MediaPortal.UI.Players.Video
       FilterGraphTools.TryDispose(ref _mpcSubsRenderer);
       FilterGraphTools.TryDispose(ref _rot);
       FilterGraphTools.TryRelease(ref _graphBuilder, true);
-    }
-
-    /// <summary>
-    /// Helper method to deinit the EVR instance. This method checks if the deinit has happened before to avoid access violations.
-    /// </summary>
-    protected void SafeEvrDeinit()
-    {
-      if (_presenterInstance == IntPtr.Zero)
-        return;
-      EvrDeinit(_presenterInstance);
-      _presenterInstance = IntPtr.Zero;
     }
 
     #endregion
@@ -831,39 +773,29 @@ namespace MediaPortal.UI.Players.Video
         mc.Stop();
       }
 
-      if (_evr != null)
+      if (_videoRenderer.Filter != null)
       {
         // Get the currently connected EVR Pins to restore the connections later
-        FilterGraphTools.GetConnectedPins(_evr, PinDirection.Input, _evrConnectionPins);
-        _graphBuilder.RemoveFilter(_evr);
-        FilterGraphTools.TryRelease(ref _evr);
+        FilterGraphTools.GetConnectedPins(_videoRenderer.Filter, PinDirection.Input, _evrConnectionPins);
+        _graphBuilder.RemoveFilter(_videoRenderer.Filter);
       }
 
-      SafeEvrDeinit();
-      FreeEvrCallback();
+      ReleaseVideoRenderer();
     }
 
-    protected virtual void CreateEvrCallback()
+    private void ReleaseVideoRenderer()
     {
-      _evrCallback = new EVRCallback(RenderFrame, OnTextureInvalidated);
-      _evrCallback.VideoSizePresent += OnVideoSizePresent;
+      FilterGraphTools.TryDispose(ref _videoRenderer);
     }
 
-    protected virtual void FreeEvrCallback()
-    {
-      if (_evrCallback != null)
-        _evrCallback.Dispose();
-      _evrCallback = null;
-    }
 
     public virtual void ReallocGUIResources()
     {
       if (_graphBuilder == null)
         return;
 
-      CreateEvrCallback();
       AddEvr();
-      FilterGraphTools.RestorePinConnections(_graphBuilder, _evr, PinDirection.Input, _evrConnectionPins);
+      FilterGraphTools.RestorePinConnections(_graphBuilder, _videoRenderer.Filter, PinDirection.Input, _evrConnectionPins);
 
       if (State == PlayerState.Active)
       {
@@ -879,7 +811,7 @@ namespace MediaPortal.UI.Players.Video
     public bool SetRenderDelegate(SkinEngine.Players.RenderDlgt dlgt)
     {
       _renderDlgt = dlgt;
-      return true;
+      return _videoRenderer.SyncRendering; // madVR doesn't sync
     }
 
     public Rectangle CropVideoRect

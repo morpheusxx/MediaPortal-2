@@ -206,10 +206,17 @@ namespace MediaPortal.UI.Players.Video
 
     public void SetMediaItem(IResourceLocator locator, string mediaItemTitle)
     {
-      SetMediaItem(locator, mediaItemTitle, null);
+      // Force graph construction to use Main thread of form, this is required by all video renderers (except EVR)
+      SkinContext.Form.InvokeIfRequired(c => SetMediaItemInternal(locator, mediaItemTitle, null));
     }
 
     public void SetMediaItem(IResourceLocator locator, string mediaItemTitle, MediaItem mediaItem)
+    {
+      // Force graph construction to use Main thread of form, this is required by all video renderers (except EVR)
+      SkinContext.Form.InvokeIfRequired(c => SetMediaItemInternal(locator, mediaItemTitle, mediaItem));
+    }
+    
+    protected void SetMediaItemInternal(IResourceLocator locator, string mediaItemTitle, MediaItem mediaItem)
     {
       _mediaItem = mediaItem;
 

@@ -11,7 +11,7 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
   public class MadVR : IVideoRenderer, IOverlayRenderer
   {
     // DirectShow objects
-    protected DSObject<IBaseFilter> _evr;
+    protected DSFilter _evr;
     protected IBasicVideo _basicVideo;
     protected IVideoWindow _videoWindow;
 
@@ -20,10 +20,10 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
     #region Classes & interfaces
 
     [Guid("E1A8B82A-32CE-4B0D-BE0D-AA68C772E423")]
-    public class MadVideoRenderer : DSObject<IBaseFilter> { }
+    public class MadVideoRenderer : DSFilter { }
 
     [Guid("51B4ABF3-748F-4E3B-A276-C828330E926A")]
-    public class Vmr9VideoRenderer : DSObject<IBaseFilter> { }
+    public class Vmr9VideoRenderer : DSFilter { }
 
     #endregion
 
@@ -50,10 +50,11 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
     public void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
     {
       _evr = new MadVideoRenderer();
-      _basicVideo = (IBasicVideo)_evr.QueryInterface(typeof(IBasicVideo));
-      _videoWindow = (IVideoWindow)_evr.QueryInterface(typeof(IVideoWindow));
+      //_evr = new Vmr9VideoRenderer();
+      _basicVideo = (IBasicVideo)_evr.Value;
+      _videoWindow = (IVideoWindow)_evr.Value;
 
-      graphBuilder.AddFilter(_evr.Value, MADVR_FILTER_NAME);
+      _evr.FilterGraph = graphBuilder;
     }
 
     public bool SyncRendering { get { return false; } }

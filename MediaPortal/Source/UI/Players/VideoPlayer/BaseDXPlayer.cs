@@ -113,6 +113,8 @@ namespace MediaPortal.UI.Players.Video
     protected PlayerEventDlgt _playbackError = null;
 
     private readonly object _syncObj = new object();
+    protected IMediaControl _mc;
+    protected IMediaEventEx _me;
 
     #endregion
 
@@ -165,14 +167,12 @@ namespace MediaPortal.UI.Players.Video
         {
           if (m.Msg == WM_GRAPHNOTIFY)
           {
-            IMediaEventEx eventEx = (IMediaEventEx) _graphBuilder;
-
             EventCode evCode;
             int param1, param2;
 
-            while (eventEx.GetEvent(out evCode, out param1, out param2, 0) == 0)
+            while (_me.GetEvent(out evCode, out param1, out param2, 0) == 0)
             {
-              eventEx.FreeEventParams(evCode, param1, param2);
+              _me.FreeEventParams(evCode, param1, param2);
               if (evCode == EventCode.Complete)
               {
                 bool hasNextPart = _mediaItem != null && _mediaItem.ActiveResourceLocatorIndex < _mediaItem.MaximumResourceLocatorIndex;
@@ -239,10 +239,9 @@ namespace MediaPortal.UI.Players.Video
         _rot = new DsROTEntry(_graphBuilder);
 
         // Add a notification handler (see WndProc)
-        _instancePtr = Marshal.AllocCoTaskMem(4);
-        IMediaEventEx mee = _graphBuilder as IMediaEventEx;
-        if (mee != null)
-          mee.SetNotifyWindow(SkinContext.Form.Handle, WM_GRAPHNOTIFY, _instancePtr);
+        _instancePtr = IntPtr.Zero;
+        if (_me != null)
+          _me.SetNotifyWindow(SkinContext.Form.Handle, WM_GRAPHNOTIFY, _instancePtr);
 
         // Create the Allocator / Presenter object
         AddPresenter();
@@ -266,8 +265,7 @@ namespace MediaPortal.UI.Players.Video
         OnBeforeGraphRunning();
 
         // Now run the graph, i.e. the DVD player needs a running graph before getting informations from dvd filter.
-        IMediaControl mc = (IMediaControl) _graphBuilder;
-        int hr = mc.Run();
+        int hr = _mc.Run();
         new HRESULT(hr).Throw();
 
         _initialized = true;
@@ -406,6 +404,8 @@ namespace MediaPortal.UI.Players.Video
     protected virtual void CreateGraphBuilder()
     {
       _graphBuilder = (IFilterGraph2) new FilterGraph();
+      _mc = (IMediaControl)_graphBuilder;
+      _me = (IMediaEventEx)_graphBuilder;
     }
 
     /// <summary>
@@ -508,9 +508,12 @@ namespace MediaPortal.UI.Players.Video
         return;
 
       //IAMPluginControl is supported in Win7 and later only.
+      DirectShowPluginControl dspc = null;
+      IAMPluginControl pc = null;
       try
       {
-        IAMPluginControl pc = new DirectShowPluginControl() as IAMPluginControl;
+        dspc = new DirectShowPluginControl();
+        pc = dspc as IAMPluginControl;
         if (pc != null)
         {
           // Set black list of codecs to ignore, they are known to cause issues like hangs and crashes
@@ -555,13 +558,13 @@ namespace MediaPortal.UI.Players.Video
           {
             DsGuid clsid = settings.AudioCodec.GetCLSID();
             foreach (Guid guid in new[]
-                                    {
-                                      MediaSubType.Mpeg2Audio,
-                                      MediaSubType.MPEG1AudioPayload,
-                                      CodecHandler.WMMEDIASUBTYPE_MP3,
-                                      CodecHandler.MEDIASUBTYPE_MPEG1_AUDIO,
-                                      CodecHandler.MEDIASUBTYPE_MPEG2_AUDIO
-                                    })
+            {
+              MediaSubType.Mpeg2Audio,
+              MediaSubType.MPEG1AudioPayload,
+              CodecHandler.WMMEDIASUBTYPE_MP3,
+              CodecHandler.MEDIASUBTYPE_MPEG1_AUDIO,
+              CodecHandler.MEDIASUBTYPE_MPEG2_AUDIO
+            })
               pc.SetPreferredClsid(guid, clsid);
           }
         }
@@ -569,6 +572,11 @@ namespace MediaPortal.UI.Players.Video
       catch (Exception ex)
       {
         ServiceRegistration.Get<ILogger>().Debug("{0}: Exception in IAMPluginControl: {1}", PlayerTitle, ex.ToString());
+      }
+      finally
+      {
+        FilterGraphTools.TryRelease(ref dspc);
+        FilterGraphTools.TryRelease(ref pc);
       }
     }
 
@@ -596,16 +604,14 @@ namespace MediaPortal.UI.Players.Video
         if (_graphBuilder != null)
         {
           FilterState state;
-          IMediaEventEx me = (IMediaEventEx) _graphBuilder;
-          IMediaControl mc = (IMediaControl) _graphBuilder;
 
-          me.SetNotifyWindow(IntPtr.Zero, 0, IntPtr.Zero);
+          _me.SetNotifyWindow(IntPtr.Zero, 0, IntPtr.Zero);
 
-          mc.GetState(10, out state);
+          _mc.GetState(10, out state);
           if (state != FilterState.Stopped)
           {
-            mc.Stop();
-            mc.GetState(10, out state);
+            _mc.Stop();
+            _mc.GetState(10, out state);
             ServiceRegistration.Get<ILogger>().Debug("{0}: Graph state after stop command: {1}", PlayerTitle, state);
           }
         }
@@ -621,6 +627,8 @@ namespace MediaPortal.UI.Players.Video
           Marshal.FreeCoTaskMem(_instancePtr);
           _instancePtr = IntPtr.Zero;
         }
+        FilterGraphTools.TryRelease(ref _mc);
+        FilterGraphTools.TryRelease(ref _me);
 
         FreeCodecs();
       }

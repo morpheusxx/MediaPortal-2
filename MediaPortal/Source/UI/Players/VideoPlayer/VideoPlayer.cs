@@ -54,7 +54,7 @@ using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.Players.Video
 {
-  public class VideoPlayer : BaseDXPlayer, ISharpDXVideoPlayer, ISubtitlePlayer, IChapterPlayer, ITitlePlayer, IResumablePlayer
+  public class VideoPlayer : BaseDXPlayer, ISharpDXVideoPlayer, ISubtitlePlayer, IChapterPlayer, ITitlePlayer, IResumablePlayer, IOverlayPlayer
   {
     #region Consts
 
@@ -209,10 +209,17 @@ namespace MediaPortal.UI.Players.Video
     protected virtual void AddEvr()
     {
       FilterGraphTools.TryDispose(ref _videoRenderer);
-      _videoRenderer = new MadVR();
-      //var evr = new Evr(RenderFrame, OnTextureInvalidated, OnVideoSizePresent);
-      //_evrCallback = evr.EvrCallback;
-      //_videoRenderer = evr;
+      bool useMadVr = true;
+      if (useMadVr)
+      {
+        _videoRenderer = new MadVR();
+      }
+      else
+      {
+        var evr = new Evr(RenderFrame, OnTextureInvalidated, OnVideoSizePresent);
+        _evrCallback = evr.EvrCallback;
+        _videoRenderer = evr;
+      }
       ServiceRegistration.Get<ILogger>().Debug("{0}: Initialize {1}", PlayerTitle, _videoRenderer.GetType().Name);
       _videoRenderer.AddToGraph(_graphBuilder, _streamCount);
     }
@@ -812,7 +819,7 @@ namespace MediaPortal.UI.Players.Video
     public bool SetRenderDelegate(SkinEngine.Players.RenderDlgt dlgt)
     {
       _renderDlgt = dlgt;
-      return _videoRenderer.SyncRendering; // madVR doesn't sync
+      return _videoRenderer != null && _videoRenderer.SyncRendering; // madVR doesn't sync
     }
 
     public Rectangle CropVideoRect
@@ -1203,5 +1210,13 @@ namespace MediaPortal.UI.Players.Video
     }
 
     #endregion
+
+    public IOverlayRenderer Renderer
+    {
+      get
+      {
+        return _videoRenderer as IOverlayRenderer;
+      }
+    }
   }
 }

@@ -352,6 +352,7 @@
     <Compile Include="MpfElements\SelectionChangedEventArgs.cs" />
     <Compile Include="Players\ISharpDXImagePlayer.cs" />
     <Compile Include="Players\ISharpDXVideoPlayer.cs" />
+    <Compile Include="Players\IVideoRenderer.cs" />
     <Compile Include="Players\PlayersHelper.cs" />
     <Compile Include="Players\PlayerRotationTranslator.cs" />
     <Compile Include="Rendering\EffectContext.cs" />

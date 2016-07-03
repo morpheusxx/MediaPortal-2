@@ -71,6 +71,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       protected readonly VideoBrush _parentBrush;
       protected bool _renderStarted = false;
       protected PrimitiveBuffer _primitiveContext;
+      protected IOverlayRenderer _overlayRenderer;
 
       public BrushContext(VideoBrush parentBrush)
       {
@@ -87,9 +88,12 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       public Func<Transform> GetRelativeTransform { get; set; }
       public Func<Matrix> GetCachedFinalBrushTransform { get; set; }
       public string ContextName { get; set; }
+      public IOverlayRenderer OverlayRenderer { get { return _overlayRenderer; } }
 
       public void Dispose()
       {
+        if (_overlayRenderer != null)
+          _overlayRenderer.SetOverlayPosition(0, 0, 0, 0);
         TryDispose(ref _texture);
       }
 
@@ -106,7 +110,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       public bool RefreshEffectParameters(IVideoPlayer player, Texture texture)
       {
         ISharpDXVideoPlayer sdvPlayer = player as ISharpDXVideoPlayer;
-        if (sdvPlayer == null || texture == null || texture.IsDisposed)
+        IOverlayPlayer overlayPlayer = player as IOverlayPlayer;
+        if (sdvPlayer == null || overlayPlayer == null && (texture == null || texture.IsDisposed))
           return false;
         SizeF aspectRatio = sdvPlayer.VideoAspectRatio.ToSize2F();
         Size playerSize = sdvPlayer.VideoSize.ToSize2();
@@ -132,12 +137,13 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         _lastVertsBounds = vertsBounds;
         SizeF targetSize = vertsBounds.Size;
 
-        lock (sdvPlayer.SurfaceLock)
-        {
-          SurfaceDescription desc = texture.GetLevelDescription(0);
-          _videoTextureClip = new RectangleF(cropVideoRect.X / desc.Width, cropVideoRect.Y / desc.Height,
-              cropVideoRect.Width / desc.Width, cropVideoRect.Height / desc.Height);
-        }
+        if (texture != null)
+          lock (sdvPlayer.SurfaceLock)
+          {
+            SurfaceDescription desc = texture.GetLevelDescription(0);
+            _videoTextureClip = new RectangleF(cropVideoRect.X / desc.Width, cropVideoRect.Y / desc.Height,
+                cropVideoRect.Width / desc.Width, cropVideoRect.Height / desc.Height);
+          }
         _scaledVideoSize = cropVideoRect.Size.ToSize2F();
 
         // Correct aspect ratio for anamorphic video
@@ -148,9 +154,17 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         }
         // Adjust target size to match final Skin scaling
         targetSize = ImageContext.AdjustForSkinAR(targetSize);
+        var targetPos = ImageContext.AdjustForSkinAR(new Size2F(vertsBounds.Left, vertsBounds.Top));
+
 
         // Adjust video size to fit desired geometry
-        _scaledVideoSize = geometry.Transform(_scaledVideoSize.ToDrawingSizeF(), targetSize.ToDrawingSizeF()).ToSize2F();
+        var targetSizeF = targetSize.ToDrawingSizeF();
+        _scaledVideoSize = geometry.Transform(_scaledVideoSize.ToDrawingSizeF(), targetSizeF).ToSize2F();
+        if (overlayPlayer != null && overlayPlayer.Renderer != null)
+        {
+          _overlayRenderer = overlayPlayer.Renderer;
+          overlayPlayer.Renderer.SetOverlayPosition((int)targetPos.Width, (int)targetPos.Height, (int)targetSizeF.Width, (int)targetSizeF.Height);
+        }
 
         // Cache inverse RelativeTransform
         Transform relativeTransform = GetRelativeTransform();
@@ -288,7 +302,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       if (multiTexturePlayer == null)
         return;
 
-      for(int i = 0; i < multiTexturePlayer.TexturePlanes.Length; i++)
+      for (int i = 0; i < multiTexturePlayer.TexturePlanes.Length; i++)
       {
         int plane = i;
         // All additional overlay textures
@@ -455,6 +469,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       bool result = false;
       foreach (var brushContext in _brushContexts)
       {
+        // OverlayPlayer use a custom positioned window, so we don't render a brush here
+        if (brushContext.OverlayRenderer != null)
+          continue;
+
         // We can only begin a new render pass if the previous ended
         if (_lastBeginContext != null && brushContext.IsValid())
         {

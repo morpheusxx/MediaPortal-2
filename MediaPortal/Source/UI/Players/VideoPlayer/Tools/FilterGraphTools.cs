@@ -1171,6 +1171,24 @@ namespace MediaPortal.UI.Players.Video.Tools
       }
       return false;
     }
+
+    /// <summary>
+    /// Checks and final release filter as COM object.
+    /// </summary>
+    /// <param name="filterToRelease">any COM object to release</param>
+    public static bool TryFinalRelease<TE>(ref TE filterToRelease) where TE : class
+    {
+      if (filterToRelease != null && Marshal.IsComObject(filterToRelease))
+      {
+        string strFilterToRelease = filterToRelease.ToString();
+        var remainingReferences = Marshal.FinalReleaseComObject(filterToRelease);
+        ServiceRegistration.Get<ILogger>().Info("Final releasing filter {0}, remaining references: {1}", strFilterToRelease, remainingReferences);
+
+        filterToRelease = default(TE);
+        return true;
+      }
+      return false;
+    }
     /// <summary>
     /// Disposes the object, if supported. Then sets reference to null.
     /// </summary>

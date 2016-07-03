@@ -67,9 +67,9 @@
     </Compile>
     <Compile Include="BaseDXPlayer.cs" />
     <Compile Include="Tools\InvokeHelper.cs" />
+    <Compile Include="VideoRenderer\IVideoRenderer.cs" />
     <Compile Include="VideoRenderer\MadVR.cs" />
     <Compile Include="VideoRenderer\Evr.cs" />
-    <Compile Include="VideoRenderer\IVideoRenderer.cs" />
     <Compile Include="PlayerRegistration.cs" />
     <Compile Include="Settings\Configuration\AudioCodecAAC.cs" />
     <Compile Include="Settings\Configuration\GenericCodecSelection.cs" />

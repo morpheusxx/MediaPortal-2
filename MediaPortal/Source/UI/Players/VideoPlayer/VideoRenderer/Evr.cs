@@ -49,7 +49,7 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
 
     public void Dispose()
     {
-      FilterGraphTools.TryRelease(ref _evr);
+      FilterGraphTools.TryFinalRelease(ref _evr);
       if (_presenterInstance != IntPtr.Zero)
         EvrDeinit(_presenterInstance);
 

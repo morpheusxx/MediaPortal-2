@@ -45,6 +45,7 @@ using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.SkinEngine;
 using MediaPortal.UI.SkinEngine.MpfElements.Converters;
 using MediaPortal.UI.SkinEngine.Players;
+using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
 using SharpDX;
 using SharpDX.Direct3D9;
@@ -1177,9 +1178,12 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public virtual bool SetResumeState(IResumeState state)
     {
-      PositionResumeState pos = state as PositionResumeState;
-      if (pos == null)
-        return false;
+      return SkinContext.Form.InvokeIfRequired2((c) =>
+      {
+        PositionResumeState
+          pos = state as PositionResumeState;
+        if (pos == null)
+          return false;
 
       if (_mediaItem != null)
       {
@@ -1193,8 +1197,9 @@ namespace MediaPortal.UI.Players.Video
             return false;
         }
       }
-      CurrentTime = pos.ResumePosition;
-      return true;
+        CurrentTime = pos.ResumePosition;
+        return true;
+      });
     }
 
     #endregion

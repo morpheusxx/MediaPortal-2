@@ -47,6 +47,7 @@ using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.Presentation.Screens;
+using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
 
 namespace MediaPortal.UI.Players.Video
@@ -1211,11 +1212,14 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public override bool SetResumeState(IResumeState state)
     {
-      BinaryResumeState binaryResumeState = state as BinaryResumeState;
-      if (binaryResumeState == null)
-        return false;
-      SetResumeState(binaryResumeState.ResumeData);
-      return true;
+      return SkinContext.Form.InvokeIfRequired2((c) =>
+      {
+        BinaryResumeState binaryResumeState = state as BinaryResumeState;
+        if (binaryResumeState == null)
+          return false;
+        SetResumeState(binaryResumeState.ResumeData);
+        return true;
+      });
     }
 
     #endregion

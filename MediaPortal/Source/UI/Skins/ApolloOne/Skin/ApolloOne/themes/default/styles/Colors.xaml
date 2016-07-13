@@ -3,7 +3,14 @@
     xmlns="www.team-mediaportal.com/2008/mpf/directx"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     >
-  <ResourceWrapper x:Key="HomeNonFocusedColor" Resource="#6B6A6A"/>
+  <!-- Colour for unfocused items -->  
+  <ResourceWrapper x:Key="HomeNonFocusedColor" Resource="#6a6a6a"/>
+    
+  <!-- Colour for focused indicator around tiles -->
+  <ResourceWrapper x:Key="HomeFocusedTileColor" Resource="#1b81ab"/>
+
+  <!-- Colour for main menu -->
+  <ResourceWrapper x:Key="HomeMenuSelectedColor" Resource="#FFFFFFFF"/>
 
   <!-- Button background and effects-->
   <ResourceWrapper x:Key="ButtonGradient1Color" Resource="#000F3369"/>

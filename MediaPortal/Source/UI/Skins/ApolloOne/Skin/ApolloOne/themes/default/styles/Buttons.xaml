@@ -167,8 +167,8 @@
               IsVisible ="False"
               CornerRadius="{ThemeResource ButtonControlRadiusX}"
               BorderBrush="{ThemeResource MediaItemsFocusedBorderBrush}"
-              BorderThickness="3"
-              Margin="-5"/>
+              BorderThickness="2"
+              Margin="-2"/>
         </ControlTemplate>
       </Setter.Value>
     </Setter>
@@ -233,7 +233,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>
-          <Rectangle x:Name="ButtonControlRectangle" StrokeThickness="1.5" Opacity="0" Margin="-2">
+          <Rectangle x:Name="ButtonControlRectangle" StrokeThickness="0" Opacity="0" Margin="-2">
             <Rectangle.Stroke>
               <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                 <GradientStop Color="#00A0A0A0" Offset="0.05"/>
@@ -251,7 +251,7 @@
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate>
-          <Grid x:Name="GrowControl" RenderTransformOrigin="0.5,0.5" Margin="0,1,0,1">
+          <Grid x:Name="GrowControl" RenderTransformOrigin="0,0" Margin="0,0,0,0">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -268,9 +268,10 @@
           </Grid>
           <ControlTemplate.Triggers>
             <Trigger Property="Selected" Value="True">
-              <Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource TextColor}"/>
+            <Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource HomeMenuSelectedColor}"/>
             </Trigger>
             <Trigger Property="HasFocus" Value="True">
+              <Setter TargetName="ItemLabel" Property="Color" Value="{ThemeResource HomeFocusedTileColor}"/>
               <Trigger.EnterActions>
                 <BeginStoryboard x:Name="Focused_BeginStoryboard" Storyboard="{ThemeResource FocusedButtonWideStoryboard}"/>
                 <SoundPlayerAction Source="navigate.wav" DisableOnAudioOutput="True"/>

@@ -439,8 +439,8 @@
       </Grid.ColumnDefinitions>
       <Grid.RowDefinitions>
         <RowDefinition Height="*"/>
-        <RowDefinition Height="48"/>
-        <RowDefinition Height="32"/>
+        <RowDefinition Height="80"/>
+        <!--<RowDefinition Height="80"/>-->
       </Grid.RowDefinitions>
 
       <!-- Light blue background fill -->
@@ -451,12 +451,12 @@
       <Image Grid.Row="0" Grid.Column="0" Grid.RowSpan="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Stretch="UniformToFill"
              Source="{Binding Converter={StaticResource ListItemActionIdConverter}, ConverterParameter=.jpg}"/>
 
-      <!-- Darkened band -->
+      <!-- Darkened band overlay for label below -->
       <Rectangle Grid.Row="1" Grid.Column="0" Fill="#FF000000" Opacity="0.749"
                  HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,0,0" />
 
       <!-- Item label -->
-      <Label Grid.Row="1" Grid.Column="0" x:Name="ItemLabel" HorizontalAlignment="Center" VerticalAlignment="Bottom"  Content="{Binding [Name]}"
+      <Label Grid.Row="1" Grid.Column="0" x:Name="ItemLabel" HorizontalAlignment="Center" VerticalAlignment="Center"  Content="{Binding [Name]}"
              FontSize="{ThemeResource BigFontSize}" Color="{ThemeResource HomeNonFocusedColor}" Margin="0,-5,0,0"/>
     </Grid>
   </DataTemplate>

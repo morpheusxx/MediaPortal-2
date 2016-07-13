@@ -1,0 +1,32 @@
+﻿<Plugin
+    DescriptorVersion="1.0"
+    Name="AmazonResourceProvider"
+    PluginId="{5391F380-FD47-41E4-9134-8A4CDCCF1EE7}"
+    Author="Morpheus_xx"
+    Copyright="GPL"
+    Description="Amazon Prime resource provider">
+
+  <Version
+    PluginVersion="1.0"
+    ReleaseDate="2016-07-01 01:00:00 GMT+01:00"
+    CurrentAPI="1"/>
+
+  <DependsOn>
+    <CoreDependency Name="MediaPortal.Common" CompatibleAPI="1" />
+    <CoreDependency Name="MediaPortal.Utilities" CompatibleAPI="1" />
+  </DependsOn>
+
+  <Runtime>
+    <Assembly FileName="Amazon.Interfaces.dll"/>
+  </Runtime>
+
+  <Register Location="/ResourceProviders">
+    <Instance Id="AmazonResourceProvider" ClassName="Amazon.Interfaces.AmazonResourceProvider.AmazonResourceProvider"/>
+  </Register>
+
+  <Register Location="/Resources/Language">
+    <Resource Id="AmazonResourceProviderLanguage" Directory="Language" Type="Language"/>
+  </Register>
+
+</Plugin>
+

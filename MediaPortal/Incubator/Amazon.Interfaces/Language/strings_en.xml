@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="AmazonResourceProvider.Name">Amazon Prime</string>
+  <string name="AmazonResourceProvider.Description">Access the Amazon Prime video library</string>
+  <string name="Amazon.Watchlist">Watchlist</string>
+  <string name="Amazon.WatchlistMovie">Watchlist Movies</string>
+  <string name="Amazon.WatchlistTV">Watchlist TV</string>
+  <string name="Amazon.Movies">Movies</string>
+  <string name="Amazon.TV">TV Shows</string>
+  <string name="Amazon.MoviesEditorsPick">Editor's Picks</string>
+  <string name="Amazon.MoviesRecentlyAdded">Recently Added</string>
+  <string name="Amazon.MoviesPopular">Popular Movies</string>
+  <string name="Amazon.TVEditorsPick">Editor's Picks</string>
+  <string name="Amazon.TVRecentlyAdded">Recently Added</string>
+  <string name="Amazon.TVPopular">Popular TV Shows</string>
+</resources>

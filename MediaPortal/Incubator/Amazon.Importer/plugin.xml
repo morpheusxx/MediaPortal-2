@@ -1,0 +1,34 @@
+﻿<Plugin
+    DescriptorVersion="1.0"
+    Name="MediaLibrary importer for Amazon Prime"
+    PluginId="{CDD7B7C2-9B15-492B-800B-3EF60E4EEB1F}"
+    Author="Morpheus_xx"
+    Copyright="GPL"
+    Description="Imports information about online available series and movies at Amazon Prime"
+    AutoActivate="true">
+
+  <Version
+    PluginVersion="1.0"
+    ReleaseDate="2016-07-01 01:00:00 GMT+01:00"
+    CurrentAPI="1"/>
+
+  <DependsOn>
+    <CoreDependency Name="MediaPortal.Backend" CompatibleAPI="1" />
+    <CoreDependency Name="MediaPortal.Common" CompatibleAPI="1" />
+    <CoreDependency Name="MediaPortal.Utilities" CompatibleAPI="1" />
+    <CoreDependency Name="UPnP" CompatibleAPI="1" />
+  </DependsOn>
+
+  <Runtime>
+    <Assembly FileName="Amazon.Importer.dll"/>
+    <Assembly FileName="OnlineVideos.MediaPortal2.Interfaces.dll"/>
+    <PluginStateTracker ClassName="Amazon.Importer.ImporterPlugin"/>
+  </Runtime>
+
+
+  <!-- The ResourceProvider to access abitrary token based media. -->
+  <Register Location="/ResourceProviders">
+    <Instance Id="RawTokenResourceProvider" ClassName="OnlineVideos.MediaPortal2.ResourceAccess.RawTokenResourceProvider"/>
+  </Register>
+</Plugin>
+

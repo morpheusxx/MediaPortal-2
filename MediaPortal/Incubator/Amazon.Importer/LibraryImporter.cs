@@ -31,7 +31,8 @@ namespace Amazon.Importer
 
     private readonly Guid SHARE_ID_MOVIES = new Guid("{E7CAEABE-79F5-46D7-91CF-5CC5A0FBFC13}");
     private readonly Guid SHARE_ID_SERIES = new Guid("{4D7C1270-64BE-43F0-A8DC-F3643A8FCBED}");
-    private readonly ResourcePath ROOT_PATH = RawTokenResourceProvider.ToProviderResourcePath("");
+    private readonly ResourcePath ROOT_PATH_MOVIES = RawTokenResourceProvider.ToProviderResourcePath("M");
+    private readonly ResourcePath ROOT_PATH_SERIES = RawTokenResourceProvider.ToProviderResourcePath("T");
 
     public void ImportSqlite()
     {
@@ -54,7 +55,7 @@ namespace Amazon.Importer
       IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
       ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
       string systemId = sr.LocalSystemId;
-      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_MOVIES, "Amazon Prime Movies", new List<string> { "Video", "Movie" });
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_MOVIES, ROOT_PATH_MOVIES, "Amazon Prime Movies", new List<string> { "Video", "Movie" });
 
       Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
@@ -74,7 +75,7 @@ namespace Amazon.Importer
         if (asin == null)
           continue;
 
-        ResourcePath path = RawTokenResourceProvider.ToProviderResourcePath(asin);
+        ResourcePath path = RawTokenResourceProvider.ToProviderResourcePath("M/" + asin);
 
         mediaAspect.SetAttribute(MediaAspect.ATTR_MIME_TYPE, "video/onlinebrowser");
         mediaAspect.SetAttribute(MediaAspect.ATTR_TITLE, row["movietitle"] as string);
@@ -133,7 +134,7 @@ namespace Amazon.Importer
       IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
       ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
       string systemId = sr.LocalSystemId;
-      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_SERIES, "Amazon Prime Series", new List<string> { "Video", "Series" });
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_SERIES, ROOT_PATH_SERIES, "Amazon Prime Series", new List<string> { "Video", "Series" });
 
       Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
@@ -153,7 +154,7 @@ namespace Amazon.Importer
         if (asin == null)
           continue;
 
-        ResourcePath path = RawTokenResourceProvider.ToProviderResourcePath(asin);
+        ResourcePath path = RawTokenResourceProvider.ToProviderResourcePath("T/" + asin);
 
         mediaAspect.SetAttribute(MediaAspect.ATTR_MIME_TYPE, "video/onlinebrowser");
 
@@ -204,19 +205,19 @@ namespace Amazon.Importer
       }
     }
 
-    private Guid GetOrCreateMediaSourceDirectory(IMediaLibrary ml, string systemId, Guid shareId, string mediaSourceName, IEnumerable<string> categories)
+    private Guid GetOrCreateMediaSourceDirectory(IMediaLibrary ml, string systemId, Guid shareId, ResourcePath rootPath, string mediaSourceName, IEnumerable<string> categories)
     {
       Guid parentDirectory = Guid.Empty;
 
-      var share = ml.GetShare(SHARE_ID_MOVIES);
+      var share = ml.GetShare(shareId);
       if (share == null)
       {
-        share = new Share(shareId, systemId, ROOT_PATH, mediaSourceName, categories);
+        share = new Share(shareId, systemId, rootPath, mediaSourceName, categories);
         ml.RegisterShare(share);
       }
 
       MediaItemAspect directoryAspect = new MediaItemAspect(DirectoryAspect.Metadata);
-      parentDirectory = ml.AddOrUpdateMediaItem(parentDirectory, systemId, ROOT_PATH, new[] { directoryAspect });
+      parentDirectory = ml.AddOrUpdateMediaItem(parentDirectory, systemId, rootPath, new[] { directoryAspect });
       return parentDirectory;
     }
 
@@ -260,7 +261,7 @@ namespace Amazon.Importer
 
         using (var cmd = connection.CreateCommand())
         {
-          cmd.CommandText = "select * from movies order by asin";
+          cmd.CommandText = "select * from movies where isPrime = 1 order by upper(movietitle)";
           DataTable dt = new DataTable();
           using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
             da.Fill(dt);
@@ -282,7 +283,7 @@ namespace Amazon.Importer
 
         using (var cmd = connection.CreateCommand())
         {
-          cmd.CommandText = "select * from episodes order by asin";
+          cmd.CommandText = "select * from episodes where isPrime = 1 order by upper(seriestitle), season, episode";
           DataTable dt = new DataTable();
           using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
             da.Fill(dt);

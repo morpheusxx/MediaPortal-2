@@ -2,15 +2,19 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.IO;
 using System.Linq;
+using System.Net;
 using MediaPortal.Backend.MediaLibrary;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.Common.MediaManagement.Helpers;
+using MediaPortal.Common.PathManager;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.SystemResolver;
+using MediaPortal.Utilities;
 using OnlineVideos.MediaPortal2.Interfaces.Metadata;
 using OnlineVideos.MediaPortal2.ResourceAccess;
 
@@ -18,12 +22,26 @@ namespace Amazon.Importer
 {
   public class LibraryImporter
   {
+    // List of required databases for our import. If they don't exist locally, they will be downloaded first.
+    readonly Dictionary<string, string> _databases = new Dictionary<string, string>
+      {
+        { "movies.db", "https://github.com/Sandmann79/xbmc/raw/master/script.module.amazon.database/lib/movies.db" },
+        { "tv.db", "https://github.com/Sandmann79/xbmc/raw/master/script.module.amazon.database/lib/tv.db" },
+      };
+
+    private readonly Guid SHARE_ID_MOVIES = new Guid("{E7CAEABE-79F5-46D7-91CF-5CC5A0FBFC13}");
+    private readonly Guid SHARE_ID_SERIES = new Guid("{4D7C1270-64BE-43F0-A8DC-F3643A8FCBED}");
+    private readonly ResourcePath ROOT_PATH = RawTokenResourceProvider.ToProviderResourcePath("");
+
     public void ImportSqlite()
     {
       try
       {
-        var dt = ReadData();
-        ImportToMediaLibrary(dt);
+        var dt = ReadMovies();
+        ImportMoviesToMediaLibrary(dt);
+
+        dt = ReadSeries();
+        ImportSeriesToMediaLibrary(dt);
       }
       catch (Exception ex)
       {
@@ -31,25 +49,12 @@ namespace Amazon.Importer
       }
     }
 
-    private void ImportToMediaLibrary(DataTable dt)
+    private void ImportMoviesToMediaLibrary(DataTable dt)
     {
       IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
       ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
-      Guid parentDirectory = Guid.Empty;
-      var systemId = sr.LocalSystemId;
-
-      Guid SHARE_ID = new Guid("{E7CAEABE-79F5-46D7-91CF-5CC5A0FBFC13}");
-      var ROOT_PATH = RawTokenResourceProvider.ToProviderResourcePath("");
-
-      var share = ml.GetShare(SHARE_ID);
-      if (share == null)
-      {
-        share = new Share(SHARE_ID, systemId, ROOT_PATH, "Amazon Prime Movies", new List<string> { "Video", "Movie" });
-        ml.RegisterShare(share);
-      }
-
-      MediaItemAspect directoryAspect = new MediaItemAspect(DirectoryAspect.Metadata);
-      parentDirectory = ml.AddOrUpdateMediaItem(parentDirectory, systemId, ROOT_PATH, new[] { directoryAspect });
+      string systemId = sr.LocalSystemId;
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_MOVIES, "Amazon Prime Movies", new List<string> { "Video", "Movie" });
 
       Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
@@ -114,13 +119,105 @@ namespace Amazon.Importer
         // TODO: support other siteutils
         onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_SITEUTIL, "Amazon Prime De");
         string uri;
-        if (TryParseUrl(row ,"fanart", out uri))
+        if (TryParseUrl(row, "fanart", out uri))
           onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_FANART, uri);
         if (TryParseUrl(row, "poster", out uri))
           onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_POSTER, uri);
 
         ml.AddOrUpdateMediaItem(parentDirectory, systemId, path, aspects.Values);
       }
+    }
+
+    private void ImportSeriesToMediaLibrary(DataTable dt)
+    {
+      IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
+      ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
+      string systemId = sr.LocalSystemId;
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_SERIES, "Amazon Prime Series", new List<string> { "Video", "Series" });
+
+      Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
+
+      foreach (DataRow row in dt.Rows)
+      {
+        aspects.Clear();
+        MediaItemAspect mediaAspect = new MediaItemAspect(MediaAspect.Metadata);
+        MediaItemAspect videoAspect = new MediaItemAspect(VideoAspect.Metadata);
+        MediaItemAspect seriesAspect = new MediaItemAspect(SeriesAspect.Metadata);
+        MediaItemAspect onlineVideosAspect = new MediaItemAspect(OnlineVideosAspect.Metadata);
+        aspects.Add(MediaAspect.ASPECT_ID, mediaAspect);
+        aspects.Add(VideoAspect.ASPECT_ID, videoAspect);
+        aspects.Add(SeriesAspect.ASPECT_ID, seriesAspect);
+        aspects.Add(OnlineVideosAspect.ASPECT_ID, onlineVideosAspect);
+
+        string asin = (row["asin"] as string ?? string.Empty).Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        if (asin == null)
+          continue;
+
+        ResourcePath path = RawTokenResourceProvider.ToProviderResourcePath(asin);
+
+        mediaAspect.SetAttribute(MediaAspect.ATTR_MIME_TYPE, "video/onlinebrowser");
+
+        SeriesInfo seriesInfo = new SeriesInfo();
+        seriesInfo.Series = row["seriestitle"] as string;
+        seriesInfo.Episode = row["episodetitle"] as string;
+        seriesInfo.Summary = row["plot"] as string;
+
+        ICollection<string> values;
+        if (TrySplit(row, "actors", out values))
+          CollectionUtils.AddAll(seriesInfo.Actors, values);
+
+        if (TrySplit(row, "genres", out values, '/'))
+          CollectionUtils.AddAll(seriesInfo.Genres, values);
+
+        string airDateVal = row["airdate"] as string;
+        DateTime dtValue;
+        if (DateTime.TryParse(airDateVal, out dtValue))
+        {
+          seriesInfo.FirstAired = dtValue;
+        }
+
+        int value;
+
+        if (TryCast(row, "season", out value))
+          seriesInfo.SeasonNumber = value;
+
+        if (TryCast(row, "episode", out value))
+          seriesInfo.EpisodeNumbers.Add(value);
+
+        if (TryCast(row, "stars", out value))
+          seriesInfo.TotalRating = value;
+
+        if (TryCast(row, "votes", out value))
+          seriesInfo.RatingCount = value;
+
+        seriesInfo.SetMetadata(aspects);
+
+        // TODO: support other siteutils
+        onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_SITEUTIL, "Amazon Prime De");
+        string uri;
+        if (TryParseUrl(row, "fanart", out uri))
+          onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_FANART, uri);
+        if (TryParseUrl(row, "poster", out uri))
+          onlineVideosAspect.SetAttribute(OnlineVideosAspect.ATTR_POSTER, uri);
+
+        ml.AddOrUpdateMediaItem(parentDirectory, systemId, path, aspects.Values);
+      }
+    }
+
+    private Guid GetOrCreateMediaSourceDirectory(IMediaLibrary ml, string systemId, Guid shareId, string mediaSourceName, IEnumerable<string> categories)
+    {
+      Guid parentDirectory = Guid.Empty;
+
+      var share = ml.GetShare(SHARE_ID_MOVIES);
+      if (share == null)
+      {
+        share = new Share(shareId, systemId, ROOT_PATH, mediaSourceName, categories);
+        ml.RegisterShare(share);
+      }
+
+      MediaItemAspect directoryAspect = new MediaItemAspect(DirectoryAspect.Metadata);
+      parentDirectory = ml.AddOrUpdateMediaItem(parentDirectory, systemId, ROOT_PATH, new[] { directoryAspect });
+      return parentDirectory;
     }
 
     protected bool TryCast<TE>(DataRow row, string colName, out TE value)
@@ -152,22 +249,68 @@ namespace Amazon.Importer
       return values.Count > 0;
     }
 
-    private DataTable ReadData()
+    private DataTable ReadMovies()
     {
-      var connBuilder = new SQLiteConnectionStringBuilder();
-      connBuilder.FullUri = @"D:\Coding\MP\MP2\tests\AmazonPrime\movies.db";
+      string localPath = GetLocalDatabase("movies.db");
+      var connBuilder = new SQLiteConnectionStringBuilder { FullUri = localPath };
 
-      SQLiteConnection connection = new SQLiteConnection(connBuilder.ToString());
-      connection.Open();
+      using (SQLiteConnection connection = new SQLiteConnection(connBuilder.ToString()))
+      {
+        connection.Open();
 
-      var cmd = connection.CreateCommand();
-      cmd.CommandText = "select * from movies order by asin";
-      DataTable dt = new DataTable();
-      using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
-        da.Fill(dt);
+        using (var cmd = connection.CreateCommand())
+        {
+          cmd.CommandText = "select * from movies order by asin";
+          DataTable dt = new DataTable();
+          using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
+            da.Fill(dt);
 
-      connection.Close();
-      return dt;
+          connection.Close();
+          return dt;
+        }
+      }
+    }
+
+    private DataTable ReadSeries()
+    {
+      string localPath = GetLocalDatabase("tv.db");
+      var connBuilder = new SQLiteConnectionStringBuilder { FullUri = localPath };
+
+      using (SQLiteConnection connection = new SQLiteConnection(connBuilder.ToString()))
+      {
+        connection.Open();
+
+        using (var cmd = connection.CreateCommand())
+        {
+          cmd.CommandText = "select * from episodes order by asin";
+          DataTable dt = new DataTable();
+          using (SQLiteDataAdapter da = new SQLiteDataAdapter(cmd))
+            da.Fill(dt);
+
+          connection.Close();
+          return dt;
+        }
+      }
+    }
+
+    private string GetLocalDatabase(string db)
+    {
+      var dbPath = ServiceRegistration.Get<IPathManager>().GetPath(@"<DATA>\OnlineVideos\DB");
+      if (!Directory.Exists(dbPath))
+        Directory.CreateDirectory(dbPath);
+
+      var database = _databases[db];
+      var path = Path.Combine(dbPath, db);
+      if (!File.Exists(path))
+      {
+        ServiceRegistration.Get<ILogger>().Info("AP Library Importer: Database {0} doesn't exist locally yet. Starting download...", db);
+        using (WebClient client = new WebClient())
+        {
+          client.DownloadFile(database, path);
+          ServiceRegistration.Get<ILogger>().Info("AP Library Importer: Database {0} download successful...", db);
+        }
+      }
+      return path;
     }
   }
 }

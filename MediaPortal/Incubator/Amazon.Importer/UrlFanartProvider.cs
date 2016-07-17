@@ -67,11 +67,13 @@ namespace Amazon.Importer
       {
         try
         {
-          WebClient client = new WebClient();
-          var data = client.DownloadData(fanartUrl);
-          FanArtImage img = new FanArtImage(fanartUrl, data);
-          result = new List<FanArtImage> { img };
-          return true;
+          using (WebClient client = new WebClient())
+          {
+            var data = client.DownloadData(fanartUrl);
+            FanArtImage img = new FanArtImage(fanartUrl, data);
+            result = new List<FanArtImage> { img };
+            return true;
+          }
         }
         catch (Exception)
         {

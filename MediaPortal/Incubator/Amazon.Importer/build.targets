@@ -4,11 +4,7 @@
   <Target Name="AfterBuild">
     <!-- Groups must be defined inside target, so they are evaluated at execution time, not parsing time (where the files are not yet copied!) -->
     <PropertyGroup>
-      <PluginDestination>$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\</PluginDestination>
-    </PropertyGroup>
-
-    <PropertyGroup>
-      <DatabaseDestination>$(SolutionDir)..\Bin\$(SolutionName)\$(OutDir)Plugins\$(ProjectName)\Database\</DatabaseDestination>
+      <PluginDestination>$(SolutionDir)..\MediaPortal\Bin\MP2-Server\bin\x86\$(Configuration)\Plugins\$(ProjectName)\</PluginDestination>
     </PropertyGroup>
 
     <ItemGroup>

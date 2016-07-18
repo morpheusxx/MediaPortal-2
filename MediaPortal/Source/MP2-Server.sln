@@ -122,8 +122,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimTv.Service3", "UI\TV\Sl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimTv.Service35", "UI\TV\SlimTvService35\SlimTv.Service35.csproj", "{1C9C13D0-C9F1-475F-96EC-D17AE77D2E1D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amazon.Importer", "..\Incubator\Amazon.Importer\Amazon.Importer.csproj", "{4A2C0AF6-3EDB-44E2-BB60-39CEF3CBED8A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -300,9 +298,6 @@ Global
 		{C239225E-CA92-4482-AFE7-F54006C48922}.Release|x86.Build.0 = Release|x86
 		{1C9C13D0-C9F1-475F-96EC-D17AE77D2E1D}.Debug|x86.ActiveCfg = Debug|x86
 		{1C9C13D0-C9F1-475F-96EC-D17AE77D2E1D}.Release|x86.ActiveCfg = Release|x86
-		{4A2C0AF6-3EDB-44E2-BB60-39CEF3CBED8A}.Debug|x86.ActiveCfg = Debug|x86
-		{4A2C0AF6-3EDB-44E2-BB60-39CEF3CBED8A}.Debug|x86.Build.0 = Debug|x86
-		{4A2C0AF6-3EDB-44E2-BB60-39CEF3CBED8A}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -363,6 +358,5 @@ Global
 		{7F790D8D-3A5A-499F-B9D3-8D9A1EF4F73A} = {35DF0F35-CB07-4868-AD8B-146E5D5B5DB0}
 		{C239225E-CA92-4482-AFE7-F54006C48922} = {1D7CBAB2-F708-4A74-8DF9-610497AED552}
 		{1C9C13D0-C9F1-475F-96EC-D17AE77D2E1D} = {1D7CBAB2-F708-4A74-8DF9-610497AED552}
-		{4A2C0AF6-3EDB-44E2-BB60-39CEF3CBED8A} = {D78DACAE-6316-45F4-B7D7-31A50791E977}
 	EndGlobalSection
 EndGlobal

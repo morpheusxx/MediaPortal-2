@@ -55,7 +55,12 @@ namespace Amazon.Importer
       IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
       ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
       string systemId = sr.LocalSystemId;
-      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_MOVIES, ROOT_PATH_MOVIES, "Amazon Prime Movies", new List<string> { "Video", "Movie" });
+      bool shareCreated;
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_MOVIES, ROOT_PATH_MOVIES, "Amazon Prime Movies", new List<string> { "Video", "Movie" }, out shareCreated);
+
+      // For now we only import once after share is created
+      if (!shareCreated)
+        return;
 
       Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
@@ -134,7 +139,12 @@ namespace Amazon.Importer
       IMediaLibrary ml = ServiceRegistration.Get<IMediaLibrary>();
       ISystemResolver sr = ServiceRegistration.Get<ISystemResolver>();
       string systemId = sr.LocalSystemId;
-      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_SERIES, ROOT_PATH_SERIES, "Amazon Prime Series", new List<string> { "Video", "Series" });
+      bool shareCreated;
+      var parentDirectory = GetOrCreateMediaSourceDirectory(ml, systemId, SHARE_ID_SERIES, ROOT_PATH_SERIES, "Amazon Prime Series", new List<string> { "Video", "Series" }, out shareCreated);
+
+      // For now we only import once after share is created
+      if (!shareCreated)
+        return;
 
       Dictionary<Guid, MediaItemAspect> aspects = new Dictionary<Guid, MediaItemAspect>();
 
@@ -205,15 +215,17 @@ namespace Amazon.Importer
       }
     }
 
-    private Guid GetOrCreateMediaSourceDirectory(IMediaLibrary ml, string systemId, Guid shareId, ResourcePath rootPath, string mediaSourceName, IEnumerable<string> categories)
+    private Guid GetOrCreateMediaSourceDirectory(IMediaLibrary ml, string systemId, Guid shareId, ResourcePath rootPath, string mediaSourceName, IEnumerable<string> categories, out bool shareCreated)
     {
       Guid parentDirectory = Guid.Empty;
+      shareCreated = false;
 
       var share = ml.GetShare(shareId);
       if (share == null)
       {
         share = new Share(shareId, systemId, rootPath, mediaSourceName, categories);
         ml.RegisterShare(share);
+        shareCreated = true;
       }
 
       MediaItemAspect directoryAspect = new MediaItemAspect(DirectoryAspect.Metadata);

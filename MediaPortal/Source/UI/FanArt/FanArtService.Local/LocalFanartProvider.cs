@@ -74,58 +74,66 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
 
       MediaItem mediaItem = items.First();
       var mediaIteamLocator = mediaItem.GetResourceLocator();
-      var fanArtPaths = new List<ResourcePath>();
-      var files = new List<IResourceLocator>();
-      // File based access
-      try
+      using (var accessor = mediaIteamLocator.CreateAccessor())
       {
-        var mediaItemPath = mediaIteamLocator.NativeResourcePath;
-        var mediaItemDirectoryPath = ResourcePathHelper.Combine(mediaItemPath, "../");
-        var mediaItemFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(mediaItemPath.ToString());
-        var mediaItemExtension = ResourcePathHelper.GetExtension(mediaItemPath.ToString());
-
-        using (var directoryRa = new ResourceLocator(mediaIteamLocator.NativeSystemId, mediaItemDirectoryPath).CreateAccessor())
+        ILocalFsResourceAccessor fsra = accessor as ILocalFsResourceAccessor;
+        if (fsra != null)
         {
-          var directoryFsra = directoryRa as IFileSystemResourceAccessor;
-          if (directoryFsra != null)
+          var fanArtPaths = new List<ResourcePath>();
+          var files = new List<IResourceLocator>();
+          // File based access
+          try
           {
-            var potentialFanArtFiles = GetPotentialFanArtFiles(directoryFsra);
+            var mediaItemPath = mediaIteamLocator.NativeResourcePath;
+            var mediaItemDirectoryPath = ResourcePathHelper.Combine(mediaItemPath, "../");
+            var mediaItemFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(mediaItemPath.ToString());
+            var mediaItemExtension = ResourcePathHelper.GetExtension(mediaItemPath.ToString());
 
-            if (fanArtType == FanArtTypes.Poster || fanArtType == FanArtTypes.Thumbnail)
-              fanArtPaths.AddRange(
-                from potentialFanArtFile in potentialFanArtFiles
-                let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString())
-                where /* Allow same file name only for non-images, otherwise each image would be its own thumbnail */
-                      potentialFanArtFileNameWithoutExtension == mediaItemFileNameWithoutExtension && !EXTENSIONS.Contains(mediaItemExtension) || 
+            using (var directoryRa = new ResourceLocator(mediaIteamLocator.NativeSystemId, mediaItemDirectoryPath).CreateAccessor())
+            {
+              var directoryFsra = directoryRa as IFileSystemResourceAccessor;
+              if (directoryFsra != null)
+              {
+                var potentialFanArtFiles = GetPotentialFanArtFiles(directoryFsra);
+
+                if (fanArtType == FanArtTypes.Poster || fanArtType == FanArtTypes.Thumbnail)
+                  fanArtPaths.AddRange(
+                    from potentialFanArtFile in potentialFanArtFiles
+                    let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString())
+                    where /* Allow same file name only for non-images, otherwise each image would be its own thumbnail */
+                      potentialFanArtFileNameWithoutExtension == mediaItemFileNameWithoutExtension && !EXTENSIONS.Contains(mediaItemExtension) ||
                       potentialFanArtFileNameWithoutExtension == mediaItemFileNameWithoutExtension + "-poster" ||
                       potentialFanArtFileNameWithoutExtension == "folder"
-                select potentialFanArtFile);
+                    select potentialFanArtFile);
 
-            if (fanArtType == FanArtTypes.FanArt)
-            {
-              fanArtPaths.AddRange(
-                from potentialFanArtFile in potentialFanArtFiles
-                let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString())
-                where potentialFanArtFileNameWithoutExtension == "backdrop" ||
-                      potentialFanArtFileNameWithoutExtension.StartsWith(mediaItemFileNameWithoutExtension + "-fanart")
-                select potentialFanArtFile);
-              if (directoryFsra.ResourceExists("ExtraFanArt/"))
-                using (var extraFanArtDirectoryFsra = directoryFsra.GetResource("ExtraFanArt/"))
-                  fanArtPaths.AddRange(GetPotentialFanArtFiles(extraFanArtDirectoryFsra));
+                if (fanArtType == FanArtTypes.FanArt)
+                {
+                  fanArtPaths.AddRange(
+                    from potentialFanArtFile in potentialFanArtFiles
+                    let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString())
+                    where potentialFanArtFileNameWithoutExtension == "backdrop" ||
+                          potentialFanArtFileNameWithoutExtension.StartsWith(mediaItemFileNameWithoutExtension + "-fanart")
+                    select potentialFanArtFile);
+                  if (directoryFsra.ResourceExists("ExtraFanArt/"))
+                    using (var extraFanArtDirectoryFsra = directoryFsra.GetResource("ExtraFanArt/"))
+                      fanArtPaths.AddRange(GetPotentialFanArtFiles(extraFanArtDirectoryFsra));
+                }
+
+                files.AddRange(fanArtPaths.Select(path => new ResourceLocator(mediaIteamLocator.NativeSystemId, path)));
+              }
             }
-
-            files.AddRange(fanArtPaths.Select(path => new ResourceLocator(mediaIteamLocator.NativeSystemId, path)));
           }
+          catch(Exception ex)
+          {
+#if DEBUG
+            ServiceRegistration.Get<ILogger>().Warn("LocalFanArtProvider: Error while searching fanart of type '{0}' for '{1}'", ex, fanArtType, mediaIteamLocator);
+#endif
+          }
+          result = files;
+          return files.Count > 0;
         }
       }
-      catch (Exception ex)
-      {
-#if DEBUG
-        ServiceRegistration.Get<ILogger>().Warn("LocalFanArtProvider: Error while searching fanart of type '{0}' for '{1}'", ex, fanArtType, mediaIteamLocator);
-#endif
-      }
-      result = files;
-      return files.Count > 0;
+      return false;
     }
 
     /// <summary>

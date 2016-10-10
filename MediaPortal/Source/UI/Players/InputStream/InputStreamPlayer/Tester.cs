@@ -5,7 +5,9 @@ using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.Common.Messaging;
 using MediaPortal.Common.PluginManager;
+using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Runtime;
+using MediaPortal.Common.Services.ResourceAccess.LocalFsResourceProvider;
 using MediaPortal.Common.Services.ResourceAccess.RawUrlResourceProvider;
 using MediaPortal.Common.SystemResolver;
 using MediaPortal.UiComponents.Media.Models;
@@ -82,7 +84,7 @@ namespace MediaPortal.UI.Players.InputStreamPlayer
       MediaItemAspect providerResourceAspect;
       MediaItemAspect mediaAspect;
 
-      var resourceAccessor = new RawUrlResourceAccessor("http://localhost/dummy");
+      var resourceAccessor = new RawUrlResourceAccessor("http://s3.lvlt.dash.us.aiv-cdn.net/d/1$AOAGZA014O5RE,18A35628/videoquality$1080p/prod/65c3/a3e2/e5f7/4c03-9e12-3abc2687696b/430c2983-0b7d-40e1-ac55-cf05c6fc6f97_corrected.mpd");
       aspects[ProviderResourceAspect.ASPECT_ID] = providerResourceAspect = new MediaItemAspect(ProviderResourceAspect.Metadata);
       aspects[MediaAspect.ASPECT_ID] = mediaAspect = new MediaItemAspect(MediaAspect.Metadata);
       providerResourceAspect.SetAttribute(ProviderResourceAspect.ATTR_SYSTEM_ID, systemResolver.LocalSystemId);

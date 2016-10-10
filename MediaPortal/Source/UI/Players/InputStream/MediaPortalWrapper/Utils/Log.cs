@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
 
 namespace MediaPortalWrapper.Utils
 {
@@ -14,11 +16,12 @@ namespace MediaPortalWrapper.Utils
 
     public static void Log(string format, params object[] args)
     {
-      using (var logFile = new FileStream(WRAPPER_LOG, FileMode.Append))
-      using (var writer = new StreamWriter(logFile))
-      {
-        writer.WriteLine(format, args);
-      }
+      ServiceRegistration.Get<ILogger>().Info(format, args);
+      //using (var logFile = new FileStream(WRAPPER_LOG, FileMode.Append))
+      //using (var writer = new StreamWriter(logFile))
+      //{
+      //  writer.WriteLine(format, args);
+      //}
     }
   }
 }

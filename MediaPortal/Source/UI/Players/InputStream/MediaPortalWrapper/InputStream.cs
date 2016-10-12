@@ -61,6 +61,8 @@ namespace MediaPortalWrapper
       _wrapper = new DllAddonWrapper<InputStreamAddonFunctions>();
       // TODO: fix path structure for temporary folders
       var pluginRoot = Path.GetDirectoryName(GetType().Assembly.Location);
+      // Add to windows DLL search path to find widevine dll
+      var res = NativeMethods.SetDllDirectory(pluginRoot);
       var addonDllPath = Path.Combine(pluginRoot, string.Format("{0}\\{0}.dll", addonName));
       _wrapper.Init(addonDllPath);
       var cb = new AddonCB { LibPath = pluginRoot };

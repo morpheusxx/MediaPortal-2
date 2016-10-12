@@ -144,7 +144,8 @@ namespace MediaPortalWrapper.Filesystem
           _curl.FollowLocation = true;
           _curl.Url = _rawUrl;
           _curl.Post = true;
-          _curl.CaInfo = "curl-ca-bundle.crt";
+          var asmFolder = Path.GetDirectoryName(GetType().Assembly.Location);
+          _curl.CaInfo = Path.Combine(asmFolder, "curl-ca-bundle.crt");
           var headers = new CurlSlist();
           foreach (var header in _headers)
           {

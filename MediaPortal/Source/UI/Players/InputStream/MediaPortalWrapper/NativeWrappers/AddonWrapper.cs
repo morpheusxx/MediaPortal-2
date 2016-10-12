@@ -15,6 +15,10 @@ namespace MediaPortalWrapper.NativeWrappers
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
     public static extern bool FreeLibrary(IntPtr hModule);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetDllDirectory(string lpPathName);
   }
 
   public enum AddonStatus

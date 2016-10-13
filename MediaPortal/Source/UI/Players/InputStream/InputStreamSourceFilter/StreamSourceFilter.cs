@@ -4,7 +4,6 @@ using DirectShow.Helper;
 using MediaPortalWrapper.Streams;
 using System.Runtime.InteropServices;
 using MediaPortalWrapper;
-using MediaPortalWrapper.NativeWrappers;
 
 namespace InputStreamSourceFilter
 {
@@ -14,10 +13,10 @@ namespace InputStreamSourceFilter
   /// </summary>
   public class StreamSourceFilter : BaseSourceFilterTemplate<StreamFileParser>
   {
-    public StreamSourceFilter(AbstractStream stream, InputstreamInfo videoInfo, InputstreamInfo audioInfo)
+    public StreamSourceFilter(InputStream stream)
       : base("InputStreamSourceFilter")
     {
-      ((StreamFileParser)m_Parsers[0]).SetSource(stream, videoInfo, audioInfo);
+      ((StreamFileParser)m_Parsers[0]).SetSource(stream);
       m_sFileName = "http://localhost/InputStream";
       //Load a dummy file
       Load(m_sFileName, null);
@@ -48,17 +47,11 @@ namespace InputStreamSourceFilter
 
   public class StreamFileParser : FileParser
   {
-    protected AbstractStream _stream;
-    InputstreamInfo _videoInfo;
-    InputstreamInfo _audioInfo;
-    //This is a hack at the moment, I think it will require different handling for seeking
-    protected long _lastVideoTime = 0;
+    protected InputStream _stream;
 
-    public void SetSource(AbstractStream stream, InputstreamInfo videoInfo, InputstreamInfo audioInfo)
+    public void SetSource(InputStream stream)
     {
       _stream = stream;
-      _videoInfo = videoInfo;
-      _audioInfo = audioInfo;
     }
 
     protected override HRESULT CheckFile()
@@ -70,20 +63,46 @@ namespace InputStreamSourceFilter
     protected override HRESULT LoadTracks()
     {
       //Initialise the tracks, these create our output pins
-      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, MediaTypeBuilder.H264_AVC1(_videoInfo)));
-      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, MediaTypeBuilder.E_AC3(_audioInfo)));
+      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, MediaTypeBuilder.H264_AVC1(_stream.VideoStream)));
+      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, MediaTypeBuilder.E_AC3(_stream.AudioStream)));
+
+      //int time = _stream.Functions.GetTime();
+      //int totalTime = _stream.Functions.GetTotalTime();
+      m_rtDuration = ToDS(_stream.Functions.GetTotalTime());
       return S_OK;
+    }
+
+    /// <summary>
+    /// Converts DirectShow hundreds nanoseconds to milliseconds.
+    /// </summary>
+    /// <param name="dsTime">DirectShow time</param>
+    /// <returns>Milliseconds</returns>
+    public int ToMS(long dsTime)
+    {
+      return (int)(dsTime / 10000);
+    }
+
+    /// <summary>
+    /// Converts milliseconds to DirectShow hundreds nanoseconds.
+    /// </summary>
+    /// <param name="msTime">Milliseconds</param>
+    /// <returns>DirectShow time</returns>
+    public long ToDS(int msTime)
+    {
+      return (long)msTime * 10000;
     }
 
     //This is called by a separate thread repeatedly to fill each tracks packet cache
     public override HRESULT ProcessDemuxPackets()
     {
+      //GetVars();
+
       DemuxPacket demuxPacket = _stream.Read();
       //EOS?
       if (demuxPacket.StreamId == 0)
         return S_FALSE;
 
-      if (demuxPacket.StreamId == _videoInfo.StreamId || demuxPacket.StreamId == _audioInfo.StreamId)
+      if (demuxPacket.StreamId == _stream.VideoStream.StreamId || demuxPacket.StreamId == _stream.AudioStream.StreamId)
       {
         //Create the packet and add the data
         //PacketData packet = new DemuxPacketData(_stream, demuxPacket);
@@ -93,13 +112,10 @@ namespace InputStreamSourceFilter
         packet.Buffer = buffer;
         packet.Size = buffer.Length;
 
-        if (demuxPacket.StreamId == _videoInfo.StreamId)
+        if (demuxPacket.StreamId == _stream.VideoStream.StreamId)
         {
-          //Just set start to straight after last packet, might need adjusting to get seeking working
-          packet.Start = _lastVideoTime;
-          //demuxPacket.Duration seems to actually be stop time, so calculate actual duration (stop - start)
-          _lastVideoTime += (long)((demuxPacket.Duration - demuxPacket.Dts) * 10);
-          packet.Stop = _lastVideoTime;
+          packet.Start = (long)demuxPacket.Dts;
+          packet.Stop = -1;
           //Queue video packet
           m_Tracks[0].AddToCache(ref packet);
         }
@@ -117,14 +133,8 @@ namespace InputStreamSourceFilter
 
     public override HRESULT SeekToTime(long _time)
     {
-      InputStream stream = _stream as InputStream;
-      if (stream != null)
-      {
-        double startPts = 0d;
-        stream.Functions.DemuxSeekTime((int)_time, false, ref startPts);
-        _lastVideoTime = (long)startPts;
-        return S_OK;
-      }
+      double startPts = 0d;
+      _stream.Functions.DemuxSeekTime(ToMS(_time), false, ref startPts);
       return base.SeekToTime(_time);
     }
   }

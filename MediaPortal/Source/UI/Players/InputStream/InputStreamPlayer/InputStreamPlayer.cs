@@ -16,7 +16,7 @@ namespace MediaPortal.UI.Players.InputStreamPlayer
 
     protected override void AddSourceFilter()
     {
-      var sourceFilter = new StreamSourceFilter(_stream, _stream.VideoStream, _stream.AudioStream);
+      var sourceFilter = new StreamSourceFilter(_stream);
       var hr = _graphBuilder.AddFilter(sourceFilter, sourceFilter.Name);
       new HRESULT(hr).Throw();
 

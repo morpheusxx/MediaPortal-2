@@ -29,20 +29,16 @@ namespace MediaPortalWrapper
 
     public InputstreamInfo VideoStream
     {
-      get
-      {
-        return _inputstreamInfos.Values.FirstOrDefault(i => _enabledStreams.Contains((int)i.StreamId) && i.StreamType == StreamType.Video);
-      }
+      get { return _inputstreamInfos.Values.FirstOrDefault(i => _enabledStreams.Contains((int)i.StreamId) && i.StreamType == StreamType.Video); }
     }
+
     public InputstreamInfo AudioStream
     {
-      get
-      {
-        return _inputstreamInfos.Values.FirstOrDefault(i => _enabledStreams.Contains((int)i.StreamId) && i.StreamType == StreamType.Audio);
-      }
+      get { return _inputstreamInfos.Values.FirstOrDefault(i => _enabledStreams.Contains((int)i.StreamId) && i.StreamType == StreamType.Audio); }
     }
 
     public InputStreamAddonFunctions Functions { get { return _addonFunctions; } }
+    public InputstreamCapabilities Caps { get { return _caps; } }
 
     private readonly DllAddonWrapper<InputStreamAddonFunctions> _wrapper;
     private Dictionary<uint, InputstreamInfo> _inputstreamInfos;
@@ -50,6 +46,7 @@ namespace MediaPortalWrapper
     private StreamPreferences _preferences;
     private int[] _enabledStreams;
     private readonly Dictionary<DemuxPacket, IntPtr> _packets = new Dictionary<DemuxPacket, IntPtr>();
+    private readonly InputstreamCapabilities _caps;
 
     public InputStream(string streamUrl, Dictionary<string, string> addonProperties, StreamPreferences preferences)
     {
@@ -97,7 +94,7 @@ namespace MediaPortalWrapper
       _addonFunctions.Open(ref inputStreamConfig);
 
       IntPtr capsPtr = _addonFunctions.GetCapabilities();
-      var caps = Marshal.PtrToStructure<InputstreamCapabilities>(capsPtr);
+      _caps = Marshal.PtrToStructure<InputstreamCapabilities>(capsPtr);
 
       OnStreamChange();
     }

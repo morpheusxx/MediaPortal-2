@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace InputStreamSourceFilter.H264
 {
@@ -18,12 +15,12 @@ namespace InputStreamSourceFilter.H264
       SPSCount = data[offset++] & 0x1F;
       SPSLength = IntFromBigEndian(data, offset, 2);
       offset += 2;
-      SPS = copyBytes(data, offset, SPSLength);
+      SPS = CopyBytes(data, offset, SPSLength);
       offset += SPSLength;
       PPSCount = data[offset++];
       PPSLength = IntFromBigEndian(data, offset, 2);
       offset += 2;
-      PPS = copyBytes(data, offset, PPSLength);
+      PPS = CopyBytes(data, offset, PPSLength);
     }
 
     public int Version { get; set; }
@@ -38,7 +35,7 @@ namespace InputStreamSourceFilter.H264
     public int PPSLength { get; set; }
     public byte[] PPS { get; set; }
 
-    static byte[] copyBytes(byte[] src, int offset, int count)
+    static byte[] CopyBytes(byte[] src, int offset, int count)
     {
       byte[] dst = new byte[count];
       Buffer.BlockCopy(src, offset, dst, 0, count);
@@ -53,7 +50,7 @@ namespace InputStreamSourceFilter.H264
       for (int x = 0; x < count; x++)
       {
         int shift = 8 * (count - 1 - x);
-        result = result | (int)buffer[x + offset] << shift;
+        result = result | buffer[x + offset] << shift;
       }
       return result;
     }

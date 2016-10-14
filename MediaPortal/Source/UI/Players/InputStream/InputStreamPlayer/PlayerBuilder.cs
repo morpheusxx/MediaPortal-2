@@ -24,11 +24,16 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using MediaPortal.Common;
+using MediaPortal.Common.Localization;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Settings;
+using MediaPortal.UI.Players.Video.Settings;
 using MediaPortal.UI.Presentation.Players;
+using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortalWrapper;
 
 namespace MediaPortal.UI.Players.InputStreamPlayer
@@ -80,12 +85,26 @@ namespace MediaPortal.UI.Players.InputStreamPlayer
         { InputStream.KEY_INPUTSTREAM_LIC_URL, licUrl }
       };
 
+      var videoSettings = ServiceRegistration.Get<ISettingsManager>().Load<VideoSettings>();
+      var regionSettings = ServiceRegistration.Get<ISettingsManager>().Load<RegionSettings>();
+      CultureInfo culture = CultureInfo.CurrentUICulture;
+      try
+      {
+        if (!string.IsNullOrEmpty(regionSettings.Culture))
+          culture = CultureInfo.CreateSpecificCulture(regionSettings.Culture);
+      }
+      catch { }
+
+      // Prefer video in screen resolution
+      var height = SkinContext.CurrentDisplayMode.Height;
+      var width  = SkinContext.CurrentDisplayMode.Width;
+
       InputStream.StreamPreferences preferences = new InputStream.StreamPreferences
       {
-        Width = 1280, //1920,
-        Height = 720, //1080,
-        ThreeLetterLangCode = "eng",
-        PreferMultiChannel = true
+        Width = width,
+        Height = height,
+        ThreeLetterLangCode = culture.ThreeLetterISOLanguageName,
+        PreferMultiChannel = videoSettings.PreferMultiChannelAudio
       };
 
       InputStream onlineSource = new InputStream(streamUrl, addonProperties, preferences);

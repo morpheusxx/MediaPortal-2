@@ -1,9 +1,11 @@
-﻿using DirectShow;
+﻿using System.Linq;
+using DirectShow;
 using DirectShow.BaseClasses;
 using DirectShow.Helper;
 using MediaPortalWrapper.Streams;
 using System.Runtime.InteropServices;
 using MediaPortalWrapper;
+using MediaPortalWrapper.NativeWrappers;
 
 namespace InputStreamSourceFilter
 {
@@ -63,11 +65,21 @@ namespace InputStreamSourceFilter
     protected override HRESULT LoadTracks()
     {
       //Initialise the tracks, these create our output pins
-      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, MediaTypeBuilder.H264_AVC1(_stream.VideoStream)));
-      m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, MediaTypeBuilder.E_AC3(_stream.AudioStream)));
+      AMMediaType mediaType;
+      if (MediaTypeBuilder.TryGetType(_stream.VideoStream, out mediaType))
+        m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType));
 
-      //int time = _stream.Functions.GetTime();
-      //int totalTime = _stream.Functions.GetTotalTime();
+      // TODO: this is intended for IAMStreamSelect, but adding all audio tracks here creates an filter output pin for each track
+      foreach (InputstreamInfo audioStream in _stream.AudioStreams.Where(s => s.StreamId == _stream.AudioStream.StreamId))
+      {
+        if (MediaTypeBuilder.TryGetType(audioStream, out mediaType))
+        {
+          var track = new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, mediaType);
+          track.Active = track.Enabled = audioStream.StreamId == _stream.AudioStream.StreamId;
+          m_Tracks.Add(track);
+        }
+      }
+
       m_rtDuration = ToDS(_stream.Functions.GetTotalTime());
       return S_OK;
     }
@@ -95,10 +107,8 @@ namespace InputStreamSourceFilter
     //This is called by a separate thread repeatedly to fill each tracks packet cache
     public override HRESULT ProcessDemuxPackets()
     {
-      //GetVars();
-
       DemuxPacket demuxPacket = _stream.Read();
-      //EOS?
+      //EOS
       if (demuxPacket.StreamId == 0)
         return S_FALSE;
 
@@ -114,6 +124,7 @@ namespace InputStreamSourceFilter
 
         if (demuxPacket.StreamId == _stream.VideoStream.StreamId)
         {
+          // DVD Time to DirectShow (10^7 to 10^8)
           packet.Start = (long)(demuxPacket.Dts * 10);
           packet.Stop = (long)(demuxPacket.Duration * 10);
           //Queue video packet
@@ -131,11 +142,11 @@ namespace InputStreamSourceFilter
       return S_OK;
     }
 
-    public override HRESULT SeekToTime(long _time)
+    public override HRESULT SeekToTime(long time)
     {
       double startPts = 0d;
-      _stream.Functions.DemuxSeekTime(ToMS(_time), false, ref startPts);
-      return base.SeekToTime(_time);
+      _stream.Functions.DemuxSeekTime(ToMS(time), false, ref startPts);
+      return base.SeekToTime(time);
     }
   }
 
@@ -144,7 +155,7 @@ namespace InputStreamSourceFilter
   /// </summary>
   class MediaTypedDemuxTrack : DemuxTrack
   {
-    readonly AMMediaType _pmt;
+    private readonly AMMediaType _pmt;
 
     public MediaTypedDemuxTrack(FileParser parser, TrackType type, AMMediaType pmt)
       : base(parser, type)

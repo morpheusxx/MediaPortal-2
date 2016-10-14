@@ -1,7 +1,7 @@
 ﻿using DirectShow;
 using InputStreamSourceFilter.H264;
-using MediaPortalWrapper.Streams;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using MediaPortalWrapper.NativeWrappers;
 
@@ -13,7 +13,39 @@ namespace InputStreamSourceFilter
     const int FOURCC_AVC1 = 0x31435641;
     static readonly Guid MEDIASUBTYPE_AVC1 = new Guid(0x31435641, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
     static readonly Guid MEDIASUBTYPE_DOLBY_DDPLUS = new Guid("a7fb87af-2d02-42fb-a4d4-05cd93843bdd");
-    
+    static readonly Guid MEDIASUBTYPE_RAW_AAC1 = new Guid("{000000FF-0000-0010-8000-00AA00389B71}");
+
+
+    private static readonly Dictionary<string, Func<InputstreamInfo, AMMediaType>> TYPE_MAPPINGS = new Dictionary<string, Func<InputstreamInfo, AMMediaType>>
+    {
+      // Types from https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/StreamingMediaGuide/FrequentlyAskedQuestions/FrequentlyAskedQuestions.html
+      { "h264", H264_AVC1 }, //        Common codec name as fallback
+      { "avc1.64001F", H264_AVC1 }, // H.264 High Profile level 3.1
+      { "avc1.640028", H264_AVC1 }, // H.264 High Profile level 4.0
+      { "avc1.640029", H264_AVC1 }, // H.264 High Profile level 4.1
+      { "mp4a.40.2", AAC_LC }, //      AAC-LC
+      { "mp4a.40.5", HE_AAC }, //      HE-AAC No decoder support yet?
+      { "ec-3", E_AC3 }, //            E-AC3
+    };
+
+    /// <summary>
+    /// Tries to create a matching <see cref="AMMediaType"/> for the given <paramref name="streamInfo"/>.
+    /// </summary>
+    /// <param name="streamInfo">stream</param>
+    /// <param name="mediaType">media type</param>
+    /// <returns><c>true</c> if successful</returns>
+    public static bool TryGetType(InputstreamInfo streamInfo, out AMMediaType mediaType)
+    {
+      Func<InputstreamInfo, AMMediaType> mediaTypeFn;
+      if (TYPE_MAPPINGS.TryGetValue(streamInfo.CodecInternalName, out mediaTypeFn) || TYPE_MAPPINGS.TryGetValue(streamInfo.CodecName, out mediaTypeFn))
+      {
+        mediaType = mediaTypeFn(streamInfo);
+        return true;
+      }
+      mediaType = null;
+      return false;
+    }
+
     /// <summary>
     /// AnnexB formatted h264 bitstream
     /// </summary>
@@ -95,29 +127,65 @@ namespace InputStreamSourceFilter
       return amt;
     }
 
-    /// <summary>
-    /// Currently hardcoded EAC3 media type from sample data.
-    /// This needs to be made more generic, it should be possible if we have a properly populated InputStreamInfo
-    /// </summary>
-    /// <param name="streamInfo"></param>
-    /// <returns></returns>
+    private static void AssignStreamInfoFields(InputstreamInfo streamInfo, ref WaveFormatEx wf, ref AMMediaType amt)
+    {
+      wf.nChannels = (ushort)streamInfo.Channels;
+      wf.nSamplesPerSec = (int)streamInfo.SampleRate;
+      wf.nAvgBytesPerSec = streamInfo.Bandwidth / 8;
+      amt.sampleSize = streamInfo.Bandwidth;
+    }
+
+    public static AMMediaType AAC_LC(InputstreamInfo streamInfo)
+    {
+      WaveFormatEx wf = new WaveFormatEx();
+      wf.wFormatTag = 255;
+      wf.nBlockAlign = 1;
+      wf.wBitsPerSample = 16;
+      wf.cbSize = 0;
+
+      AMMediaType amt = new AMMediaType();
+      AssignStreamInfoFields(streamInfo, ref wf, ref amt);
+      amt.majorType = MediaType.Audio;
+      amt.subType = MEDIASUBTYPE_RAW_AAC1;
+      amt.temporalCompression = false;
+      amt.fixedSizeSamples = true;
+      amt.SetFormat(wf);
+      return amt;
+    }
+
+
+    public static AMMediaType HE_AAC(InputstreamInfo streamInfo)
+    {
+      WaveFormatEx wf = new WaveFormatEx();
+      wf.wFormatTag = 8192;
+      wf.nBlockAlign = 24;
+      wf.wBitsPerSample = 16;
+      wf.cbSize = 0;
+
+      AMMediaType amt = new AMMediaType();
+      AssignStreamInfoFields(streamInfo, ref wf, ref amt);
+      amt.majorType = MediaType.Audio;
+      amt.subType = MEDIASUBTYPE_DOLBY_DDPLUS;
+      amt.temporalCompression = false;
+      amt.fixedSizeSamples = true;
+      amt.SetFormat(wf);
+      return amt;
+    }
+
     public static AMMediaType E_AC3(InputstreamInfo streamInfo)
     {
       WaveFormatEx wf = new WaveFormatEx();
       wf.wFormatTag = 8192;
-      wf.nChannels = (ushort)streamInfo.Channels; // 6
-      wf.nSamplesPerSec = (int)streamInfo.SampleRate; // 48000;
-      wf.nAvgBytesPerSec = streamInfo.Bandwidth/8; // 32000;
       wf.nBlockAlign = 24;
       wf.wBitsPerSample = 32;
       wf.cbSize = 0;
 
       AMMediaType amt = new AMMediaType();
+      AssignStreamInfoFields(streamInfo, ref wf, ref amt);
       amt.majorType = MediaType.Audio;
       amt.subType = MEDIASUBTYPE_DOLBY_DDPLUS;
       amt.temporalCompression = false;
       amt.fixedSizeSamples = true;
-      amt.sampleSize = streamInfo.Bandwidth; // 256000;
       amt.SetFormat(wf);
       return amt;
     }

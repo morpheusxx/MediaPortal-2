@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using MediaPortalWrapper.NativeWrappers;
 using MediaPortalWrapper.Streams;
@@ -37,13 +36,18 @@ namespace MediaPortalWrapper
       get { return _inputstreamInfos.Values.FirstOrDefault(i => _enabledStreams.Contains((int)i.StreamId) && i.StreamType == StreamType.Audio); }
     }
 
+    public List<InputstreamInfo> AudioStreams
+    {
+      get { return _inputstreamInfos.Values.Where(i => i.StreamType == StreamType.Audio).ToList(); }
+    }
+
     public InputStreamAddonFunctions Functions { get { return _addonFunctions; } }
     public InputstreamCapabilities Caps { get { return _caps; } }
 
     private readonly DllAddonWrapper<InputStreamAddonFunctions> _wrapper;
     private Dictionary<uint, InputstreamInfo> _inputstreamInfos;
     private InputStreamAddonFunctions _addonFunctions;
-    private StreamPreferences _preferences;
+    private readonly StreamPreferences _preferences;
     private int[] _enabledStreams;
     private readonly Dictionary<DemuxPacket, IntPtr> _packets = new Dictionary<DemuxPacket, IntPtr>();
     private readonly InputstreamCapabilities _caps;
@@ -110,7 +114,7 @@ namespace MediaPortalWrapper
     {
       UpdateStreams();
 
-      GetPreferredStreams(_inputstreamInfos, _preferences.ThreeLetterLangCode);
+      GetPreferredStreams(_inputstreamInfos, _preferences);
 
       // Tell the inputstream to enable selected stream IDs
       EnableStreams();
@@ -143,7 +147,7 @@ namespace MediaPortalWrapper
       _inputstreamInfos = streamInfos.ToDictionary(s => s.StreamId);
     }
 
-    private void GetPreferredStreams(Dictionary<uint, InputstreamInfo> inputstreamInfos, string preferedLang, bool preferMultiChannel = true)
+    private void GetPreferredStreams(Dictionary<uint, InputstreamInfo> inputstreamInfos, StreamPreferences preferences)
     {
       List<int> selectedIds = new List<int>();
       // Video
@@ -153,12 +157,12 @@ namespace MediaPortalWrapper
 
       // Audio, prefer language then multichannel
       var audioStreams = inputstreamInfos.Values.Where(i => i.StreamType == StreamType.Audio).ToList();
-      var langStreams = audioStreams.Where(i => i.Language == preferedLang).ToList();
+      var langStreams = audioStreams.Where(i => i.Language == preferences.ThreeLetterLangCode).ToList();
 
       // Prefer matching language, then all languages
       foreach (var streams in new[] { langStreams, audioStreams })
       {
-        var matchingStreams = preferMultiChannel ?
+        var matchingStreams = preferences.PreferMultiChannel ?
           streams.OrderByDescending(i => i.Channels).ThenBy(i => i.CodecInternalName) :
           streams.OrderBy(i => i.Channels).ThenBy(i => i.CodecInternalName);
 

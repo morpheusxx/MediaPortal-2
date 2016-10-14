@@ -114,8 +114,8 @@ namespace InputStreamSourceFilter
 
         if (demuxPacket.StreamId == _stream.VideoStream.StreamId)
         {
-          packet.Start = (long)demuxPacket.Dts;
-          packet.Stop = -1;
+          packet.Start = (long)(demuxPacket.Dts * 10);
+          packet.Stop = (long)(demuxPacket.Duration * 10);
           //Queue video packet
           m_Tracks[0].AddToCache(ref packet);
         }

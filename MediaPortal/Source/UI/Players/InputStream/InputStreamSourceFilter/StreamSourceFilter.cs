@@ -176,7 +176,7 @@ namespace InputStreamSourceFilter
                            dwFlags == AMStreamSelectEnableFlags.EnableAll // all should be enabled
                          ) && dwFlags != AMStreamSelectEnableFlags.DisableAll; // must not be "Disable All"
 
-        _streamParser.InputStream.Functions.EnableStream(track.StreamId, isEnabled);
+        _streamParser.InputStream.EnableStream(track.StreamId, isEnabled);
       }
 
       if (IsActive && dwFlags != AMStreamSelectEnableFlags.DisableAll)
@@ -188,10 +188,14 @@ namespace InputStreamSourceFilter
           {
             long current;
             seeking.GetCurrentPosition(out current);
-            current -= UNITS / 10;
-            seeking.SetPositions(current, AMSeekingSeekingFlags.AbsolutePositioning, null, AMSeekingSeekingFlags.NoPositioning);
-            current += UNITS / 10;
-            seeking.SetPositions(current, AMSeekingSeekingFlags.AbsolutePositioning, null, AMSeekingSeekingFlags.NoPositioning);
+            // Only seek during playback, not on initial selection
+            if (current != 0)
+            {
+              current -= UNITS / 10;
+              seeking.SetPositions(current, AMSeekingSeekingFlags.AbsolutePositioning, null, AMSeekingSeekingFlags.NoPositioning);
+              current += UNITS / 10;
+              seeking.SetPositions(current, AMSeekingSeekingFlags.AbsolutePositioning, null, AMSeekingSeekingFlags.NoPositioning);
+            }
           }
         }
         catch
@@ -208,6 +212,7 @@ namespace InputStreamSourceFilter
   public class StreamFileParser : FileParser
   {
     protected InputStream _stream;
+    protected Dictionary<int, MediaTypedDemuxTrack> _trackMap = new Dictionary<int, MediaTypedDemuxTrack>();
 
     public List<MediaTypedDemuxTrack> Tracks { get { return m_Tracks.OfType<MediaTypedDemuxTrack>().ToList(); } }
     public List<MediaTypedDemuxTrack> SelectableTracks { get { return Tracks.Where(t => t.Type == DemuxTrack.TrackType.Audio || t.Type == DemuxTrack.TrackType.Subtitles).ToList(); } }
@@ -224,12 +229,18 @@ namespace InputStreamSourceFilter
       return S_OK;
     }
 
+    protected void AddIndexedTrack(MediaTypedDemuxTrack track)
+    {
+      m_Tracks.Add(track);
+      _trackMap[track.StreamId] = track;
+    }
+
     protected override HRESULT LoadTracks()
     {
       //Initialise the tracks, these create our output pins
       AMMediaType mediaType;
       if (MediaTypeBuilder.TryGetType(_stream.VideoStream, out mediaType))
-        m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType, (int)_stream.VideoStream.StreamId));
+        AddIndexedTrack(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType, (int)_stream.VideoStream.StreamId));
 
       foreach (InputstreamInfo audioStream in _stream.AudioStreams)
       {
@@ -238,9 +249,10 @@ namespace InputStreamSourceFilter
           var track = new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, mediaType, (int)audioStream.StreamId)
           {
             LCID = audioStream.Language.TryGetLCID(),
-            Enabled = audioStream.StreamId == _stream.AudioStream.StreamId
+            Enabled = audioStream.StreamId == _stream.AudioStream.StreamId,
+            Active = audioStream.StreamId == _stream.AudioStream.StreamId
           };
-          m_Tracks.Add(track);
+          AddIndexedTrack(track);
         }
       }
 
@@ -265,17 +277,17 @@ namespace InputStreamSourceFilter
         packet.Buffer = buffer;
         packet.Size = buffer.Length;
 
-        if (demuxPacket.StreamId == _stream.VideoStream.StreamId)
+        MediaTypedDemuxTrack track;
+        if (_trackMap.TryGetValue(demuxPacket.StreamId, out track))
         {
-          packet.Start = demuxPacket.Dts.ToDS();
-          packet.Stop = demuxPacket.Duration.ToDS();
-          //Queue video packet
-          m_Tracks[0].AddToCache(ref packet);
-        }
-        else
-        {
-          //Queue audio packet, audio doesn't need timestamps
-          m_Tracks[1].AddToCache(ref packet);
+          if (track.Type == DemuxTrack.TrackType.Video)
+          {
+            // Set video timestamps
+            packet.Start = demuxPacket.Dts.ToDS();
+            packet.Stop = demuxPacket.Duration.ToDS();
+          }
+          // Queue samples
+          track.AddToCache(ref packet);
         }
       }
 

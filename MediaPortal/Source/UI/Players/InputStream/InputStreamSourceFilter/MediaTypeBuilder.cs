@@ -154,18 +154,19 @@ namespace InputStreamSourceFilter
     }
 
 
+    // TODO: find a working decoder and get matching properties
     public static AMMediaType HE_AAC(InputstreamInfo streamInfo)
     {
       WaveFormatEx wf = new WaveFormatEx();
-      wf.wFormatTag = 8192;
-      wf.nBlockAlign = 24;
+      wf.wFormatTag = 255;
+      wf.nBlockAlign = 1;
       wf.wBitsPerSample = 16;
       wf.cbSize = 0;
 
       AMMediaType amt = new AMMediaType();
       AssignStreamInfoFields(streamInfo, ref wf, ref amt);
       amt.majorType = MediaType.Audio;
-      amt.subType = MEDIASUBTYPE_DOLBY_DDPLUS;
+      amt.subType = MEDIASUBTYPE_RAW_AAC1;
       amt.temporalCompression = false;
       amt.fixedSizeSamples = true;
       amt.SetFormat(wf);

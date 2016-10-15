@@ -41,14 +41,14 @@ namespace MediaPortalWrapper
       get { return _inputstreamInfos.Values.Where(i => i.StreamType == StreamType.Audio).ToList(); }
     }
 
-    public InputStreamAddonFunctions Functions { get { return _addonFunctions; } }
+    public InputStreamAddonFunctions Functions { get { lock (_syncObj) return _addonFunctions; } }
     public InputstreamCapabilities Caps { get { return _caps; } }
 
     private readonly DllAddonWrapper<InputStreamAddonFunctions> _wrapper;
     private Dictionary<uint, InputstreamInfo> _inputstreamInfos;
-    private InputStreamAddonFunctions _addonFunctions;
+    private readonly InputStreamAddonFunctions _addonFunctions;
     private readonly StreamPreferences _preferences;
-    private int[] _enabledStreams;
+    private List<int> _enabledStreams;
     private readonly Dictionary<DemuxPacket, IntPtr> _packets = new Dictionary<DemuxPacket, IntPtr>();
     private readonly InputstreamCapabilities _caps;
 
@@ -93,19 +93,20 @@ namespace MediaPortalWrapper
       inputStreamConfig.CountInfoValues = (uint)idx;
 
       if (preferences.Width.HasValue && preferences.Height.HasValue)
-        _addonFunctions.SetVideoResolution(preferences.Width.Value, preferences.Height.Value);
+        Functions.SetVideoResolution(preferences.Width.Value, preferences.Height.Value);
 
-      _addonFunctions.Open(ref inputStreamConfig);
+      Functions.Open(ref inputStreamConfig);
 
-      IntPtr capsPtr = _addonFunctions.GetCapabilities();
-      _caps = Marshal.PtrToStructure<InputstreamCapabilities>(capsPtr);
+      IntPtr capsPtr = Functions.GetCapabilities();
+      if (capsPtr != IntPtr.Zero)
+        _caps = Marshal.PtrToStructure<InputstreamCapabilities>(capsPtr);
 
       OnStreamChange();
     }
 
     public override void Dispose()
     {
-      _addonFunctions.Close();
+      Functions.Close();
       _wrapper.Dispose();
     }
 
@@ -120,22 +121,41 @@ namespace MediaPortalWrapper
       EnableStreams();
     }
 
+    public void EnableStream(int streamId, bool isEnabled)
+    {
+      bool changed = false;
+      // Keep list in sync
+      if (isEnabled && !_enabledStreams.Contains(streamId))
+      {
+        _enabledStreams.Add(streamId);
+        changed = true;
+      }
+      if (!isEnabled && _enabledStreams.Contains(streamId))
+      {
+        _enabledStreams.Remove(streamId);
+        changed = true;
+      }
+
+      if (changed)
+        Functions.EnableStream(streamId, isEnabled);
+    }
+
     private void EnableStreams()
     {
       foreach (var inputstreamInfo in _inputstreamInfos)
-        _addonFunctions.EnableStream((int)inputstreamInfo.Key, _enabledStreams.Contains((int)inputstreamInfo.Key));
+        Functions.EnableStream((int)inputstreamInfo.Key, _enabledStreams.Contains((int)inputstreamInfo.Key));
     }
 
     private void UpdateStreams()
     {
-      InputstreamIds ids = _addonFunctions.GetStreamIds();
+      InputstreamIds ids = Functions.GetStreamIds();
 
       List<InputstreamInfo> streamInfos = new List<InputstreamInfo>();
       unsafe
       {
         for (int i = 0; i < ids.StreamCount; i++)
         {
-          var info = _addonFunctions.GetStream((int)ids.StreamIds[i]);
+          var info = Functions.GetStream((int)ids.StreamIds[i]);
           streamInfos.Add(info);
           Logger.Log("Stream {1}:", i, info);
 
@@ -173,7 +193,7 @@ namespace MediaPortalWrapper
           break;
         }
       }
-      _enabledStreams = selectedIds.ToArray();
+      _enabledStreams = selectedIds.ToList();
     }
 
     public override void Write(DemuxPacket packet)
@@ -183,7 +203,7 @@ namespace MediaPortalWrapper
 
     public override DemuxPacket Read()
     {
-      IntPtr demuxPacketPtr = _addonFunctions.DemuxRead();
+      IntPtr demuxPacketPtr = Functions.DemuxRead();
       // If there is no more data, DemuxRead returns 0
       if (demuxPacketPtr == IntPtr.Zero)
         return new DemuxPacket { StreamId = 0 }; // EOS indicator

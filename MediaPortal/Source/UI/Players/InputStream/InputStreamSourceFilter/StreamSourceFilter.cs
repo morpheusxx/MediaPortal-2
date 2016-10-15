@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Globalization;
+using System.Linq;
 using DirectShow;
 using DirectShow.BaseClasses;
 using DirectShow.Helper;
@@ -62,6 +64,19 @@ namespace InputStreamSourceFilter
       return S_OK;
     }
 
+    public static CultureInfo FromISOName(string name)
+    {
+      return CultureInfo
+          .GetCultures(CultureTypes.NeutralCultures)
+          .FirstOrDefault(c => string.Equals(c.ThreeLetterISOLanguageName, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static int TryGetLCID(string name)
+    {
+      var culture = FromISOName(name);
+      return culture != null ? culture.LCID : 0;
+    }
+
     protected override HRESULT LoadTracks()
     {
       //Initialise the tracks, these create our output pins
@@ -70,11 +85,12 @@ namespace InputStreamSourceFilter
         m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType));
 
       // TODO: this is intended for IAMStreamSelect, but adding all audio tracks here creates an filter output pin for each track
-      foreach (InputstreamInfo audioStream in _stream.AudioStreams.Where(s => s.StreamId == _stream.AudioStream.StreamId))
+      foreach (InputstreamInfo audioStream in _stream.AudioStreams/*.Where(s => s.StreamId == _stream.AudioStream.StreamId)*/)
       {
         if (MediaTypeBuilder.TryGetType(audioStream, out mediaType))
         {
           var track = new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, mediaType);
+          track.LCID = TryGetLCID(audioStream.Language);
           track.Active = track.Enabled = audioStream.StreamId == _stream.AudioStream.StreamId;
           m_Tracks.Add(track);
         }

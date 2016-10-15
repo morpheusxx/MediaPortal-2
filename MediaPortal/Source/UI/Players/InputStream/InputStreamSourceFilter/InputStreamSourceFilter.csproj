@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\CultureExtension.cs" />
+    <Compile Include="Extensions\TimeStampExtension.cs" />
     <Compile Include="H264\H264CodecData.cs" />
     <Compile Include="H264\BitReader.cs" />
     <Compile Include="H264\NaluParser.cs" />

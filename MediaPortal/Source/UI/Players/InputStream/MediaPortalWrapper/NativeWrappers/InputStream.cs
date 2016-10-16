@@ -55,19 +55,21 @@ namespace MediaPortalWrapper.NativeWrappers
     public int dummy;
   }
 
-  [StructLayout(LayoutKind.Sequential, Pack = 1)]
+  [StructLayout(LayoutKind.Sequential)]
   public struct InputstreamCapabilities
   {
-    [MarshalAs(UnmanagedType.I1)]
-    public bool SupportsIDemux; /*!< @brief supports interface IDemux */
-    [MarshalAs(UnmanagedType.I1)]
-    public bool SupportsIPosTime; /*!< @brief supports interface IPosTime */
-    [MarshalAs(UnmanagedType.I1)]
-    public bool SupportsIDisplayTime; /*!< @brief supports interface IDisplayTime */
-    [MarshalAs(UnmanagedType.I1)]
-    public bool SupportsSeek; /*!< @brief supports seek */
-    [MarshalAs(UnmanagedType.I1)]
-    public bool SupportsPause; /*!< @brief supports pause */
+    public byte SupportsIDemux;/*!< @brief supports interface IDemux */
+    public byte SupportsIPosTime; /*!< @brief supports interface IPosTime */
+    public byte SupportsIDisplayTime; /*!< @brief supports interface IDisplayTime */
+    public byte SupportsSeek; /*!< @brief supports seek */
+    public byte SupportsPause; /*!< @brief supports pause */
+
+    // NOTE: Although the unmanaged types are only "bool" (1 byte), marshalling calls without having exact the double size crashes
+    public byte Padding0;
+    public byte Padding1;
+    public byte Padding2;
+    public byte Padding3;
+    public byte Padding4;
   }
 
   [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -188,7 +190,8 @@ namespace MediaPortalWrapper.NativeWrappers
 
   // InputstreamCapabilities (INPUTSTREAM_CAPABILITIES)
   [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-  public delegate IntPtr GetCapabilitiesDlg();
+  [return: MarshalAs(UnmanagedType.Struct)]
+  public delegate InputstreamCapabilities GetCapabilitiesDlg();
 
   // INPUTSTREAM_IDS
   [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

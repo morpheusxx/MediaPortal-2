@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using InputStreamSourceFilter.Extensions;
 using MediaPortalWrapper;
 using MediaPortalWrapper.NativeWrappers;
+using MediaPortalWrapper.Utils;
 
 namespace InputStreamSourceFilter
 {
@@ -30,61 +31,6 @@ namespace InputStreamSourceFilter
       Load(m_sFileName, null);
     }
 
-    protected override HRESULT InitializeOutputPins()
-    {
-      if (m_pFileParser == null) return E_UNEXPECTED;
-      int nAdded = 0;
-      int nCount = m_pFileParser.Count;
-      int[] indexes = new int[(int)DemuxTrack.TrackType.Subtitles + 1];
-      bool[] useIndexes = new bool[indexes.Length];
-      for (int i = 0; i < indexes.Length; i++)
-      {
-        indexes[i] = 0;
-        useIndexes[i] = m_pFileParser.GetTracksCountByType((DemuxTrack.TrackType)i) > 1;
-      }
-      for (int i = 0; i < nCount; i++)
-      {
-        DemuxTrack track = m_pFileParser[i];
-        if (track != null && track.IsTrackValid)
-        {
-          string name = track.Name;
-          if (string.IsNullOrEmpty(name))
-          {
-            name = "Unknown";
-            switch (track.Type)
-            {
-              case DemuxTrack.TrackType.Video:
-                name = "Video";
-                break;
-              case DemuxTrack.TrackType.Audio:
-                name = "Audio";
-                break;
-              case DemuxTrack.TrackType.Subtitles:
-                name = "Subtitles";
-                break;
-              case DemuxTrack.TrackType.SubPicture:
-                name = "Sub Picture";
-                break;
-            }
-            int type = (int)track.Type;
-            if (type >= 0 && type < indexes.Length)
-            {
-              if (useIndexes[type])
-              {
-                name += " " + indexes[type]++;
-              }
-            }
-          }
-          if (track.Enabled)
-          {
-            AddPin(new SplitterOutputPin(track, name, this));
-            nAdded++;
-          }
-        }
-      }
-      return nAdded == 0 ? VFW_E_NO_ACCEPTABLE_TYPES : NOERROR;
-    }
-
     #region IAMStreamSelect Members
 
     public override int Count(out int pcStreams)
@@ -104,8 +50,8 @@ namespace InputStreamSourceFilter
 
       if (ppmt != IntPtr.Zero)
       {
-        AMMediaType mt = new AMMediaType();
-        if (S_OK == selected.GetMediaType(0, ref mt))
+        AMMediaType mt;
+        if (MediaTypeBuilder.TryGetType(selected, out mt))
         {
           IntPtr pmt = Marshal.AllocCoTaskMem(Marshal.SizeOf(mt));
           Marshal.StructureToPtr(mt, pmt, true);
@@ -118,40 +64,36 @@ namespace InputStreamSourceFilter
       }
       if (pdwFlags != IntPtr.Zero)
       {
-        if (!selected.Enabled)
-        {
-          Marshal.WriteInt32(pdwFlags, 0);
-        }
-        else
-        {
-          Marshal.WriteInt32(pdwFlags, (int)AMStreamSelectInfoFlags.Enabled);
-        }
+        var enabled = (int)(selected.StreamId == _streamParser.InputStream.AudioStream.StreamId ?
+          AMStreamSelectInfoFlags.Enabled :
+          AMStreamSelectInfoFlags.Disabled);
+
+        Marshal.WriteInt32(pdwFlags, enabled);
       }
       if (plcid != IntPtr.Zero)
       {
-        int lcid = selected.LCID;
+        int lcid = selected.Language.TryGetLCID();
         if (lcid == 0)
-        {
           lcid = LOCALE_NEUTRAL;
-        }
+
         Marshal.WriteInt32(plcid, lcid);
       }
       if (pdwGroup != IntPtr.Zero)
       {
-        if (selected.Type == DemuxTrack.TrackType.Audio)
+        if (selected.StreamType == StreamType.Audio)
           Marshal.WriteInt32(pdwGroup, 1);
-        else if (selected.Type == DemuxTrack.TrackType.Subtitles)
+        else if (selected.StreamType == StreamType.Subtitle)
           Marshal.WriteInt32(pdwGroup, 2);
         else
           Marshal.WriteInt32(pdwGroup, 0);
       }
       if (ppszName != IntPtr.Zero)
       {
-        string name = selected.Name;
+        var culture = selected.Language.FromISOName();
+        string name = culture != null ? culture.DisplayName : selected.Language;
         if (string.IsNullOrEmpty(name))
-        {
           name = "Audio #" + lIndex;
-        }
+
         Marshal.WriteIntPtr(ppszName, Marshal.StringToCoTaskMemUni(name));
       }
       if (ppObject != IntPtr.Zero)
@@ -167,6 +109,8 @@ namespace InputStreamSourceFilter
 
     public override int Enable(int lIndex, AMStreamSelectEnableFlags dwFlags)
     {
+      bool changed = false;
+      uint oldAudioStream = _streamParser.InputStream.AudioStream.StreamId;
       for (int index = 0; index < _streamParser.SelectableTracks.Count; index++)
       {
         var track = _streamParser.SelectableTracks[index];
@@ -176,7 +120,21 @@ namespace InputStreamSourceFilter
                            dwFlags == AMStreamSelectEnableFlags.EnableAll // all should be enabled
                          ) && dwFlags != AMStreamSelectEnableFlags.DisableAll; // must not be "Disable All"
 
-        _streamParser.InputStream.EnableStream(track.StreamId, isEnabled);
+        changed |= _streamParser.InputStream.EnableStream((int)track.StreamId, isEnabled);
+      }
+      uint newAudioStream = _streamParser.InputStream.AudioStream.StreamId;
+
+      if (!changed)
+        return NOERROR;
+
+      // Update output pin
+      var audioPin = Pins.OfType<SplitterOutputPin>().FirstOrDefault(p => p.Track.Type == DemuxTrack.TrackType.Audio);
+      if (audioPin != null)
+      {
+        AMMediaType mt;
+        if (MediaTypeBuilder.TryGetType(_streamParser.InputStream.AudioStream, out mt))
+          _streamParser.Tracks[1].SetStreamMediaType(mt);
+        var res = RenameOutputPin(audioPin, oldAudioStream, newAudioStream);
       }
 
       if (IsActive && dwFlags != AMStreamSelectEnableFlags.DisableAll)
@@ -205,17 +163,82 @@ namespace InputStreamSourceFilter
       return NOERROR;
     }
 
-    #endregion
+    private HRESULT RenameOutputPin(SplitterOutputPin pPin, uint oldStreamId, uint newStreamId)
+    {
+      // Output Pin was found
+      // Stop the Graph, remove the old filter, render the graph again, start it up again
+      // This only works on pins that were connected before, or the filter graph could .. well, break
+      if (pPin != null && pPin.IsConnected)
+      {
+        Logger.Log("RenameOutputPin() - Switching {0} Stream {1} to {2}", pPin.Name, oldStreamId, newStreamId);
 
+        IMediaControl pControl = (IMediaControl)FilterGraph;
+
+        FilterState oldState;
+        // Get the graph state
+        // If the graph is in transition, we'll get the next state, not the previous
+        var hr = (HRESULT)pControl.GetState(10, out oldState);
+
+        // Stop the filter graph
+        hr = (HRESULT)pControl.Stop();
+
+        // Audio Filters get their connected filter removed
+        // This way we make sure we reconnect to the proper filter
+        // Other filters just disconnect and try to reconnect later on
+        PinInfo pInfo;
+        IPinImpl connectedPin = pPin.Connected;
+        hr = (HRESULT)connectedPin.QueryPinInfo(out pInfo);
+
+        // Update Output Pin
+        AMMediaType pmt;
+        if (MediaTypeBuilder.TryGetType(_streamParser.InputStream.AudioStream, out pmt))
+          pPin.SetMediaType(pmt);
+
+        int mtIdx = connectedPin.QueryAccept(pmt);
+        bool bMediaTypeFound = (mtIdx >= 0);
+
+        if (pInfo.filter != null)
+        {
+          bool bRemoveFilter = !bMediaTypeFound;
+          if (bRemoveFilter)
+          {
+            hr = (HRESULT)FilterGraph.RemoveFilter(pInfo.filter);
+            // Use IGraphBuilder to rebuild the graph
+            IGraphBuilder pGraphBuilder = (IGraphBuilder)FilterGraph;
+            // Instruct the GraphBuilder to connect us again
+            hr = (HRESULT)pGraphBuilder.Render(pPin);
+          }
+          else
+          {
+            hr = (HRESULT)ReconnectPin(pPin, pmt);
+          }
+
+          pPin.SetMediaType(pmt);
+        }
+
+        // Re-start the graph
+        if (oldState == FilterState.Paused)
+        {
+          hr = (HRESULT)pControl.Pause();
+        }
+        else if (oldState == FilterState.Running)
+        {
+          hr = (HRESULT)pControl.Run();
+        }
+        return hr;
+      }
+      return E_FAIL;
+    }
+
+    #endregion
   }
 
   public class StreamFileParser : FileParser
   {
     protected InputStream _stream;
-    protected Dictionary<int, MediaTypedDemuxTrack> _trackMap = new Dictionary<int, MediaTypedDemuxTrack>();
 
     public List<MediaTypedDemuxTrack> Tracks { get { return m_Tracks.OfType<MediaTypedDemuxTrack>().ToList(); } }
-    public List<MediaTypedDemuxTrack> SelectableTracks { get { return Tracks.Where(t => t.Type == DemuxTrack.TrackType.Audio || t.Type == DemuxTrack.TrackType.Subtitles).ToList(); } }
+    public List<InputstreamInfo> SelectableTracks { get { return _stream.AudioStreams; } }
     public InputStream InputStream { get { return _stream; } }
 
     public void SetSource(InputStream stream)
@@ -229,32 +252,16 @@ namespace InputStreamSourceFilter
       return S_OK;
     }
 
-    protected void AddIndexedTrack(MediaTypedDemuxTrack track)
-    {
-      m_Tracks.Add(track);
-      _trackMap[track.StreamId] = track;
-    }
-
     protected override HRESULT LoadTracks()
     {
       //Initialise the tracks, these create our output pins
       AMMediaType mediaType;
       if (MediaTypeBuilder.TryGetType(_stream.VideoStream, out mediaType))
-        AddIndexedTrack(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType, (int)_stream.VideoStream.StreamId));
+        m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Video, mediaType));
 
-      foreach (InputstreamInfo audioStream in _stream.AudioStreams)
-      {
-        if (MediaTypeBuilder.TryGetType(audioStream, out mediaType))
-        {
-          var track = new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, mediaType, (int)audioStream.StreamId)
-          {
-            LCID = audioStream.Language.TryGetLCID(),
-            Enabled = audioStream.StreamId == _stream.AudioStream.StreamId,
-            Active = audioStream.StreamId == _stream.AudioStream.StreamId
-          };
-          AddIndexedTrack(track);
-        }
-      }
+
+      if (MediaTypeBuilder.TryGetType(_stream.AudioStream, out mediaType))
+        m_Tracks.Add(new MediaTypedDemuxTrack(this, DemuxTrack.TrackType.Audio, mediaType) { LCID = _stream.AudioStream.Language.TryGetLCID() });
 
       m_rtDuration = _stream.Functions.GetTotalTime().ToDS();
       return S_OK;
@@ -268,28 +275,28 @@ namespace InputStreamSourceFilter
       if (demuxPacket.StreamId == 0)
         return S_FALSE;
 
-      if (demuxPacket.StreamId == _stream.VideoStream.StreamId || demuxPacket.StreamId == _stream.AudioStream.StreamId)
+      if (demuxPacket.Data == IntPtr.Zero)
       {
-        //Create the packet and add the data
-        PacketData packet = new PacketData();
-        byte[] buffer = new byte[demuxPacket.Size];
-        Marshal.Copy(demuxPacket.Data, buffer, 0, buffer.Length);
-        packet.Buffer = buffer;
-        packet.Size = buffer.Length;
-
-        MediaTypedDemuxTrack track;
-        if (_trackMap.TryGetValue(demuxPacket.StreamId, out track))
-        {
-          if (track.Type == DemuxTrack.TrackType.Video)
-          {
-            // Set video timestamps
-            packet.Start = demuxPacket.Dts.ToDS();
-            packet.Stop = demuxPacket.Duration.ToDS();
-          }
-          // Queue samples
-          track.AddToCache(ref packet);
-        }
+        _stream.Free(demuxPacket);
+        return S_OK;
       }
+
+      //Create the packet and add the data
+      PacketData packet = new PacketData();
+      byte[] buffer = new byte[demuxPacket.Size];
+      Marshal.Copy(demuxPacket.Data, buffer, 0, buffer.Length);
+      packet.Buffer = buffer;
+      packet.Size = buffer.Length;
+
+      DemuxTrack track = demuxPacket.StreamId == _stream.VideoStream.StreamId ? m_Tracks[0] : m_Tracks[1];
+      if (track.Type == DemuxTrack.TrackType.Video)
+      {
+        // Set video timestamps
+        packet.Start = demuxPacket.Dts.ToDS();
+        packet.Stop = demuxPacket.Duration.ToDS();
+      }
+      // Queue samples
+      track.AddToCache(ref packet);
 
       _stream.Free(demuxPacket);
       return S_OK;
@@ -308,17 +315,18 @@ namespace InputStreamSourceFilter
   /// </summary>
   public class MediaTypedDemuxTrack : DemuxTrack
   {
-    private readonly AMMediaType _pmt;
-    // Contains the underlying input stream ID.
-    private readonly int _streamId;
+    private AMMediaType _pmt;
 
-    public int StreamId { get { return _streamId; } }
+    // Updates stored media type
+    public void SetStreamMediaType(AMMediaType pmt)
+    {
+      _pmt = pmt;
+    }
 
-    public MediaTypedDemuxTrack(FileParser parser, TrackType type, AMMediaType pmt, int streamId)
+    public MediaTypedDemuxTrack(FileParser parser, TrackType type, AMMediaType pmt)
       : base(parser, type)
     {
       _pmt = pmt;
-      _streamId = streamId;
     }
 
     public override HRESULT GetMediaType(int iPosition, ref AMMediaType pmt)

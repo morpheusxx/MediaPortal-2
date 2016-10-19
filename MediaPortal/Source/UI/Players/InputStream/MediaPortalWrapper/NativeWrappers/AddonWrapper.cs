@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
@@ -7,15 +6,6 @@ namespace MediaPortalWrapper.NativeWrappers
 {
   static class NativeMethods
   {
-    [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-    public static extern IntPtr LoadLibrary([MarshalAs(UnmanagedType.LPStr)]string lpFileName);
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-    public static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-    public static extern bool FreeLibrary(IntPtr hModule);
-
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetDllDirectory(string lpPathName);
@@ -32,7 +22,7 @@ namespace MediaPortalWrapper.NativeWrappers
     PermanentFailure   /**< permanent failure, like failing to resolve methods */
   }
 
-  [StructLayout(LayoutKind.Sequential, Pack=1)]
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
   public struct AddonStructSetting
   {
     public int Type;
@@ -41,7 +31,6 @@ namespace MediaPortalWrapper.NativeWrappers
     [MarshalAs(UnmanagedType.LPStr)]
     public string Label;
     public int Current;
-    //public string[] entry;
     public IntPtr Entry;
     public uint NumberOfEntries;
   }
@@ -49,7 +38,7 @@ namespace MediaPortalWrapper.NativeWrappers
   /*!
    * @brief Handle used to return data from the PVR add-on to CPVRClient
    */
-  [StructLayout(LayoutKind.Sequential, Pack=1)]
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
   public struct AddonHandleStruct
   {
     public IntPtr CallerAddress;  /*!< address of the caller */
@@ -86,7 +75,7 @@ namespace MediaPortalWrapper.NativeWrappers
   public delegate AddonStatus SetSettingDlg([MarshalAs(UnmanagedType.LPStr)]string settingName, IntPtr settingValue);
 
 
-  [StructLayout(LayoutKind.Sequential, Pack=1)]
+  [StructLayout(LayoutKind.Sequential, Pack = 1)]
   public struct AddonCB
   {
     [MarshalAs(UnmanagedType.LPStr)]
@@ -113,17 +102,17 @@ namespace MediaPortalWrapper.NativeWrappers
   //<TStruct, TProps> : IDllAddon<TStruct, TProps>, 
   public class DllAddonWrapper<TFunc> : IDisposable where TFunc : new()
   {
-    private IntPtr _pDll;
+    private UnmanagedLibrary _pDll;
+    private IntPtr _ptrStruct;
 
     public TFunc Addon
     {
       get
       {
         int sizeOfStruct = Marshal.SizeOf(typeof(TFunc));
-        var ptrStruct = Marshal.AllocCoTaskMem(sizeOfStruct);
-        GetAddon(ptrStruct);
-        var res = (TFunc)Marshal.PtrToStructure(ptrStruct, typeof(TFunc));
-        //Marshal.FreeCoTaskMem(ptrStruct);
+        _ptrStruct = Marshal.AllocCoTaskMem(sizeOfStruct);
+        GetAddon(_ptrStruct);
+        var res = (TFunc)Marshal.PtrToStructure(_ptrStruct, typeof(TFunc));
         return res;
       }
     }
@@ -140,44 +129,34 @@ namespace MediaPortalWrapper.NativeWrappers
 
     public void Init(string addonDllPath)
     {
-      _pDll = NativeMethods.LoadLibrary(addonDllPath);
+      _pDll = new UnmanagedLibrary(addonDllPath);
 
-      if (_pDll == IntPtr.Zero)
+      if (_pDll == null)
       {
         var lasterror = Marshal.GetLastWin32Error();
         var innerEx = new Win32Exception(lasterror);
         throw innerEx;
       }
 
-      Dictionary<string, Func<IntPtr, bool>> initdll = new Dictionary<string, Func<IntPtr, bool>>
-            {
-                {"get_addon", fnPtr => { GetAddon = (GetAddonDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (GetAddonDlg)); return true; } },
-                {"ADDON_Create", fnPtr => { Create = (CreateDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (CreateDlg)); return true; } },
-                {"ADDON_Stop", fnPtr => { Stop = (StopDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (StopDlg)); return true; } },
-                {"ADDON_Destroy", fnPtr => { Destroy = (DestroyDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (DestroyDlg)); return true; } },
-                {"ADDON_GetStatus", fnPtr => { GetStatus = (GetStatusDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (GetStatusDlg)); return true; } },
-                {"ADDON_HasSettings", fnPtr => { HasSettings = (HasSettingsDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (HasSettingsDlg)); return true; } },
-                {"ADDON_GetSettings", fnPtr => { GetSettings = (GetSettingsDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (GetSettingsDlg)); return true; } },
-                {"ADDON_FreeSettings", fnPtr => { FreeSettings = (FreeSettingsDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (FreeSettingsDlg)); return true; } },
-                {"ADDON_SetSetting", fnPtr => { SetSetting = (SetSettingDlg) Marshal.GetDelegateForFunctionPointer(fnPtr, typeof (SetSettingDlg)); return true; } },
-            };
-
-      foreach (var func in initdll)
-      {
-        IntPtr pAddressOfFunctionToCall = NativeMethods.GetProcAddress(_pDll, func.Key);
-        if (pAddressOfFunctionToCall == IntPtr.Zero)
-          throw new InvalidOperationException();
-        if (!func.Value(pAddressOfFunctionToCall))
-          throw new InvalidOperationException();
-      }
+      GetAddon = _pDll.GetUnmanagedFunction<GetAddonDlg>("get_addon");
+      Create = _pDll.GetUnmanagedFunction<CreateDlg>("ADDON_Create");
+      Stop = _pDll.GetUnmanagedFunction<StopDlg>("ADDON_Stop");
+      Destroy = _pDll.GetUnmanagedFunction<DestroyDlg>("ADDON_Destroy");
+      GetStatus = _pDll.GetUnmanagedFunction<GetStatusDlg>("ADDON_GetStatus");
+      HasSettings = _pDll.GetUnmanagedFunction<HasSettingsDlg>("ADDON_HasSettings");
+      GetSettings = _pDll.GetUnmanagedFunction<GetSettingsDlg>("ADDON_GetSettings");
+      FreeSettings = _pDll.GetUnmanagedFunction<FreeSettingsDlg>("ADDON_FreeSettings");
+      SetSetting = _pDll.GetUnmanagedFunction<SetSettingDlg>("ADDON_SetSetting");
     }
 
     public void Dispose()
     {
+      Marshal.FreeCoTaskMem(_ptrStruct);
       Stop();
       Destroy();
-      if (_pDll != IntPtr.Zero)
-        NativeMethods.FreeLibrary(_pDll);
+      if (_pDll != null)
+        _pDll.Dispose();
     }
   }
 }
+

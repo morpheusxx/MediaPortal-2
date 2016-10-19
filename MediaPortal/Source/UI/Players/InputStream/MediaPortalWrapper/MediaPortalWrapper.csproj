@@ -68,6 +68,7 @@
   <ItemGroup>
     <Compile Include="NativeWrappers\AddonWrapper.cs" />
     <Compile Include="InputStream.cs" />
+    <Compile Include="NativeWrappers\UnmanagedLibrary.cs" />
     <Compile Include="Streams\AvStream.cs" />
     <Compile Include="Streams\DemuxPacket.cs" />
     <Compile Include="Filesystem\AbstractFile.cs" />

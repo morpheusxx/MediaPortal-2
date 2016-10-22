@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using MediaPortal.Common;
+using MediaPortal.Common.PathManager;
 using MediaPortalWrapper.NativeWrappers;
 using MediaPortalWrapper.Streams;
 using MediaPortalWrapper.Utils;
@@ -43,7 +45,7 @@ namespace MediaPortalWrapper
 
     public InputStreamAddonFunctions Functions { get { lock (_syncObj) return _addonFunctions; } }
     public InputstreamCapabilities Caps { get { return _caps; } }
-    
+
     private readonly DllAddonWrapper<InputStreamAddonFunctions> _wrapper;
     private Dictionary<uint, InputstreamInfo> _inputstreamInfos;
     private readonly InputStreamAddonFunctions _addonFunctions;
@@ -60,7 +62,7 @@ namespace MediaPortalWrapper
 
       _preferences = preferences;
       _wrapper = new DllAddonWrapper<InputStreamAddonFunctions>();
-      // TODO: fix path structure for temporary folders
+
       var pluginRoot = Path.GetDirectoryName(GetType().Assembly.Location);
       // Add to windows DLL search path to find widevine dll
       var res = NativeMethods.SetDllDirectory(pluginRoot);
@@ -74,11 +76,14 @@ namespace MediaPortalWrapper
 
       _addonFunctions = _wrapper.Addon;
 
+      // The path contains 2 dummy folders, because the InputStream.mpd plugin creates the cdm folder 2 levels higher.
+      string profileFolder = ServiceRegistration.Get<IPathManager>().GetPath("<DATA>\\OnlineVideos\\InputStream\\D1\\D2");
+
       var inputStreamConfig = new InputStreamConfig
       {
         Url = streamUrl,
-        LibFolder = Path.Combine(cb.LibPath, "cdm"),
-        ProfileFolder = cb.LibPath,
+        LibFolder = Path.Combine(profileFolder, "cdm"),
+        ProfileFolder = profileFolder,
         Properties = new ListItemProperty[InputStreamConfig.MAX_INFO_COUNT]
       };
 

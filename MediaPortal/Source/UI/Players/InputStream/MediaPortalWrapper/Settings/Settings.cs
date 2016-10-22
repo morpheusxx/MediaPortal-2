@@ -73,7 +73,7 @@ namespace MediaPortalWrapper.Settings
 
     public static Dictionary<string, object> Settings = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
     {
-      {"DECRYPTERPATH",  Path.GetDirectoryName(Assembly.GetEntryAssembly().Location)},
+      {"DECRYPTERPATH",  Path.GetDirectoryName(typeof(SettingsWrapper).Assembly.Location)},
       {"MAXRESOLUTION",  2 /* 1920x1080 */}
     };
   }

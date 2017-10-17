@@ -21,6 +21,7 @@
 */
 
 #endregion
+#define RAISE_LOG_LEVEL
 
 using System;
 using MediaPortal.Common;
@@ -28,43 +29,59 @@ using Mediaportal.TV.Server.TVLibrary.IntegrationProvider.Interfaces;
 
 namespace MediaPortal.Plugins.SlimTv.Integration
 {
-  class LoggerWrapper: ILogger
+  class LoggerWrapper : ILogger
   {
     private readonly Common.Logging.ILogger _logger;
 
-    public LoggerWrapper ()
+    public LoggerWrapper()
     {
       _logger = ServiceRegistration.Get<Common.Logging.ILogger>();
     }
 
-    public void Debug (string format, params object[] args)
+    public void Debug(string format, params object[] args)
     {
+#if RAISE_LOG_LEVEL
+      _logger.Info(format, args);
+#else
       _logger.Debug(format, args);
+#endif
     }
 
-    public void Debug (string format, Exception ex, params object[] args)
+    public void Debug(string format, Exception ex, params object[] args)
     {
+#if RAISE_LOG_LEVEL
+      _logger.Info(format, ex, args);
+#else
       _logger.Debug(format, ex, args);
+#endif
     }
 
-    public void Debug (Type caller, string format, params object[] args)
+    public void Debug(Type caller, string format, params object[] args)
     {
       // TODO: handle caller type (format, use own logger,...)
+#if RAISE_LOG_LEVEL
+      _logger.Info(format, args);
+#else
       _logger.Debug(format, args);
+#endif
     }
 
-    public void Debug (Type caller, string format, Exception ex, params object[] args)
+    public void Debug(Type caller, string format, Exception ex, params object[] args)
     {
       // TODO: handle caller type (format, use own logger,...)
+#if RAISE_LOG_LEVEL
+      _logger.Info(format, ex, args);
+#else
       _logger.Debug(format, ex, args);
+#endif
     }
 
-    public void Info (string format, params object[] args)
+    public void Info(string format, params object[] args)
     {
       _logger.Info(format, args);
     }
 
-    public void Info (string format, Exception ex, params object[] args)
+    public void Info(string format, Exception ex, params object[] args)
     {
       _logger.Info(format, ex, args);
     }
@@ -81,12 +98,12 @@ namespace MediaPortal.Plugins.SlimTv.Integration
       _logger.Info(format, ex, args);
     }
 
-    public void Warn (string format, params object[] args)
+    public void Warn(string format, params object[] args)
     {
       _logger.Warn(format, args);
     }
 
-    public void Warn (string format, Exception ex, params object[] args)
+    public void Warn(string format, Exception ex, params object[] args)
     {
       _logger.Warn(format, ex, args);
     }
@@ -103,21 +120,21 @@ namespace MediaPortal.Plugins.SlimTv.Integration
       _logger.Warn(format, ex, args);
     }
 
-    public void Error (string format, params object[] args)
+    public void Error(string format, params object[] args)
     {
       _logger.Error(format, args);
     }
 
-    public void Error (string format, Exception ex, params object[] args)
+    public void Error(string format, Exception ex, params object[] args)
     {
       _logger.Error(format, ex, args);
     }
 
-    public void Error (Exception ex)
+    public void Error(Exception ex)
     {
       _logger.Error(ex);
     }
-    
+
     public void Error(Type caller, Exception ex)
     {
       // TODO: handle caller type (format, use own logger,...)
@@ -136,17 +153,17 @@ namespace MediaPortal.Plugins.SlimTv.Integration
       _logger.Error(format, ex, args);
     }
 
-    public void Critical (string format, params object[] args)
+    public void Critical(string format, params object[] args)
     {
       _logger.Critical(format, args);
     }
 
-    public void Critical (string format, Exception ex, params object[] args)
+    public void Critical(string format, Exception ex, params object[] args)
     {
       _logger.Critical(format, ex, args);
     }
 
-    public void Critical (Exception ex)
+    public void Critical(Exception ex)
     {
       _logger.Critical(ex);
     }

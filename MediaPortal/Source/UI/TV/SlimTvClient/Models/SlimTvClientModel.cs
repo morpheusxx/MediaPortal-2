@@ -46,9 +46,7 @@ using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UiComponents.Media.General;
-using MediaPortal.UiComponents.Media.Settings;
 using MediaPortal.UiComponents.SkinBase.Models;
-using MediaPortal.UI.Control.InputManager;
 using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.Utilities.Events;
@@ -103,6 +101,9 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
 
     // OSD Control properties
     private AbstractProperty _isOSDVisibleProperty = null;
+    private AbstractProperty _isOSDLevel0Property = null;
+    private AbstractProperty _isOSDLevel1Property = null;
+    private AbstractProperty _isOSDLevel2Property = null;
 
     // Channel zapping
     protected DelayedEvent _zapTimer;
@@ -124,9 +125,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
 
     private readonly ItemsList _channelList = new ItemsList();
     private DateTime _lastChannelListUpdate = DateTime.MinValue;
-    private bool _isPlayerConfigOpen;
-    protected DateTime _lastOSDMouseUsageTime = DateTime.MinValue;
-    protected bool _isOsdOpenOnDemand;
 
     #endregion
 
@@ -399,6 +397,39 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       get { return _isOSDVisibleProperty; }
     }
 
+    public bool IsOSDLevel0
+    {
+      get { return (bool)_isOSDLevel0Property.GetValue(); }
+      set { _isOSDLevel0Property.SetValue(value); }
+    }
+
+    public AbstractProperty IsOSDLevel0Property
+    {
+      get { return _isOSDLevel0Property; }
+    }
+
+    public bool IsOSDLevel1
+    {
+      get { return (bool)_isOSDLevel1Property.GetValue(); }
+      set { _isOSDLevel1Property.SetValue(value); }
+    }
+
+    public AbstractProperty IsOSDLevel1Property
+    {
+      get { return _isOSDLevel1Property; }
+    }
+
+    public bool IsOSDLevel2
+    {
+      get { return (bool)_isOSDLevel2Property.GetValue(); }
+      set { _isOSDLevel2Property.SetValue(value); }
+    }
+
+    public AbstractProperty IsOSDLevel2Property
+    {
+      get { return _isOSDLevel2Property; }
+    }
+
     public void UpdateProgram(object sender, SelectionChangedEventArgs e)
     {
       var channelItem = e.FirstAddedItem as ChannelProgramListItem;
@@ -435,32 +466,53 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       PiPEnabled = !PiPEnabled;
     }
 
-    public void ToggleOSD()
+    public void ShowVideoInfo()
     {
-      if (IsOSDVisible)
-      {
-        MediaModelSettings settings = ServiceRegistration.Get<ISettingsManager>().Load<MediaModelSettings>();
-        if (settings.OpenPlayerConfigInOsd)
-        {
-          PlayerConfigurationDialogModel.OpenPlayerConfigurationDialog();
-          _isOsdOpenOnDemand = true;
-          return;
-        }
-      }
-
-      IsOSDVisible = !IsOSDVisible;
       if (!IsOSDVisible)
       {
-        SetLastOSDMouseUsageTime();
-      }       
-      _isOsdOpenOnDemand = IsOSDVisible;
+        IsOSDVisible = IsOSDLevel0 = true;
+        IsOSDLevel1 = IsOSDLevel2 = false;
+        Update();
+        return;
+      }
+
+      if (IsOSDLevel0)
+      {
+        IsOSDVisible = IsOSDLevel1 = true;
+        IsOSDLevel0 = IsOSDLevel2 = false;
+        Update();
+        return;
+      }
+
+      if (IsOSDLevel1)
+      {
+        IsOSDVisible = IsOSDLevel2 = true;
+        IsOSDLevel0 = IsOSDLevel1 = false;
+        Update();
+        return;
+      }
+
+      if (IsOSDLevel2)
+      {
+        // Hide OSD
+        IsOSDVisible = IsOSDLevel0 = IsOSDLevel1 = IsOSDLevel2 = false;
+
+        // Pressing the info button twice will bring up the context menu
+        PlayerConfigurationDialogModel.OpenPlayerConfigurationDialog();
+      }
+      Update();
     }
 
     public void CloseOSD()
     {
-      IsOSDVisible = false;
-      _isOsdOpenOnDemand = false;
-      SetLastOSDMouseUsageTime();
+      // Makes sure to always have model initialized first and the property created
+      InitModel();
+      if (IsOSDVisible)
+      {
+        // Hide OSD
+        IsOSDVisible = IsOSDLevel0 = IsOSDLevel1 = IsOSDLevel2 = false;
+        Update();
+      }
     }
 
     #endregion
@@ -668,6 +720,9 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     private void ReSetSkipTimer()
     {
       IsOSDVisible = true;
+      IsOSDLevel0 = true;
+      IsOSDLevel1 = false;
+      IsOSDLevel2 = false;
 
       UpdateRunningChannelPrograms(ChannelContext.Instance.Channels[_zapChannelIndex]);
 
@@ -751,6 +806,9 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
         _piPEnabledProperty = new WProperty(typeof(bool), false);
 
         _isOSDVisibleProperty = new WProperty(typeof(bool), false);
+        _isOSDLevel0Property = new WProperty(typeof(bool), false);
+        _isOSDLevel1Property = new WProperty(typeof(bool), false);
+        _isOSDLevel2Property = new WProperty(typeof(bool), false);
 
         //Get current Tv Server state
         var ssm = ServiceRegistration.Get<IServerStateManager>();
@@ -771,41 +829,10 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
     {
       _messageQueue.SubscribeToMessageChannel(SystemMessaging.CHANNEL);
       _messageQueue.SubscribeToMessageChannel(ServerStateMessaging.CHANNEL);
-      _messageQueue.SubscribeToMessageChannel(WorkflowManagerMessaging.CHANNEL);
-      _messageQueue.SubscribeToMessageChannel(PlayerManagerMessaging.CHANNEL);
-      _messageQueue.SubscribeToMessageChannel(PlayerContextManagerMessaging.CHANNEL);
-      _messageQueue.PreviewMessage += OnPreviewMessageReceived;
-      _messageQueue.MessageReceived += OnMessageReceived;
+      _messageQueue.PreviewMessage += OnMessageReceived;
     }
 
     private void OnMessageReceived(AsynchronousMessageQueue queue, SystemMessage message)
-    {
-      if (message.ChannelName == WorkflowManagerMessaging.CHANNEL)
-      {
-        if ((WorkflowManagerMessaging.MessageType)message.MessageType == WorkflowManagerMessaging.MessageType.StatePushed)
-        {
-          bool isPlayerConfigDialog = ServiceRegistration.Get<IWorkflowManager>().CurrentNavigationContext.WorkflowState.StateId.ToString().Equals("D0B79345-69DF-4870-B80E-39050434C8B3", StringComparison.OrdinalIgnoreCase);
-          if (isPlayerConfigDialog)
-          {
-            _isPlayerConfigOpen = true;
-            IsOSDVisible = false;
-          }
-        }
-
-        if ((WorkflowManagerMessaging.MessageType)message.MessageType == WorkflowManagerMessaging.MessageType.StatesPopped)
-        {
-          ICollection<Guid> statesRemoved = new List<Guid>(((IDictionary<Guid, NavigationContext>)message.MessageData[WorkflowManagerMessaging.CONTEXTS]).Keys);
-          if (statesRemoved.Contains(new Guid("D0B79345-69DF-4870-B80E-39050434C8B3")))
-          {
-            _isPlayerConfigOpen = false;
-            _isOsdOpenOnDemand = false;
-            SetLastOSDMouseUsageTime();
-          }
-        }
-      }
-    }
-
-    private void OnPreviewMessageReceived(AsynchronousMessageQueue queue, SystemMessage message)
     {
       if (message.ChannelName == SystemMessaging.CHANNEL)
       {
@@ -912,16 +939,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
           NextProgram.SetProgram(nextProgram, channel);
         }
       }
-      if (!_isPlayerConfigOpen)
-      {
-        IInputManager inputManager = ServiceRegistration.Get<IInputManager>();
-        //Only show the OSD on mouse usage if the mouse has been used again since the last time it was closed.
-        if (!_isOsdOpenOnDemand && inputManager.LastMouseUsageTime > _lastOSDMouseUsageTime)
-        {
-          IsOSDVisible = inputManager.IsMouseUsed;
-        }
-      }
-     
     }
 
     private void UpdateChannelGroupSelection(IChannel channel)
@@ -1095,23 +1112,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
         StartTime = from,
         EndTime = to
       };
-    }
-
-    /// <summary>
-    /// Should be called when closing the OSD to set the last time the mouse
-    /// was used whilst the OSD was open to avoid immediately reopening it again.
-    /// </summary>
-    /// <remarks>
-    /// The OSD gets shown automatically on mouse usage but if we've deliberately
-    /// closed it with the mouse, and therefore the mouse is being used,
-    /// we don't want it to open again. We store the last mouse usage when closing
-    /// and only show the OSD if the mouse has been used again since closing the OSD.
-    /// </remarks>
-    protected void SetLastOSDMouseUsageTime()
-    {
-      IInputManager inputManager = ServiceRegistration.Get<IInputManager>();
-      //Add a second to allow for mouse movement just after closing
-      _lastOSDMouseUsageTime = inputManager.LastMouseUsageTime.AddSeconds(1);
     }
 
     #endregion

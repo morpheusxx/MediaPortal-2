@@ -23,15 +23,19 @@
 #endregion
 
 using System.Collections.Generic;
+using MediaPortal.Common;
 using MediaPortal.Common.MediaManagement;
+using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Extensions.MetadataExtractors.Aspects;
+using MediaPortal.Plugins.SlimTv.Interfaces;
+using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using MediaPortal.UiComponents.Media.MediaItemActions;
 
 namespace MediaPortal.Plugins.SlimTv.Client.MediaItemActions
 {
   public class DeleteRecordingFromStorage : DeleteFromStorage
   {
-    protected bool _isCurrentlyRecording;
+    protected ISchedule _schedule;
 
     public DeleteRecordingFromStorage()
     {
@@ -46,13 +50,38 @@ namespace MediaPortal.Plugins.SlimTv.Client.MediaItemActions
 
     public override bool IsAvailable(MediaItem mediaItem)
     {
-      return IsRecording(mediaItem) && IsResourceDeletor(mediaItem);
+      var isAvailable = IsRecording(mediaItem) && IsResourceDeletor(mediaItem);
+      if (!isAvailable)
+        return false;
+
+      TryGetSchedule(mediaItem);
+      return true;
+    }
+
+    private void TryGetSchedule(MediaItem mediaItem)
+    {
+      _schedule = null;
+      var rl = mediaItem.GetResourceLocator();
+      var serverLocalPath = LocalFsResourceProviderBase.ToDosPath(rl.NativeResourcePath);
+      var tvHandler = ServiceRegistration.Get<ITvHandler>(false);
+      ISchedule schedule;
+      if (tvHandler != null && tvHandler.ScheduleControl.IsCurrentlyRecording(serverLocalPath, out schedule))
+      {
+        _schedule = schedule;
+      }
     }
 
     public override bool Process(MediaItem mediaItem, out ContentDirectoryMessaging.MediaItemChangeType changeType)
     {
-      // TODO: Check if media item is a currently running recording
-      _isCurrentlyRecording = false;
+      if (_schedule != null)
+      {
+        var tvHandler = ServiceRegistration.Get<ITvHandler>(false);
+        if (tvHandler != null && !tvHandler.ScheduleControl.RemoveSchedule(_schedule))
+        {
+          changeType = ContentDirectoryMessaging.MediaItemChangeType.None;
+          return false;
+        }
+      }
       var result = base.Process(mediaItem, out changeType);
       return result;
     }
@@ -61,7 +90,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.MediaItemActions
     {
       get
       {
-        return _isCurrentlyRecording ?
+        return _schedule != null ?
           "[SlimTvClient.DeleteRecording.Confirmation]" :
           "[Media.DeleteFromStorage.Confirmation]";
       }

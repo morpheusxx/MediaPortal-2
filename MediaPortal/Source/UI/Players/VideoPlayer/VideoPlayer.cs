@@ -209,7 +209,7 @@ namespace MediaPortal.UI.Players.Video
     protected virtual void AddEvr()
     {
       FilterGraphTools.TryDispose(ref _videoRenderer);
-      bool useMadVr = false;
+      bool useMadVr = true;
       if (useMadVr)
       {
         _videoRenderer = new MadVR();
@@ -1183,7 +1183,7 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public virtual bool SetResumeState(IResumeState state)
     {
-      return SkinContext.Form.InvokeIfRequired2((c) =>
+//      return SkinContext.Form.InvokeIfRequired2((c) =>
       {
         PositionResumeState
           pos = state as PositionResumeState;
@@ -1204,7 +1204,7 @@ namespace MediaPortal.UI.Players.Video
       }
         CurrentTime = pos.ResumePosition;
         return true;
-      });
+      }//);
     }
 
     #endregion

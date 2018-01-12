@@ -22,9 +22,11 @@
 
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using UPnP.Infrastructure.CP.DeviceTree;
 
 namespace MediaPortal.Common.Services.ServerCommunication
@@ -59,9 +61,41 @@ namespace MediaPortal.Common.Services.ServerCommunication
     {
       return await Task.Factory.FromAsync((callback, stateObject) => action.BeginInvokeAction(inParameters, callback, stateObject), action.EndInvokeAction, null).ConfigureAwait(false);
     }
+
     public static ConfiguredTaskAwaitable<IList<object>> InvokeAsync(this CpAction action, IList<object> inParameters)
     {
       return Task.Factory.FromAsync((callback, stateObject) => action.BeginInvokeAction(inParameters, callback, stateObject), action.EndInvokeAction, null).ConfigureAwait(false);
+    }
+
+
+
+    public static ControlAwaiter GetAwaiter(this Control control)
+    {
+      return new ControlAwaiter(control);
+    }
+
+    public struct ControlAwaiter : INotifyCompletion
+    {
+      private readonly Control m_control;
+
+      public ControlAwaiter(Control control)
+      {
+        m_control = control;
+      }
+
+      public bool IsCompleted
+      {
+        get { return !m_control.InvokeRequired; }
+      }
+
+      public void OnCompleted(Action continuation)
+      {
+        m_control.BeginInvoke(continuation);
+      }
+
+      public void GetResult()
+      {
+      }
     }
   }
 }

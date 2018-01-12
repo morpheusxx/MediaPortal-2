@@ -1212,14 +1212,14 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public override bool SetResumeState(IResumeState state)
     {
-      return SkinContext.Form.InvokeIfRequired2((c) =>
+      //return SkinContext.Form.InvokeIfRequired2((c) =>
       {
         BinaryResumeState binaryResumeState = state as BinaryResumeState;
         if (binaryResumeState == null)
           return false;
         SetResumeState(binaryResumeState.ResumeData);
         return true;
-      });
+      }//);
     }
 
     #endregion

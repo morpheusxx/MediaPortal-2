@@ -63,6 +63,17 @@ EVRCustomPresenter::~EVRCustomPresenter()
 }
 
 
+__declspec(dllexport) int CreateMadVR(IBaseFilter** filter)
+{
+  int hr = ::CoCreateInstance(CLSID_madVR, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, reinterpret_cast<LPVOID*>(filter));
+  return hr;
+}
+__declspec(dllexport) int ReleaseMadVR(IBaseFilter* filter)
+{
+  if (filter) filter->Release();
+  return 0;
+}
+
 // Init EVR Presenter (called by VideoPlayer.cs)
 __declspec(dllexport) int EvrInit(IEVRCallback* callback, DWORD dwD3DDevice, IBaseFilter* evrFilter, HWND hwnd, EVRCustomPresenter** ppPresenterInstance)
 {

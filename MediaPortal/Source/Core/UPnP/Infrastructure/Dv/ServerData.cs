@@ -24,7 +24,6 @@
 
 using System;
 using System.Collections.Generic;
-using HttpServer;
 using UPnP.Infrastructure.Dv.DeviceTree;
 using UPnP.Infrastructure.Dv.GENA;
 using UPnP.Infrastructure.Dv.SSDP;
@@ -69,7 +68,7 @@ namespace UPnP.Infrastructure.Dv
     /// <summary>
     /// HTTP listeners to answer description, control and eventing requests.
     /// </summary>
-    public List<HttpListener> HTTPListeners = new List<HttpListener>();
+    public List<IDisposable> HTTPListeners = new List<IDisposable>();
 
     /// <summary>
     /// Port where the HTTP server is listening for IPv4.

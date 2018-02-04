@@ -170,8 +170,10 @@ namespace UPnP.Infrastructure.Dv
         if (_serverData.IsActive)
           throw new IllegalCallException("UPnP subsystem mustn't be started multiple times");
 
-        var port = _serverData.HTTP_PORTv4 = NetworkHelper.GetFreePort(_serverData.HTTP_PORTv4);
-        var startOptions = BuildStartOptions(port);
+        //var port = _serverData.HTTP_PORTv4 = NetworkHelper.GetFreePort(_serverData.HTTP_PORTv4);
+        var servicePrefix = "/MediaPortal/UPnPServer_" + Guid.NewGuid().ToString("N");
+        _serverData.ServicePrefix = servicePrefix;
+        var startOptions = BuildStartOptions(servicePrefix);
 
         IDisposable server = null;
         try
@@ -246,7 +248,7 @@ namespace UPnP.Infrastructure.Dv
       }
     }
 
-    public static StartOptions BuildStartOptions(int port)
+    public static StartOptions BuildStartOptions(string servicePrefix)
     {
       ICollection<IPAddress> listenAddresses = new HashSet<IPAddress>();
       if (UPnPConfiguration.USE_IPV4)
@@ -257,15 +259,16 @@ namespace UPnP.Infrastructure.Dv
           listenAddresses.Add(address);
 
       StartOptions startOptions = new StartOptions();
+      int port = 55555;
       foreach (IPAddress address in listenAddresses)
       {
         var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
-        string formattedAddress = $"http://{bindableAddress}:{port}/";
+        string formattedAddress = $"http://{bindableAddress}:{port}{servicePrefix}";
         if (address.AddressFamily == AddressFamily.InterNetworkV6)
         {
           if (Equals(address, IPAddress.IPv6Any))
             continue;
-          formattedAddress = $"http://[{bindableAddress}]:{port}/";
+          formattedAddress = $"http://[{bindableAddress}]:{port}{servicePrefix}";
         }
         startOptions.Urls.Add(formattedAddress);
       }
@@ -360,7 +363,7 @@ namespace UPnP.Infrastructure.Dv
           // Handle different HTTP methods here
           if (request.Method == "GET")
           { // GET of descriptions
-            if (pathAndQuery.StartsWith(config.DescriptionPathBase))
+            if (pathAndQuery.StartsWith(_serverData.ServicePrefix + config.DescriptionPathBase))
             {
               string acceptLanguage = request.Headers.Get("ACCEPT-LANGUAGE");
               CultureInfo culture = GetFirstCultureOrDefault(acceptLanguage, CultureInfo.InvariantCulture);
@@ -483,7 +486,7 @@ namespace UPnP.Infrastructure.Dv
       result = config.SCPDPathsToServices.Values.Select(service => service.BuildSCPDDocument(
           config, _serverData)).Aggregate(result, (current, description) => current + HashGenerator.CalculateHash(0, description));
       result += HashGenerator.CalculateHash(0, NetworkHelper.IPAddrToString(config.EndPointIPAddress));
-      result += config.HTTPServerPort;
+      result += HashGenerator.CalculateHash(0, config.ServicePrefix);
       result += HashGenerator.CalculateHash(0, config.ControlPathBase + config.DescriptionPathBase + config.EventSubPathBase);
       return (int)result;
     }
@@ -520,7 +523,8 @@ namespace UPnP.Infrastructure.Dv
           DescriptionPathBase = DEFAULT_DESCRIPTION_URL_PREFIX,
           ControlPathBase = DEFAULT_CONTROL_URL_PREFIX,
           EventSubPathBase = DEFAULT_EVENT_SUB_URL_PREFIX,
-          HTTPServerPort = family == AddressFamily.InterNetwork ? _serverData.HTTP_PORTv4 : _serverData.HTTP_PORTv6
+          ServicePrefix = _serverData.ServicePrefix,
+          //HTTPServerPort = family == AddressFamily.InterNetwork ? _serverData.HTTP_PORTv4 : _serverData.HTTP_PORTv6
         };
         GenerateObjectURLs(config);
         config.ConfigId = GenerateConfigId(config);

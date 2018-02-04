@@ -113,8 +113,9 @@ namespace UPnP.Infrastructure.CP.GENA
       _upnpVersion = upnpVersion;
       _eventNotificationPath = "/" + Guid.NewGuid();
       IPAddress address = endpoint.EndPointIPAddress;
-      _eventNotificationEndpoint = new IPEndPoint(address, address.AddressFamily == AddressFamily.InterNetwork ?
-          cpData.HttpPortV4 : cpData.HttpPortV6);
+      _eventNotificationEndpoint = new IPEndPoint(address, 55555); // TODO
+        //address.AddressFamily == AddressFamily.InterNetwork ?
+        //  cpData.HttpPortV4 : cpData.HttpPortV6);
       _subscriptionRenewalTimer = new Timer(OnSubscriptionRenewalTimerElapsed);
     }
 

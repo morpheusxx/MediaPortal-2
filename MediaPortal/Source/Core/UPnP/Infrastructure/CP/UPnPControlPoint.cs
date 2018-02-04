@@ -183,9 +183,11 @@ namespace UPnP.Infrastructure.CP
 
         UPnPConfiguration.LOGGER.Debug("Will listen on IPs filtered by [{0}]", (UPnPConfiguration.IP_ADDRESS_BINDINGS != null ? String.Join(",", UPnPConfiguration.IP_ADDRESS_BINDINGS) : null));
 
-        _cpData.HttpPortV4 = 0;
-        var port = _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
-        var startOptions = UPnPServer.BuildStartOptions(port);
+        //_cpData.HttpPortV4 = 0;
+        //var port = _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
+        var servicePrefix = "/MediaPortal/UPnPControlPoint_" + Guid.NewGuid().ToString("N");
+        _cpData.ServicePrefix = servicePrefix;
+        var startOptions = UPnPServer.BuildStartOptions(servicePrefix);
 
         IDisposable server = null;
         try

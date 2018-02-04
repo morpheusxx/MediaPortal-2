@@ -22,9 +22,9 @@
 
 #endregion
 
+using System;
 using System.Net;
-using HttpServer.Authentication;
-using HttpServer.HttpModules;
+using Microsoft.Owin;
 
 namespace MediaPortal.Common.ResourceAccess
 {
@@ -57,7 +57,7 @@ namespace MediaPortal.Common.ResourceAccess
     /// the MediaPortal concept: Plugins simply can add a module to the HTTP server.
     /// </remarks>
     /// <param name="module"></param>
-    void AddHttpModule(HttpModule module);
+    void AddHttpModule(Type module);
 
     /// <summary>
     /// Adds a new Authentication Module to the HTTP server.
@@ -67,12 +67,12 @@ namespace MediaPortal.Common.ResourceAccess
     /// the MediaPortal concept: Plugins simply can add a module to the HTTP server.
     /// </remarks>
     /// <param name="module"></param>
-    void AddAuthenticationModule(AuthenticationModule module);
+    //void AddAuthenticationModule(AuthenticationModule module);
 
     /// <summary>
     /// Removes an HTTP module from the HTTP server.
     /// </summary>
     /// <param name="module">Module to remove.</param>
-    void RemoveHttpModule(HttpModule module);
+    void RemoveHttpModule(Type module);
   }
 }

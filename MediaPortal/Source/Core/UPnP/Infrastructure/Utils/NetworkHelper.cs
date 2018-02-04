@@ -486,7 +486,8 @@ namespace UPnP.Infrastructure.Utils
         return "+";
       return address.ToString();
     }
-    public static int GetOpenPort(int preferredPort)
+
+    public static int GetFreePort(int preferredPort)
     {
       if (preferredPort != 0)
         return preferredPort;

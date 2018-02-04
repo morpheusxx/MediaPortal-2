@@ -192,7 +192,7 @@ namespace UPnP.Infrastructure.CP
             IDisposable server = null;
             try
             {
-              _cpData.HttpPortV4 = NetworkHelper.GetOpenPort(_cpData.HttpPortV4);
+              _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
               var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
               var baseAddress = $"http://{bindableAddress}:{_cpData.HttpPortV4}/";
               server = WebApp.Start(baseAddress, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
@@ -220,7 +220,7 @@ namespace UPnP.Infrastructure.CP
             {
               //httpListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv6 isn't installed
               //_cpData.HttpPortV6 = httpListenerV6.LocalEndpoint.Port;
-              _cpData.HttpPortV6 = NetworkHelper.GetOpenPort(_cpData.HttpPortV6);
+              _cpData.HttpPortV6 = NetworkHelper.GetFreePort(_cpData.HttpPortV6);
               var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
               server = WebApp.Start($"http://{bindableAddress}:{_cpData.HttpPortV6}/", builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
 

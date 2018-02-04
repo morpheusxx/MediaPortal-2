@@ -180,7 +180,7 @@ namespace UPnP.Infrastructure.Dv
             IDisposable server = null;
             try
             {
-              _serverData.HTTP_PORTv4 = NetworkHelper.GetOpenPort(_serverData.HTTP_PORTv4);
+              _serverData.HTTP_PORTv4 = NetworkHelper.GetFreePort(_serverData.HTTP_PORTv4);
               var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
               server = WebApp.Start($"http://{bindableAddress}:{_serverData.HTTP_PORTv4}", builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
 
@@ -211,7 +211,7 @@ namespace UPnP.Infrastructure.Dv
             IDisposable server = null;
             try
             {
-              _serverData.HTTP_PORTv6 = NetworkHelper.GetOpenPort(_serverData.HTTP_PORTv6);
+              _serverData.HTTP_PORTv6 = NetworkHelper.GetFreePort(_serverData.HTTP_PORTv6);
               var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
               server = WebApp.Start($"http://{bindableAddress}:{_serverData.HTTP_PORTv6}", builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
               //httpListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE);

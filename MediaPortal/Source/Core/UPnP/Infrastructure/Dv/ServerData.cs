@@ -38,7 +38,7 @@ namespace UPnP.Infrastructure.Dv
     /// <summary>
     /// HTTP listening port for description and control requests.
     /// </summary>
-    public static int DEFAULT_HTTP_PORT = 8081;
+    public static int DEFAULT_HTTP_PORT = 0; // Auto assign
 
     /// <summary>
     /// State of the UPnP subsystem.

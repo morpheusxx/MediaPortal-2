@@ -32,6 +32,7 @@ using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
 using Owin;
 using UPnP.Infrastructure.CP.DeviceTree;
+using UPnP.Infrastructure.Dv;
 using UPnP.Infrastructure.Utils;
 
 namespace UPnP.Infrastructure.CP
@@ -183,56 +184,73 @@ namespace UPnP.Infrastructure.CP
         UPnPConfiguration.LOGGER.Debug("Will listen on IPs filtered by [{0}]", (UPnPConfiguration.IP_ADDRESS_BINDINGS != null ? String.Join(",", UPnPConfiguration.IP_ADDRESS_BINDINGS) : null));
 
         _cpData.HttpPortV4 = 0;
-        if (UPnPConfiguration.USE_IPV4)
+        var port = _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
+        var startOptions = UPnPServer.BuildStartOptions(port);
+
+        IDisposable server = null;
+        try
         {
-          foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, UPnPConfiguration.IP_ADDRESS_BINDINGS))
-          {
-            //HttpListener httpListenerV4 = HttpListener.Create(address, _cpData.HttpPortV4);
-            //httpListenerV4.RequestReceived += OnHttpListenerRequestReceived;
-            IDisposable server = null;
-            try
-            {
-              _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
-              var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
-              var baseAddress = $"http://{bindableAddress}:{_cpData.HttpPortV4}/";
-              server = WebApp.Start(baseAddress, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
-              //httpListenerV4.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv4 isn't installed
-              //_cpData.HttpPortV4 = httpListenerV4.LocalEndpoint.Port;
-              UPnPConfiguration.LOGGER.Debug("UPnPControlPoint: HTTP listener for IPv4 protocol started at address '{0}' on port '{1}'", address, _cpData.HttpPortV4);
-              _httpListeners.Add(server);
-            }
-            catch (SocketException e)
-            {
-              UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv4)", e);
-            }
-          }
+          server = WebApp.Start(startOptions, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
+          UPnPConfiguration.LOGGER.Info("UPnPControlPoint: HTTP listener started on addresses {0}", String.Join(", ", startOptions.Urls));
+          _httpListeners.Add(server);
+        }
+        catch (SocketException e)
+        {
+          server?.Dispose();
+          UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server", e);
         }
 
-        _cpData.HttpPortV6 = 0;
-        if (UPnPConfiguration.USE_IPV6)
-        {
-          foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, UPnPConfiguration.IP_ADDRESS_BINDINGS))
-          {
-            //HttpListener httpListenerV6 = HttpListener.Create(address, _cpData.HttpPortV6);
-            //httpListenerV6.RequestReceived += OnHttpListenerRequestReceived;
-            IDisposable server = null;
-            try
-            {
-              //httpListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv6 isn't installed
-              //_cpData.HttpPortV6 = httpListenerV6.LocalEndpoint.Port;
-              _cpData.HttpPortV6 = NetworkHelper.GetFreePort(_cpData.HttpPortV6);
-              var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
-              server = WebApp.Start($"http://{bindableAddress}:{_cpData.HttpPortV6}/", builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
+        //if (UPnPConfiguration.USE_IPV4)
+        //{
+        //  foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, UPnPConfiguration.IP_ADDRESS_BINDINGS))
+        //  {
+        //    //HttpListener httpListenerV4 = HttpListener.Create(address, _cpData.HttpPortV4);
+        //    //httpListenerV4.RequestReceived += OnHttpListenerRequestReceived;
+        //    IDisposable server = null;
+        //    try
+        //    {
+        //      var port = _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
+        //      var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
+        //      var baseAddress = $"http://{bindableAddress}:{port}/";
+        //      server = WebApp.Start(baseAddress, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
+        //      //httpListenerV4.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv4 isn't installed
+        //      //_cpData.HttpPortV4 = httpListenerV4.LocalEndpoint.Port;
+        //      UPnPConfiguration.LOGGER.Debug("UPnPControlPoint: HTTP listener for IPv4 protocol started at address '{0}' on port '{1}'", address, port);
+        //      _httpListeners.Add(server);
+        //    }
+        //    catch (SocketException e)
+        //    {
+        //      UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv4)", e);
+        //    }
+        //  }
+        //}
 
-              UPnPConfiguration.LOGGER.Debug("UPnPControlPoint: HTTP listener for IPv6 protocol started at address '{0}' on port '{1}'", address, _cpData.HttpPortV6);
-              _httpListeners.Add(server);
-            }
-            catch (SocketException e)
-            {
-              UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv6)", e);
-            }
-          }
-        }
+        //_cpData.HttpPortV6 = 0;
+        //if (UPnPConfiguration.USE_IPV6)
+        //{
+        //  foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, UPnPConfiguration.IP_ADDRESS_BINDINGS))
+        //  {
+        //    //HttpListener httpListenerV6 = HttpListener.Create(address, _cpData.HttpPortV6);
+        //    //httpListenerV6.RequestReceived += OnHttpListenerRequestReceived;
+        //    IDisposable server = null;
+        //    try
+        //    {
+        //      //httpListenerV6.Start(DEFAULT_HTTP_REQUEST_QUEUE_SIZE); // Might fail if IPv6 isn't installed
+        //      //_cpData.HttpPortV6 = httpListenerV6.LocalEndpoint.Port;
+        //      _cpData.HttpPortV6 = NetworkHelper.GetFreePort(_cpData.HttpPortV6);
+        //      var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
+        //      server = WebApp.Start($"http://{bindableAddress}:{_cpData.HttpPortV6}/", builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
+
+        //      UPnPConfiguration.LOGGER.Debug("UPnPControlPoint: HTTP listener for IPv6 protocol started at address '{0}' on port '{1}'", address, _cpData.HttpPortV6);
+        //      _httpListeners.Add(server);
+        //    }
+        //    catch (SocketException e)
+        //    {
+        //      UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server (IPv6)", e);
+        //    }
+        //  }
+        //}
+
         _networkTracker.RootDeviceRemoved += OnRootDeviceRemoved;
         _networkTracker.DeviceRebooted += OnDeviceRebooted;
 

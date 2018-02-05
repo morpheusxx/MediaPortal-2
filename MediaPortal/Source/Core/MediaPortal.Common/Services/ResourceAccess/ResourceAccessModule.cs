@@ -344,7 +344,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
       var response = context.Response;
       ResourcePath resourcePath;
       Uri uri = request.Uri;
-      if (!uri.AbsolutePath.StartsWith(ResourceHttpAccessUrlUtils.RESOURCE_ACCESS_PATH))
+      if (!uri.AbsolutePath.StartsWith(ResourceHttpAccessUrlUtils.RESOURCE_SERVER_BASE_PATH) || !uri.AbsolutePath.Contains(ResourceHttpAccessUrlUtils.RESOURCE_ACCESS_PATH))
       {
         await Next.Invoke(context);
         return;

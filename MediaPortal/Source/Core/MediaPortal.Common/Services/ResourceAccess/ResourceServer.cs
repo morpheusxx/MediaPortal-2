@@ -30,9 +30,8 @@ using MediaPortal.Common.Logging;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Services.ResourceAccess.Settings;
 using MediaPortal.Common.Settings;
-using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
-using UPnP.Infrastructure.Utils;
+using UPnP.Infrastructure.Dv;
 
 namespace MediaPortal.Common.Services.ResourceAccess
 {
@@ -40,8 +39,9 @@ namespace MediaPortal.Common.Services.ResourceAccess
   {
     protected readonly List<Type> _middleWares = new List<Type>();
     protected IDisposable _httpServer;
-    protected int _serverPort;
+    protected int _serverPort = 55555; // TODO
     protected readonly object _syncObj = new object();
+    protected string _servicePrefix;
 
     public ResourceServer()
     {
@@ -53,24 +53,25 @@ namespace MediaPortal.Common.Services.ResourceAccess
     {
       ServerSettings settings = ServiceRegistration.Get<ISettingsManager>().Load<ServerSettings>();
       List<string> filters = settings.IPAddressBindingsList;
-      List<IPAddress> validAddresses = new List<IPAddress>();
+      //List<IPAddress> validAddresses = new List<IPAddress>();
 
-      StartOptions startOption = new StartOptions();
+      _servicePrefix = ResourceHttpAccessUrlUtils.RESOURCE_SERVER_BASE_PATH + Guid.NewGuid().ToString("N");
+      var startOptions = UPnPServer.BuildStartOptions(_servicePrefix, filters);
 
-      if (settings.UseIPv4)
-        validAddresses.AddRange(NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, filters));
-      if (settings.UseIPv6)
-        validAddresses.AddRange(NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, filters));
+      //if (settings.UseIPv4)
+      //  validAddresses.AddRange(NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, filters));
+      //if (settings.UseIPv6)
+      //  validAddresses.AddRange(NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, filters));
 
       lock (_syncObj)
       {
-        _serverPort = NetworkHelper.GetFreePort(0);
-        foreach (IPAddress address in validAddresses)
-        {
-          var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
-          startOption.Urls.Add($"http://{bindableAddress}:{_serverPort}/");
-        }
-        _httpServer = WebApp.Start(startOption, builder =>
+        //_serverPort = NetworkHelper.GetFreePort(0);
+        //foreach (IPAddress address in validAddresses)
+        //{
+        //  var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
+        //  startOption.Urls.Add($"http://{bindableAddress}:{_serverPort}/");
+        //}
+        _httpServer = WebApp.Start(startOptions, builder =>
         {
           foreach (Type middleWareType in _middleWares)
           {
@@ -102,6 +103,11 @@ namespace MediaPortal.Common.Services.ResourceAccess
     }
 
     #region IResourceServer implementation
+
+    public string GetServiceUrl(IPAddress ipAddress)
+    {
+      return string.Format("http://{0}:{1}{2}", ipAddress, _serverPort, _servicePrefix);
+    }
 
     public int GetPortForIP(IPAddress ipAddress)
     {

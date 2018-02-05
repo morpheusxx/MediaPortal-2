@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.Network;
+using MediaPortal.Common.Services.ResourceAccess;
 using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 using Microsoft.Owin;
 
@@ -51,7 +52,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
       var request = context.Request;
       var response = context.Response;
       Uri uri = request.Uri;
-      if (!uri.AbsolutePath.StartsWith("/FanartService"))
+      if (!uri.AbsolutePath.StartsWith(ResourceHttpAccessUrlUtils.RESOURCE_SERVER_BASE_PATH) || !uri.AbsolutePath.Contains("/FanartService"))
       {
         await Next.Invoke(context);
         return;
@@ -99,7 +100,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService
       const int BUF_LEN = 8192;
       byte[] buffer = new byte[BUF_LEN];
       int bytesRead;
-      while ((bytesRead = resourceStream.Read(buffer, 0, length > BUF_LEN ? BUF_LEN : (int) length)) > 0) // Don't use Math.Min since (int) length is negative for length > Int32.MaxValue
+      while ((bytesRead = resourceStream.Read(buffer, 0, length > BUF_LEN ? BUF_LEN : (int)length)) > 0) // Don't use Math.Min since (int) length is negative for length > Int32.MaxValue
       {
         length -= bytesRead;
         await response.WriteAsync(buffer, 0, bytesRead, cts.Token);

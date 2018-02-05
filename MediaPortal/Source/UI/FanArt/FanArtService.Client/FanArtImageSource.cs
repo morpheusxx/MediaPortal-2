@@ -29,6 +29,8 @@ using MediaPortal.Common.FanArt;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Network;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Services.ResourceAccess;
+using MediaPortal.Extensions.UserServices.FanArtService.Interfaces;
 using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.SkinEngine.Controls.ImageSources;
 using MediaPortal.Utilities.DeepCopy;
@@ -200,7 +202,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client
           return false;
 
         Uri uri = new Uri(resourceUrl);
-        _baseUrl = uri.Authority;
+        _baseUrl = resourceUrl.Substring(0, resourceUrl.IndexOf(ResourceHttpAccessUrlUtils.RESOURCE_ACCESS_PATH));
         return true;
       }
       catch

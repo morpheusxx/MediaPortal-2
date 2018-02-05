@@ -24,18 +24,15 @@
 
 using System;
 using System.Net;
-using Microsoft.Owin;
 
 namespace MediaPortal.Common.ResourceAccess
 {
   public interface IResourceServer
   {
     /// <summary>
-    /// Gets the port number on which the HttpServer with give IP is listening.
+    /// Gets the service base url.
     /// </summary>
-    /// <param name="ipAddress">Bound IP address</param>
-    /// <returns>Port number</returns>
-    int GetPortForIP(IPAddress ipAddress);
+    string GetServiceUrl(IPAddress ipAddress);
 
     void Startup();
 

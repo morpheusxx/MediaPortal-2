@@ -250,12 +250,17 @@ namespace UPnP.Infrastructure.Dv
 
     public static StartOptions BuildStartOptions(string servicePrefix)
     {
+      return BuildStartOptions(servicePrefix, UPnPConfiguration.IP_ADDRESS_BINDINGS);
+    }
+
+    public static StartOptions BuildStartOptions(string servicePrefix, List<string> filters)
+    {
       ICollection<IPAddress> listenAddresses = new HashSet<IPAddress>();
       if (UPnPConfiguration.USE_IPV4)
-        foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, UPnPConfiguration.IP_ADDRESS_BINDINGS))
+        foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, filters))
           listenAddresses.Add(address);
       if (UPnPConfiguration.USE_IPV6)
-        foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, UPnPConfiguration.IP_ADDRESS_BINDINGS))
+        foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, filters))
           listenAddresses.Add(address);
 
       StartOptions startOptions = new StartOptions();

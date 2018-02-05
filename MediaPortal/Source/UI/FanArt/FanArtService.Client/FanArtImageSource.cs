@@ -217,7 +217,7 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Client
         return;
 
       string cacheHint = Cache ? "" : "&NoCache=" + DateTime.Now.Ticks;
-      UriSource = string.Format("http://{0}/FanartService?mediatype={1}&fanarttype={2}&name={3}&width={4}&height={5}{6}", _baseUrl, FanArtMediaType, FanArtType, FanArtName.Encode(), (int)MaxWidth, (int)MaxHeight, cacheHint);
+      UriSource = string.Format("{0}/FanartService?mediatype={1}&fanarttype={2}&name={3}&width={4}&height={5}{6}", _baseUrl, FanArtMediaType, FanArtType, FanArtName.Encode(), (int)MaxWidth, (int)MaxHeight, cacheHint);
     }
 
     protected bool CheckValidArgs()

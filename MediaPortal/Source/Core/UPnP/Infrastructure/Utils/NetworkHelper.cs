@@ -79,13 +79,13 @@ namespace UPnP.Infrastructure.Utils
     public static ICollection<IPAddress> GetBindableIPAddresses(AddressFamily family, List<string> filters)
     {
       ICollection<IPAddress> result = new HashSet<IPAddress>();
-      if (filters == null || filters.Count == 0)
-      {
-        result.Add((family == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any));
-        //if (family == AddressFamily.InterNetwork)
-        //  result.Add((family == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Loopback : IPAddress.Loopback));
-      }
-      else
+      //if (filters == null || filters.Count == 0)
+      //{
+      //  result.Add((family == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Any : IPAddress.Any));
+      //  //if (family == AddressFamily.InterNetwork)
+      //  //  result.Add((family == AddressFamily.InterNetworkV6 ? IPAddress.IPv6Loopback : IPAddress.Loopback));
+      //}
+      //else
       {
         NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
         foreach (NetworkInterface inf in interfaces)

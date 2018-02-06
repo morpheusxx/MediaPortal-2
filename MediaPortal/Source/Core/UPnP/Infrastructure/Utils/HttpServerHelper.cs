@@ -23,7 +23,7 @@
 #endregion
 
 using System.Net;
-using Microsoft.Owin;
+using Microsoft.AspNetCore.Http;
 
 namespace UPnP.Infrastructure.Utils
 {
@@ -35,7 +35,7 @@ namespace UPnP.Infrastructure.Utils
     /// <param name="request">Http client request.</param>
     /// <returns><see cref="string"/> instance containing the client's IP address. The returned IP address can be
     /// parsed by calling <see cref="IPAddress.Parse"/>.</returns>
-    public static string GetRemoteAddress(IOwinRequest request)
+    public static string GetRemoteAddress(HttpRequest request)
     {
       return request.Headers["remote_addr"];
     }

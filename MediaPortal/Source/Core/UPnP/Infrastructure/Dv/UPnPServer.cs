@@ -33,9 +33,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using MediaPortal.Utilities.Exceptions;
-using Microsoft.Owin;
-using Microsoft.Owin.Hosting;
-using Owin;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using UPnP.Infrastructure.Dv.DeviceTree;
 using UPnP.Infrastructure.Dv.GENA;
 using UPnP.Infrastructure.Dv.SOAP;
@@ -173,18 +173,25 @@ namespace UPnP.Infrastructure.Dv
         //var port = _serverData.HTTP_PORTv4 = NetworkHelper.GetFreePort(_serverData.HTTP_PORTv4);
         var servicePrefix = "/MediaPortal/UPnPServer_" + Guid.NewGuid().ToString("N");
         _serverData.ServicePrefix = servicePrefix;
-        var startOptions = BuildStartOptions(servicePrefix);
+        var urls = BuildStartOptions(string.Empty);
 
-        IDisposable server = null;
         try
         {
-          server = WebApp.Start(startOptions, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
-          UPnPConfiguration.LOGGER.Info("UPnP server: HTTP listener started on addresses {0}", String.Join(", ", startOptions.Urls));
-          _serverData.HTTPListeners.Add(server);
+          var builder = new WebHostBuilder()
+            .UseKestrel()
+            .Configure(app =>
+            {
+              app.Use((context, func) => HandleHTTPRequest(context));
+              app.UsePathBase(servicePrefix);
+            }).UseUrls(urls);
+
+          var host = builder.Build();
+          host.Start();
+          UPnPConfiguration.LOGGER.Info("UPnP server: HTTP listener started on addresses {0}", String.Join(", ", urls));
+          _serverData.HTTPListeners.Add(host);
         }
         catch (SocketException e)
         {
-          server?.Dispose();
           UPnPConfiguration.LOGGER.Warn("UPnPServer: Error starting HTTP server", e);
         }
 
@@ -248,12 +255,12 @@ namespace UPnP.Infrastructure.Dv
       }
     }
 
-    public static StartOptions BuildStartOptions(string servicePrefix)
+    public static string[] BuildStartOptions(string servicePrefix)
     {
       return BuildStartOptions(servicePrefix, UPnPConfiguration.IP_ADDRESS_BINDINGS);
     }
 
-    public static StartOptions BuildStartOptions(string servicePrefix, List<string> filters)
+    public static string[] BuildStartOptions(string servicePrefix, List<string> filters)
     {
       ICollection<IPAddress> listenAddresses = new HashSet<IPAddress>();
       if (UPnPConfiguration.USE_IPV4)
@@ -263,7 +270,7 @@ namespace UPnP.Infrastructure.Dv
         foreach (IPAddress address in NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetworkV6, filters))
           listenAddresses.Add(address);
 
-      StartOptions startOptions = new StartOptions();
+      List<string> urls = new List<string>();
       int port = 55555;
       foreach (IPAddress address in listenAddresses)
       {
@@ -275,9 +282,9 @@ namespace UPnP.Infrastructure.Dv
             continue;
           formattedAddress = $"http://[{bindableAddress}]:{port}{servicePrefix}";
         }
-        startOptions.Urls.Add(formattedAddress);
+        urls.Add(formattedAddress);
       }
-      return startOptions;
+      return urls.ToArray();
     }
 
     /// <summary>
@@ -344,13 +351,12 @@ namespace UPnP.Infrastructure.Dv
     /// <param name="request">HTTP request to handle.</param>
     //protected void HandleHTTPRequest_NoLock(IHttpClientContext context, IHttpRequest request)
     //protected async Task Invoke(AppFunc next, IDictionary<string, object> environment)
-    protected async Task HandleHTTPRequest(IOwinContext context)
+    protected async Task HandleHTTPRequest(HttpContext context)
     {
       var request = context.Request;
       var response = context.Response;
-      Uri uri = request.Uri;
-      string hostName = uri.Host;
-      string pathAndQuery = uri.LocalPath; // Unfortunately, Uri.PathAndQuery doesn't decode characters like '{' and '}', so we use the Uri.LocalPath property
+      string hostName = request.Host.Host;
+      string pathAndQuery = request.Path.ToString(); // Unfortunately, Uri.PathAndQuery doesn't decode characters like '{' and '}', so we use the Uri.LocalPath property
       try
       {
         DvService service;
@@ -363,14 +369,14 @@ namespace UPnP.Infrastructure.Dv
             continue;
 
           // Common check for supported encodings
-          string acceptEncoding = request.Headers.Get("ACCEPT-ENCODING") ?? string.Empty;
+          string acceptEncoding = request.Headers["ACCEPT-ENCODING"].ToString();
 
           // Handle different HTTP methods here
           if (request.Method == "GET")
           { // GET of descriptions
             if (pathAndQuery.StartsWith(_serverData.ServicePrefix + config.DescriptionPathBase))
             {
-              string acceptLanguage = request.Headers.Get("ACCEPT-LANGUAGE");
+              string acceptLanguage = request.Headers["ACCEPT-LANGUAGE"];
               CultureInfo culture = GetFirstCultureOrDefault(acceptLanguage, CultureInfo.InvariantCulture);
 
               string description = null;
@@ -397,8 +403,8 @@ namespace UPnP.Infrastructure.Dv
           { // POST of control messages
             if (config.ControlPathsToServices.TryGetValue(pathAndQuery, out service))
             {
-              string contentType = request.Headers.Get("CONTENT-TYPE");
-              string userAgentStr = request.Headers.Get("USER-AGENT");
+              string contentType = request.Headers["CONTENT-TYPE"].ToString();
+              string userAgentStr = request.Headers["USER-AGENT"].ToString();
               int minorVersion;
               if (string.IsNullOrEmpty(userAgentStr))
                 minorVersion = 0;
@@ -462,7 +468,7 @@ namespace UPnP.Infrastructure.Dv
       }
       catch (Exception e)
       {
-        UPnPConfiguration.LOGGER.Error("UPnPServer: Error handling HTTP request '{0}'", e, uri);
+        UPnPConfiguration.LOGGER.Error("UPnPServer: Error handling HTTP request '{0}'", e, request.Path);
         response.StatusCode = (int)HttpStatusCode.InternalServerError;
         //SafeSendResponse(response);
       }

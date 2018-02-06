@@ -33,7 +33,7 @@ using System.Threading;
 using System.Xml;
 using MediaPortal.Utilities.Exceptions;
 using MediaPortal.Utilities.Network;
-using Microsoft.Owin;
+using Microsoft.AspNetCore.Http;
 using UPnP.Infrastructure.Common;
 using UPnP.Infrastructure.CP.Description;
 using UPnP.Infrastructure.CP.DeviceTree;
@@ -460,13 +460,13 @@ namespace UPnP.Infrastructure.CP.GENA
       return request;
     }
 
-    public HttpStatusCode HandleUnicastEventNotification(IOwinRequest request)
+    public HttpStatusCode HandleUnicastEventNotification(HttpRequest request)
     {
-      string nt = request.Headers.Get("NT");
-      string nts = request.Headers.Get("NTS");
-      string sid = request.Headers.Get("SID");
-      string seqStr = request.Headers.Get("SEQ");
-      string contentType = request.Headers.Get("CONTENT-TYPE");
+      string nt = request.Headers["NT"].ToString();
+      string nts = request.Headers["NTS"].ToString();
+      string sid = request.Headers["SID"].ToString();
+      string seqStr = request.Headers["SEQ"].ToString();
+      string contentType = request.Headers["CONTENT-TYPE"].ToString();
 
       lock (_cpData.SyncObj)
       {

@@ -28,9 +28,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using MediaPortal.Utilities.Exceptions;
-using Microsoft.Owin;
-using Microsoft.Owin.Hosting;
-using Owin;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using UPnP.Infrastructure.CP.DeviceTree;
 using UPnP.Infrastructure.Dv;
 using UPnP.Infrastructure.Utils;
@@ -187,18 +187,24 @@ namespace UPnP.Infrastructure.CP
         //var port = _cpData.HttpPortV4 = NetworkHelper.GetFreePort(_cpData.HttpPortV4);
         var servicePrefix = "/MediaPortal/UPnPControlPoint_" + Guid.NewGuid().ToString("N");
         _cpData.ServicePrefix = servicePrefix;
-        var startOptions = UPnPServer.BuildStartOptions(servicePrefix);
+        var urls = UPnPServer.BuildStartOptions(String.Empty);
 
-        IDisposable server = null;
         try
         {
-          server = WebApp.Start(startOptions, builder => { builder.Use((context, func) => HandleHTTPRequest(context)); });
-          UPnPConfiguration.LOGGER.Info("UPnPControlPoint: HTTP listener started on addresses {0}", String.Join(", ", startOptions.Urls));
-          _httpListeners.Add(server);
+          var builder = new WebHostBuilder()
+            .UseKestrel()
+            .Configure(app =>
+            {
+              app.Use((context, func) => HandleHTTPRequest(context));
+              app.UsePathBase(servicePrefix);
+            }).UseUrls(urls);
+          var host = builder.Build();
+          host.Start();
+          UPnPConfiguration.LOGGER.Info("UPnPControlPoint: HTTP listener started on addresses {0}", String.Join(", ", urls));
+          _httpListeners.Add(host);
         }
         catch (SocketException e)
         {
-          server?.Dispose();
           UPnPConfiguration.LOGGER.Warn("UPnPControlPoint: Error starting HTTP server", e);
         }
 
@@ -374,13 +380,12 @@ namespace UPnP.Infrastructure.CP
       }
     }
 
-    protected async Task HandleHTTPRequest(IOwinContext context)
+    protected async Task HandleHTTPRequest(HttpContext context)
     {
       var request = context.Request;
       var response = context.Response;
-      Uri uri = request.Uri;
-      string hostName = uri.Host;
-      string pathAndQuery = uri.PathAndQuery;
+      string hostName = request.Host.Host;
+      string pathAndQuery = request.Path.Value;
       try
       {
         // Handle different HTTP methods here

@@ -30,7 +30,8 @@ using MediaPortal.Common.Logging;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Services.ResourceAccess.Settings;
 using MediaPortal.Common.Settings;
-using Microsoft.Owin.Hosting;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using UPnP.Infrastructure.Dv;
 
 namespace MediaPortal.Common.Services.ResourceAccess
@@ -56,7 +57,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
       //List<IPAddress> validAddresses = new List<IPAddress>();
 
       _servicePrefix = ResourceHttpAccessUrlUtils.RESOURCE_SERVER_BASE_PATH + Guid.NewGuid().ToString("N");
-      var startOptions = UPnPServer.BuildStartOptions(_servicePrefix, filters);
+      var urls = UPnPServer.BuildStartOptions(string.Empty, filters);
 
       //if (settings.UseIPv4)
       //  validAddresses.AddRange(NetworkHelper.GetBindableIPAddresses(AddressFamily.InterNetwork, filters));
@@ -71,13 +72,18 @@ namespace MediaPortal.Common.Services.ResourceAccess
         //  var bindableAddress = NetworkHelper.TranslateBindableAddress(address);
         //  startOption.Urls.Add($"http://{bindableAddress}:{_serverPort}/");
         //}
-        _httpServer = WebApp.Start(startOptions, builder =>
-        {
-          foreach (Type middleWareType in _middleWares)
+        var builder = new WebHostBuilder()
+          .UseKestrel()
+          .Configure(app =>
           {
-            builder.Use(middleWareType);
-          }
-        });
+            app.UsePathBase(_servicePrefix);
+            foreach (Type middleWareType in _middleWares)
+              app.UseMiddleware(middleWareType);
+          })
+          .UseUrls(urls);
+
+        var host = builder.Build();
+        host.Start();
       }
     }
 

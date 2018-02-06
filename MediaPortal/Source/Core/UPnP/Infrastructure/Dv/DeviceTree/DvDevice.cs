@@ -28,7 +28,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Xml;
-using Microsoft.Owin;
+using Microsoft.AspNetCore.Http;
 using UPnP.Infrastructure.Utils;
 
 namespace UPnP.Infrastructure.Dv.DeviceTree
@@ -285,10 +285,10 @@ namespace UPnP.Infrastructure.Dv.DeviceTree
     /// <returns>UPnP device description document for this root device and all embedded devices.</returns>
     public string BuildRootDeviceDescription(ServerData serverData, EndpointConfiguration config, CultureInfo culture)
     {
-        return BuildRootDeviceDescription(null, serverData, config, culture);
+      return BuildRootDeviceDescription(null, serverData, config, culture);
     }
 
-    public string BuildRootDeviceDescription(IOwinRequest request, ServerData serverData, EndpointConfiguration config, CultureInfo culture)
+    public string BuildRootDeviceDescription(HttpRequest request, ServerData serverData, EndpointConfiguration config, CultureInfo culture)
     {
       StringBuilder result = new StringBuilder(10000);
       using (StringWriterWithEncoding stringWriter = new StringWriterWithEncoding(result, UPnPConsts.UTF8_NO_BOM))
@@ -329,7 +329,7 @@ namespace UPnP.Infrastructure.Dv.DeviceTree
         AddDeviceDescriptionsRecursive(null, writer, config, culture);
     }
 
-    internal void AddDeviceDescriptionsRecursive(IOwinRequest request, XmlWriter writer, EndpointConfiguration config, CultureInfo culture)
+    internal void AddDeviceDescriptionsRecursive(HttpRequest request, XmlWriter writer, EndpointConfiguration config, CultureInfo culture)
     {
       GenerateDescriptionDlgt dgh = DescriptionGenerateHook;
       GetDeviceInfoForEndpointDlgt dih = DeviceInfoHook;

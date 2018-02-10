@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using System.Web;
 using MediaPortal.Utilities.Exceptions;
 using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
@@ -380,7 +381,7 @@ namespace UPnP.Infrastructure.CP
       var response = context.Response;
       Uri uri = request.Uri;
       string hostName = uri.Host;
-      string pathAndQuery = uri.PathAndQuery;
+      string pathAndQuery = HttpUtility.UrlDecode(uri.PathAndQuery);
       try
       {
         // Handle different HTTP methods here

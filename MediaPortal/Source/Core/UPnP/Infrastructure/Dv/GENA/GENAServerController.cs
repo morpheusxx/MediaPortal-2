@@ -28,6 +28,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Web;
 using MediaPortal.Utilities;
 using Microsoft.Owin;
 using UPnP.Infrastructure.Dv.DeviceTree;
@@ -305,7 +306,7 @@ namespace UPnP.Infrastructure.Dv.GENA
       var response = context.Response;
       if (request.Method == "SUBSCRIBE")
       { // SUBSCRIBE events
-        string pathAndQuery = request.Uri.PathAndQuery;
+        string pathAndQuery = HttpUtility.UrlDecode(request.Uri.PathAndQuery);
         DvService service;
         if (config.EventSubPathsToServices.TryGetValue(pathAndQuery, out service))
         {
@@ -405,7 +406,7 @@ namespace UPnP.Infrastructure.Dv.GENA
       }
       else if (request.Method == "UNSUBSCRIBE")
       { // UNSUBSCRIBE events
-        string pathAndQuery = request.Uri.PathAndQuery;
+        string pathAndQuery = HttpUtility.UrlDecode(request.Uri.PathAndQuery);
         DvService service;
         if (config.EventSubPathsToServices.TryGetValue(pathAndQuery, out service))
         {

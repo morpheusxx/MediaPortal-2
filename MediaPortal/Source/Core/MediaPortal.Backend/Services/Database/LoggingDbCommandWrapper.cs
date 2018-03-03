@@ -23,13 +23,19 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using MediaPortal.Common;
 using MediaPortal.Common.PathManager;
 using MediaPortal.Utilities.DB;
 using MediaPortal.Common.Services.Logging;
 using MediaPortal.Utilities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace MediaPortal.Backend.Services.Database
 {
@@ -64,17 +70,85 @@ namespace MediaPortal.Backend.Services.Database
 
     protected void DumpCommand(bool includeParameters, double timeSpanMs)
     {
-      StringBuilder sbLogText = new StringBuilder();
-      sbLogText.Append("\r\n-------------------------------------------------------");
-      sbLogText.Append(SqlUtils.FormatSQL(_command.CommandText));
-      if (includeParameters)
+      var settings = new JsonSerializerSettings
       {
-        sbLogText.Append("\r\n-------------------------------------------------------");
-        sbLogText.Append(SqlUtils.FormatSQLParameters(_command.Parameters));
+        DefaultValueHandling = DefaultValueHandling.Ignore,
+        NullValueHandling = NullValueHandling.Ignore,
+      };
+
+      var wrapper = new DbCommandWrapper();
+      wrapper.FromCommand(_command);
+      var serialized = JsonConvert.SerializeObject(wrapper, settings);
+      sqlDebugLog.Debug(StringUtils.EscapeCurlyBraces(serialized));
+      //StringBuilder sbLogText = new StringBuilder();
+      //sbLogText.Append("\r\n-------------------------------------------------------");
+      //sbLogText.Append(SqlUtils.FormatSQL(_command.CommandText));
+      //if (includeParameters)
+      //{
+      //  sbLogText.Append("\r\n-------------------------------------------------------");
+      //  sbLogText.Append(SqlUtils.FormatSQLParameters(_command.Parameters));
+      //}
+      //sbLogText.AppendFormat("\r\n Query time {0:0.00} ms", timeSpanMs);
+      //sbLogText.Append("\r\n=======================================================");
+      //sqlDebugLog.Debug(StringUtils.EscapeCurlyBraces(sbLogText.ToString()));
+    }
+
+    public class DbCommandWrapper
+    {
+      public string CommandText;
+      public CommandType CommandType;
+      public List<DbParameterWrapper> Parameters = new List<DbParameterWrapper>();
+
+      public void FromCommand(IDbCommand cmd)
+      {
+        CommandType = cmd.CommandType;
+        CommandText = cmd.CommandText;
+        foreach (DbParameter parameter in cmd.Parameters)
+        {
+          var pw = new DbParameterWrapper();
+          pw.FromParam(parameter);
+          Parameters.Add(pw);
+        }
       }
-      sbLogText.AppendFormat("\r\n Query time {0:0.00} ms", timeSpanMs);
-      sbLogText.Append("\r\n=======================================================");
-      sqlDebugLog.Debug(StringUtils.EscapeCurlyBraces(sbLogText.ToString()));
+
+      public void ToCommand(IDbCommand cmd)
+      {
+        cmd.CommandType = CommandType;
+        cmd.CommandText = CommandText;
+        foreach (DbParameterWrapper wrapper in Parameters)
+        {
+          var param = cmd.CreateParameter();
+          wrapper.ToParam(param);
+          cmd.Parameters.Add(param);
+        }
+      }
+    }
+
+    public class DbParameterWrapper
+    {
+      public string ParameterName;
+      public DbType DbType;
+      public ParameterDirection Direction;
+      public int Size;
+      public object Value;
+
+      public void FromParam(DbParameter parameter)
+      {
+        ParameterName = parameter.ParameterName;
+        DbType = parameter.DbType;
+        Size = parameter.Size;
+        Value = parameter.Value;
+        Direction = parameter.Direction;
+      }
+
+      public void ToParam(IDbDataParameter parameter)
+      {
+        parameter.ParameterName = ParameterName;
+        parameter.DbType = DbType;
+        parameter.Size = Size;
+        parameter.Value = Value;
+        parameter.Direction = Direction;
+      }
     }
 
     #endregion
@@ -145,7 +219,7 @@ namespace MediaPortal.Backend.Services.Database
     public object ExecuteScalar()
     {
       var sw = System.Diagnostics.Stopwatch.StartNew();
-      var result =  _command.ExecuteScalar();
+      var result = _command.ExecuteScalar();
       sw.Stop();
       DumpCommand(true, sw.Elapsed.TotalMilliseconds);
       return result;

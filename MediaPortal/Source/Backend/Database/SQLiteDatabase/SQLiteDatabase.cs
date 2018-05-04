@@ -52,7 +52,7 @@ namespace MediaPortal.Database.SQLite
   /// (such as MSSQLCE with a maximum database size of 2GB). The limitations of SQLite are much less
   /// restrictive (e.g. a maximum database size of about 140TB, for details see http://www.sqlite.org/limits.html)
   /// </remarks>
-  public class SQLiteDatabase : ISQLDatabasePaging, IDisposable
+  public class SQLiteDatabase : ISQLDatabasePaging, ISQLDatabaseStorage, IDisposable
   {
     #region Constants
 
@@ -76,9 +76,17 @@ namespace MediaPortal.Database.SQLite
     #region Constructors/Destructors
 
     public SQLiteDatabase()
+      : this(false)
+    {
+    }
+    /// <summary>
+    /// Creates a new SQLiteDatabase instance.
+    /// </summary>
+    /// <param name="skipUpgrades"><c>true</c> to skip version check and use the database as it is.</param>
+    public SQLiteDatabase(bool skipUpgrades)
     {
       VersionUpgrade upgrade = new VersionUpgrade();
-      if (!upgrade.Upgrade())
+      if (!skipUpgrades && !upgrade.Upgrade())
       {
         ServiceRegistration.Get<ILogger>().Warn("SQLiteDatabase: Could not upgrade existing database");
       }
@@ -253,7 +261,7 @@ namespace MediaPortal.Database.SQLite
     /// InitializationCommand via ExecuteNonQuery()
     /// </summary>
     /// <returns>Newly created and initialized <see cref="SQLiteConnection"/></returns>
-    internal SQLiteConnection CreateOpenAndInitializeConnection()
+    public SQLiteConnection CreateOpenAndInitializeConnection()
     {
       var connection = new SQLiteConnection(_connectionString);
       connection.Open();
@@ -513,6 +521,17 @@ namespace MediaPortal.Database.SQLite
       // a TEXT value and SQLite refuses to convert TEXT to INT without an
       // explicit CAST.
       return "CAST(strftime('%Y', " + selectExpression + ") AS INTEGER)";
+    }
+
+    public string GetStorageClause(string statementStr)
+    {
+      // We can only append the "WITHOUT ROWID" to tables that are defining a primary key inside the "CREATE TABLE" statement.
+      if (string.IsNullOrEmpty(statementStr) 
+        || statementStr.IndexOf("create table", StringComparison.InvariantCultureIgnoreCase) == -1
+        || statementStr.IndexOf("primary key", StringComparison.InvariantCultureIgnoreCase) == -1)
+        return null;
+
+      return " WITHOUT ROWID";
     }
 
     public bool Process(ref string statementStr, ref IList<BindVar> bindVars, ref uint? offset, ref uint? limit)

@@ -115,7 +115,15 @@ namespace MediaPortal.Database.SQLite
 
         // We use our own collation sequence which is registered here to be able
         // to sort items taking into account culture specifics
-        SQLiteFunction.RegisterFunction(typeof(SQLiteCultureSensitiveCollation));
+        if (!_settings.DisableCustomCollation)
+        {
+          SQLiteFunction.RegisterFunction(typeof(SQLiteCultureSensitiveCollation));
+          ServiceRegistration.Get<ILogger>().Info("SQLiteDatabase: Registered SQLiteCultureSensitiveCollation");
+        }
+        else
+        {
+          ServiceRegistration.Get<ILogger>().Info("SQLiteDatabase: Skipping registration of SQLiteCultureSensitiveCollation");
+        }
 
         var pathManager = ServiceRegistration.Get<IPathManager>();
         string dataDirectory = pathManager.GetPath("<DATABASE>");

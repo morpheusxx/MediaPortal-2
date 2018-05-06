@@ -90,6 +90,11 @@ namespace MediaPortal.Database.SQLite
     // the interest of people with very big MediaLibraries in speed.
     private const int DEFAULT_CHUNK_SIZE_IN_MEGABYTES = 16;
 
+    // We use an own collation for culture specific sorting. It also applies on comparision of values and thus
+    // also inside text based indexes. There are some incompatibilities with other SQLite tools, so this option
+    // is for debugging purpose.
+    private const bool DEFAULT_DISABLE_COLLATION = false;
+
     #endregion
 
     #region Constructors/Destructors
@@ -139,6 +144,9 @@ namespace MediaPortal.Database.SQLite
 
     [Setting(SettingScope.Global, false)]
     public bool EnableTraceLogging { get; set; }
+
+    [Setting(SettingScope.Global, DEFAULT_DISABLE_COLLATION)]
+    public bool DisableCustomCollation { get; set; }
 
     public string InitializationCommand
     {

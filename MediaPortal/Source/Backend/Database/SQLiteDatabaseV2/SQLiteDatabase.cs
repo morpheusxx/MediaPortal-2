@@ -251,10 +251,10 @@ namespace MediaPortal.Database.SQLite
     #region Private methods
 
     /// <summary>
-    /// Creates a new <see cref="SQLiteConnection"/> object, opens it and executes the
+    /// Creates a new <see cref="SqliteConnection"/> object, opens it and executes the
     /// InitializationCommand via ExecuteNonQuery()
     /// </summary>
-    /// <returns>Newly created and initialized <see cref="SQLiteConnection"/></returns>
+    /// <returns>Newly created and initialized <see cref="SqliteConnection"/></returns>
     internal SqliteConnection CreateOpenAndInitializeConnection()
     {
       var connection = new SqliteConnection(_connectionString);

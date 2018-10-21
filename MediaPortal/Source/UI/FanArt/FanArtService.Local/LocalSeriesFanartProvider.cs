@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -109,7 +109,14 @@ namespace MediaPortal.Extensions.UserServices.FanArtService.Local
           {
             var potentialFanArtFiles = LocalFanartHelper.GetPotentialFanArtFiles(directoryFsra);
 
-            if (fanArtType == FanArtTypes.Poster || fanArtType == FanArtTypes.Thumbnail)
+            if (fanArtType == FanArtTypes.Thumbnail)
+              fanArtPaths.AddRange(
+                from potentialFanArtFile in potentialFanArtFiles
+                let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString()).ToLowerInvariant()
+                where potentialFanArtFileNameWithoutExtension == "thumb"
+                select potentialFanArtFile);
+
+            if (fanArtType == FanArtTypes.Poster)
               fanArtPaths.AddRange(
                 from potentialFanArtFile in potentialFanArtFiles
                 let potentialFanArtFileNameWithoutExtension = ResourcePathHelper.GetFileNameWithoutExtension(potentialFanArtFile.ToString()).ToLowerInvariant()

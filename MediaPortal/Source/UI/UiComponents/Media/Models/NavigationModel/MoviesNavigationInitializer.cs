@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -64,13 +64,13 @@ namespace MediaPortal.UiComponents.Media.Models.NavigationModel
          _filter = BooleanCombinationFilter.CombineFilters(BooleanOperator.And, _filters);
       }
 
-      _defaultScreen = new MovieFilterByGenreScreenData();
+      _defaultScreen = new MoviesShowItemsScreenData(_genericPlayableItemCreatorDelegate);
       _availableScreens = new List<AbstractScreenData>
         {
-          new MoviesShowItemsScreenData(_genericPlayableItemCreatorDelegate),
+          _defaultScreen,
+          new MovieFilterByGenreScreenData(),
           new MovieFilterByCollectionScreenData(),
           new VideosFilterByPlayCountScreenData(),
-          _defaultScreen,
           new MovieFilterByCertificationScreenData(),
           new MovieFilterByActorScreenData(),
           new MovieFilterByCharacterScreenData(),

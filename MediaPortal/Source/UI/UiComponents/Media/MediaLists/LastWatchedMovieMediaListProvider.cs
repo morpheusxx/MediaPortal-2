@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -22,9 +22,11 @@
 
 #endregion
 
+using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using MediaPortal.UiComponents.Media.General;
 using MediaPortal.UiComponents.Media.Models.Navigation;
 using MediaPortal.UiComponents.Media.Models.NavigationModel;
+using System;
 
 namespace MediaPortal.UiComponents.Media.MediaLists
 {
@@ -33,6 +35,8 @@ namespace MediaPortal.UiComponents.Media.MediaLists
     public LastWatchedMovieMediaListProvider()
     {
       _necessaryMias = Consts.NECESSARY_MOVIES_MIAS;
+      //Needed for calculating play percentage
+      _optionalMias = new Guid[] { VideoStreamAspect.ASPECT_ID };
       _playableConverterAction = item => new MovieItem(item);
       _navigationInitializerType = typeof(MoviesNavigationInitializer);
     }

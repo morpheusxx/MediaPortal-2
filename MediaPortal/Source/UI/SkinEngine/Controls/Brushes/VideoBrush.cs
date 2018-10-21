@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -144,7 +144,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
             _videoTextureClip = new RectangleF(cropVideoRect.X / desc.Width, cropVideoRect.Y / desc.Height,
                 cropVideoRect.Width / desc.Width, cropVideoRect.Height / desc.Height);
           }
-        _scaledVideoSize = cropVideoRect.Size.ToSize2F();
+        _scaledVideoSize = new SizeF(cropVideoRect.Width, cropVideoRect.Height);
 
         // Correct aspect ratio for anamorphic video
         if (!aspectRatio.IsEmpty() && geometry.RequiresCorrectAspectRatio)

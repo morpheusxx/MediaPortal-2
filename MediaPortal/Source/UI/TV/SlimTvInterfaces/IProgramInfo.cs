@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using MediaPortal.Plugins.SlimTv.Interfaces.Items;
 using System;
 using System.Threading.Tasks;
+using MediaPortal.Common.Async;
 using MediaPortal.Common.Services.ServerCommunication;
 
 namespace MediaPortal.Plugins.SlimTv.Interfaces

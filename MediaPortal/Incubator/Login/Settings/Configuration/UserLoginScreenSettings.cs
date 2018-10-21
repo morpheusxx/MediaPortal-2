@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -25,6 +25,7 @@
 using MediaPortal.Common;
 using MediaPortal.Common.Configuration.ConfigurationClasses;
 using MediaPortal.Common.Settings;
+using MediaPortal.UI.Services.UserManagement;
 
 namespace MediaPortal.UiComponents.Login.Settings.Configuration
 {

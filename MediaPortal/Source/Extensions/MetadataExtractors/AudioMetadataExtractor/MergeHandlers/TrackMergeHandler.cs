@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -81,7 +81,21 @@ namespace MediaPortal.Extensions.MetadataExtractors.AudioMetadataExtractor
 
     public IFilter GetSearchFilter(IDictionary<Guid, IList<MediaItemAspect>> extractedAspects)
     {
-      return IAudioRelationshipExtractor.GetTrackSearchFilter(extractedAspects);
+      SingleMediaItemAspect audioAspect;
+      if (!MediaItemAspect.TryGetAspect(extractedAspects, AudioAspect.Metadata, out audioAspect))
+        return null;
+
+      IFilter trackFilter = RelationshipExtractorUtils.CreateExternalItemFilter(extractedAspects, ExternalIdentifierAspect.TYPE_TRACK);
+      IFilter albumFilter = RelationshipExtractorUtils.CreateExternalItemFilter(extractedAspects, ExternalIdentifierAspect.TYPE_ALBUM);
+      if (albumFilter == null)
+        return trackFilter;
+
+      int? trackNumber = audioAspect.GetAttributeValue<int?>(AudioAspect.ATTR_TRACK);
+      if (trackNumber.HasValue)
+        albumFilter = BooleanCombinationFilter.CombineFilters(BooleanOperator.And, albumFilter,
+          new RelationalFilter(AudioAspect.ATTR_TRACK, RelationalOperator.EQ, trackNumber.Value));
+
+      return BooleanCombinationFilter.CombineFilters(BooleanOperator.Or, trackFilter, albumFilter);
     }
 
     public bool TryMatch(IDictionary<Guid, IList<MediaItemAspect>> extractedAspects, IDictionary<Guid, IList<MediaItemAspect>> existingAspects)
@@ -137,6 +151,9 @@ namespace MediaPortal.Extensions.MetadataExtractors.AudioMetadataExtractor
             MediaItemAspect.SetAttribute(existingAspects, MediaAspect.ATTR_ISVIRTUAL, false);
             MediaItemAspect.SetAttribute(existingAspects, MediaAspect.ATTR_ISSTUB, 
               providerResourceAspects.Where(p => p.GetAttributeValue<int>(ProviderResourceAspect.ATTR_TYPE) == ProviderResourceAspect.TYPE_STUB).Any());
+            var now = DateTime.Now;
+            MediaItemAspect.SetAttribute(existingAspects, ImporterAspect.ATTR_DATEADDED, now);
+            MediaItemAspect.SetAttribute(existingAspects, ImporterAspect.ATTR_LAST_IMPORT_DATE, now);
             existingAspects.Remove(ProviderResourceAspect.ASPECT_ID);
             foreach (Guid aspect in extractedAspects.Keys)
             {

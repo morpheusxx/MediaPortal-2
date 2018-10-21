@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -54,7 +54,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor
 
     public MovieRelationshipExtractor()
     {
-      _metadata = new RelationshipExtractorMetadata(METADATAEXTRACTOR_ID, "Movie relationship extractor");
+      _metadata = new RelationshipExtractorMetadata(METADATAEXTRACTOR_ID, "Movie relationship extractor", MetadataExtractorPriority.External);
       RegisterRelationships();
       InitExtractors();
     }
@@ -185,6 +185,11 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor
     {
       OnlineMatcherService.Instance.ResetLastChangedMovieCollections();
       OnlineMatcherService.Instance.ResetLastChangedMovies();
+    }
+
+    public IDictionary<Guid, IList<MediaItemAspect>> GetBaseChildAspectsFromExistingAspects(IDictionary<Guid, IList<MediaItemAspect>> existingChildAspects, IDictionary<Guid, IList<MediaItemAspect>> existingParentAspects)
+    {
+      return null;
     }
 
     public RelationshipExtractorMetadata Metadata

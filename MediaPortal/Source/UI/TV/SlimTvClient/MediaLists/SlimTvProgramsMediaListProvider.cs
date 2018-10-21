@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -46,7 +46,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.MediaLists
       ProgramProperties programProperties = new ProgramProperties();
       programProperties.SetProgram(program, channel);
 
-      ListItem item = new ProgramListItem(programProperties)
+      ProgramListItem item = new ProgramListItem(programProperties)
       {
         Command = new AsyncMethodDelegateCommand(() => SlimTvModelBase.TuneChannel(channel)),
       };
@@ -68,7 +68,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.MediaLists
 
       ICollection<IChannel> channels;
       if (_currentChannels == null || updateReason.HasFlag(UpdateReason.Forced) || updateReason.HasFlag(UpdateReason.PlaybackComplete))
-        channels = _currentChannels = await GetUserChannelList(maxItems, UserDataKeysKnown.KEY_CHANNEL_PLAY_COUNT);
+        channels = _currentChannels = await GetUserChannelList(maxItems, UserDataKeysKnown.KEY_CHANNEL_PLAY_COUNT, true);
       else
         channels = _currentChannels;
 

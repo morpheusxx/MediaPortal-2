@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -24,12 +24,12 @@
 
 using System;
 using System.Collections.Generic;
+using codeRR.Client;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.Services.Settings;
-using MediaPortal.Plugins.OneTrueError.Settings;
-using OneTrueError.Client;
+using MediaPortal.Plugins.CodeRR.Settings;
 
-namespace MediaPortal.Plugins.OneTrueError
+namespace MediaPortal.Plugins.CodeRR
 {
   public class ErrorLogWrapper : ILogger, ILoggerConfig
   {
@@ -158,13 +158,13 @@ namespace MediaPortal.Plugins.OneTrueError
     private void FilterAndSubmit(string format, Exception ex, object[] args)
     {
       if (ShouldSubmit(ex))
-        OneTrue.Report(ex, TryFormat(format, args));
+        Err.Report(ex, TryFormat(format, args));
     }
 
     private void FilterAndSubmit(Exception ex)
     {
       if (ShouldSubmit(ex))
-        OneTrue.Report(ex);
+        Err.Report(ex);
     }
 
     #endregion

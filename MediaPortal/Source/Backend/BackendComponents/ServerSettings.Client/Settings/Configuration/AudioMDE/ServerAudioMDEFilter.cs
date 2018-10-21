@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -38,9 +38,9 @@ namespace MediaPortal.Plugins.ServerSettings.Settings.Configuration
     {
       Enabled = false;
       ConnectionMonitor.Instance.RegisterConfiguration(this);
-      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.AudioMDESettings.ServerAudioMDEFilter.Artists]"));
-      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.AudioMDESettings.ServerAudioMDEFilter.Composers]"));
-      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.AudioMDESettings.ServerAudioMDEFilter.MusicLabels]"));
+      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.MDESettings.MDEFilter.Artists]"));
+      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.MDESettings.MDEFilter.Composers]"));
+      _items.Add(LocalizationHelper.CreateResourceString("[Settings.ServerSettings.MDESettings.MDEFilter.MusicLabels]"));
     }
 
     public override void Load()

@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -76,5 +76,12 @@ namespace MediaPortal.UiComponents.Weather.Settings
     /// </summary>
     [Setting(SettingScope.User, null)]
     public List<CitySetupInfo> LocationsList { get; set; }
+
+    /// <summary>
+    /// Optional ApiKey for the weather provider. Currently this can be used for <c>https://openweathermap.org/api</c>. Users can register their own key so there is no request limit hit.
+    /// If this property is <c>null</c> the inbuilt keys are used, but those can expire or get limited.
+    /// </summary>
+    [Setting(SettingScope.User, null)]
+    public string ApiKey { get; set; }
   }
 }

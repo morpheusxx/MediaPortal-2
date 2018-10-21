@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -110,13 +110,14 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       }
 
       BooleanCombinationFilter boolFilter = filter as BooleanCombinationFilter;
+      ICollection<IFilter> filterOperands = boolFilter?.Operands; //Work on collection reference to avoid chaning original
       if (boolFilter != null && boolFilter.Operator == BooleanOperator.And && boolFilter.Operands.Count > 1 && boolFilter.Operands.ToList().All(x => x is IAttributeFilter))
       {
         ICollection<IFilter> remainingOperands = new List<IFilter>();
 
         // Special case to do multiple MIA boolean logic first
         IDictionary<Guid, ICollection<IAttributeFilter>> multiGroups = new Dictionary<Guid, ICollection<IAttributeFilter>>();
-        foreach (IAttributeFilter operand in boolFilter.Operands)
+        foreach (IAttributeFilter operand in filterOperands)
         {
           MultipleMediaItemAspectMetadata mmiam = operand.AttributeType.ParentMIAM as MultipleMediaItemAspectMetadata;
           if (mmiam != null)
@@ -183,13 +184,13 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
             return;
 
           resultParts.Add(" AND ");
-          boolFilter.Operands = remainingOperands;
+          filterOperands = remainingOperands;
         }
       }
       if (boolFilter != null)
       {
-        int numOperands = boolFilter.Operands.Count;
-        IEnumerator enumOperands = boolFilter.Operands.GetEnumerator();
+        int numOperands = filterOperands.Count;
+        IEnumerator enumOperands = filterOperands.GetEnumerator();
         if (!enumOperands.MoveNext())
           return;
         if (numOperands > 1)
@@ -251,8 +252,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         else if (cardinality == Cardinality.OneToMany)
         {
           resultParts.Add("NOT EXISTS(");
-          resultParts.Add("SELECT V.");
-          resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+          resultParts.Add("SELECT 1");
           resultParts.Add(" FROM ");
           resultParts.Add(miaManagement.GetMIACollectionAttributeTableName(attributeType));
           resultParts.Add(" V WHERE V.");
@@ -264,8 +264,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         else if (cardinality == Cardinality.ManyToMany)
         {
           resultParts.Add("NOT EXISTS(");
-          resultParts.Add("SELECT NM.");
-          resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+          resultParts.Add("SELECT 1");
           resultParts.Add(" FROM ");
           resultParts.Add(miaManagement.GetMIACollectionAttributeNMTableName(attributeType));
           resultParts.Add(" NM INNER JOIN ");
@@ -291,8 +290,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         BindVar userIdVar = new BindVar(bvNamespace.CreateNewBindVarName("V"), emptyUserDataFilter.UserProfileId, typeof(Guid));
 
         resultParts.Add("NOT EXISTS(");
-        resultParts.Add("SELECT ");
-        resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+        resultParts.Add("SELECT 1");
         resultParts.Add(" FROM ");
         resultParts.Add(UserProfileDataManagement_SubSchema.USER_MEDIA_ITEM_DATA_TABLE_NAME);
         resultParts.Add(" WHERE ");
@@ -334,10 +332,8 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         BindVar userIdVar = new BindVar(bvNamespace.CreateNewBindVarName("V"), relationalUserDataFilter.UserProfileId, typeof(Guid));
         BindVar bindVar = new BindVar(bvNamespace.CreateNewBindVarName("V"), relationalUserDataFilter.FilterValue, typeof(string));
 
-        resultParts.Add(outerMIIDJoinVariable);
-        resultParts.Add(" IN(");
-        resultParts.Add("SELECT ");
-        resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+        resultParts.Add("(EXISTS(");
+        resultParts.Add("SELECT 1");
         resultParts.Add(" FROM ");
         resultParts.Add(UserProfileDataManagement_SubSchema.USER_MEDIA_ITEM_DATA_TABLE_NAME);
         resultParts.Add(" WHERE ");
@@ -348,7 +344,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         resultParts.Add(UserProfileDataManagement_SubSchema.USER_DATA_KEY_COL_NAME);
         resultParts.Add(" = '");
         resultParts.Add(relationalUserDataFilter.UserDataKey);
-        resultParts.Add("' AND ");
+        resultParts.Add("' AND (");
         resultParts.Add(UserProfileDataManagement_SubSchema.USER_DATA_VALUE_COL_NAME);
         switch (relationalUserDataFilter.Operator)
         {
@@ -376,6 +372,37 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
         }
         resultParts.Add("@" + bindVar.Name);
         resultBindVars.Add(bindVar);
+        if (relationalUserDataFilter.IncludeEmpty)
+        {
+          resultParts.Add(" OR ");
+          resultParts.Add(UserProfileDataManagement_SubSchema.USER_DATA_VALUE_COL_NAME);
+          resultParts.Add(" IS NULL ");
+        }
+        resultParts.Add(") AND ");
+        resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+        resultParts.Add("=");
+        resultParts.Add(outerMIIDJoinVariable);
+        resultParts.Add(")");
+        if (relationalUserDataFilter.IncludeEmpty)
+        {
+          resultParts.Add(" OR NOT EXISTS(");
+          resultParts.Add("SELECT 1");
+          resultParts.Add(" FROM ");
+          resultParts.Add(UserProfileDataManagement_SubSchema.USER_MEDIA_ITEM_DATA_TABLE_NAME);
+          resultParts.Add(" WHERE ");
+          resultParts.Add(UserProfileDataManagement_SubSchema.USER_PROFILE_ID_COL_NAME);
+          resultParts.Add(" = @" + userIdVar.Name);
+          resultParts.Add(" AND ");
+          resultParts.Add(UserProfileDataManagement_SubSchema.USER_DATA_KEY_COL_NAME);
+          resultParts.Add(" = '");
+          resultParts.Add(relationalUserDataFilter.UserDataKey);
+          resultParts.Add("'");
+          resultParts.Add(" AND ");
+          resultParts.Add(MIA_Management.MIA_MEDIA_ITEM_ID_COL_NAME);
+          resultParts.Add("=");
+          resultParts.Add(outerMIIDJoinVariable);
+          resultParts.Add(")");
+        }
         resultParts.Add(")");
         return;
       }

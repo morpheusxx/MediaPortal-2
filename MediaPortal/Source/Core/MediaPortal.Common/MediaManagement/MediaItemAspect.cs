@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -732,6 +732,24 @@ namespace MediaPortal.Common.MediaManagement
       foreach (IList<MediaItemAspect> values in aspectData.Values)
         foreach (MediaItemAspect value in values)
           aspects.Add(value);
+      return aspects;
+    }
+
+    public static IDictionary<Guid, IList<MediaItemAspect>> GetAspects(IEnumerable<MediaItemAspect> aspectData)
+    {
+      IDictionary<Guid, IList<MediaItemAspect>> aspects = new Dictionary<Guid, IList<MediaItemAspect>>();
+      foreach (MediaItemAspect aspect in aspectData)
+      {
+        SingleMediaItemAspect singleAspect = aspect as SingleMediaItemAspect;
+        if (singleAspect != null)
+          SetAspect(aspects, singleAspect);
+        else
+        {
+          MultipleMediaItemAspect multiAspect = aspect as MultipleMediaItemAspect;
+          if (multiAspect != null)
+            AddOrUpdateAspect(aspects, multiAspect);
+        }
+      }
       return aspects;
     }
 

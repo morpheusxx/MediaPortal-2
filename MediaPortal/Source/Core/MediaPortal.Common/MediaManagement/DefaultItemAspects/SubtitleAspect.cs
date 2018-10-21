@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -127,5 +127,25 @@ namespace MediaPortal.Common.MediaManagement.DefaultItemAspects
             ATTR_RESOURCE_INDEX
         }
         );
+
+    public static string GetSubtitleType(string codec)
+    {
+      if (codec.Equals("VOBSUB", StringComparison.InvariantCultureIgnoreCase))
+        return FORMAT_VOBSUB;
+      else if (codec.Equals("PGS", StringComparison.InvariantCultureIgnoreCase))
+        return FORMAT_PGS;
+      else if (codec.Equals("ASS", StringComparison.InvariantCultureIgnoreCase))
+        return FORMAT_ASS;
+      else if (codec.Equals("SSA", StringComparison.InvariantCultureIgnoreCase))
+        return FORMAT_SSA;
+      else if (codec.Equals("UTF-8", StringComparison.InvariantCultureIgnoreCase))
+        return FORMAT_SRT;
+      else if (codec.IndexOf("TELETEXT", StringComparison.InvariantCultureIgnoreCase) >= 0)
+        return FORMAT_TELETEXT;
+      else if (codec.IndexOf("DVB", StringComparison.InvariantCultureIgnoreCase) >= 0)
+        return FORMAT_DVBTEXT;
+
+      return null;
+    }
   }
 }

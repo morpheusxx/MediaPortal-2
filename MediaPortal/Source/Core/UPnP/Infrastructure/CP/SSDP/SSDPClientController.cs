@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -316,9 +316,9 @@ namespace UPnP.Infrastructure.CP.SSDP
 
             StartMulticastReceive(new UDPAsyncReceiveState<EndpointConfiguration>(config, UPnPConsts.UDP_SSDP_RECEIVE_BUFFER_SIZE, socket));
           }
-          catch (Exception) // SocketException, SecurityException
+          catch (Exception e) // SocketException, SecurityException
           {
-            UPnPConfiguration.LOGGER.Info("SSDPClientController: Unable to bind to multicast address(es) for endpoint '{0}'",
+            UPnPConfiguration.LOGGER.Warn("SSDPClientController: Unable to bind to multicast address(es) for endpoint '{0}'", e,
                 NetworkHelper.IPAddrToString(config.EndPointIPAddress));
           }
 
@@ -335,7 +335,7 @@ namespace UPnP.Infrastructure.CP.SSDP
           }
           catch (Exception e) // SocketException, SecurityException
           {
-            UPnPConfiguration.LOGGER.Info("SSDPClientController: Unable to bind to unicast address '{0}'", e,
+            UPnPConfiguration.LOGGER.Warn("SSDPClientController: Unable to bind to unicast address '{0}'", e,
                 NetworkHelper.IPAddrToString(config.EndPointIPAddress));
           }
         }

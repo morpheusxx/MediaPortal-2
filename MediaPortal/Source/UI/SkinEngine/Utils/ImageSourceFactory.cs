@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -134,12 +134,7 @@ namespace MediaPortal.UI.SkinEngine.Utils
 
       textureData = (byte[])mediaAspect.GetAttributeValue(ThumbnailLargeAspect.ATTR_THUMBNAIL);
 
-      ImageRotation miRotation;
-      bool flipX;
-      bool flipY;
-      ImageAspect.GetOrientationMetadata(mediaItem, out miRotation, out flipX, out flipY);
-      RightAngledRotation rotation = RotationTranslator.TranslateToRightAngledRotation(miRotation);
-      return new BinaryTextureImageSource(textureData, rotation, key);
+      return new BinaryTextureImageSource(textureData, RightAngledRotation.Zero, key);
     }
 
     /// <summary>

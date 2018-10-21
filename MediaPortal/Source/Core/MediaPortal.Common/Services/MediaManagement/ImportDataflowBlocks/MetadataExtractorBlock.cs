@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -68,7 +68,7 @@ namespace MediaPortal.Common.Services.MediaManagement.ImportDataflowBlocks
       new ExecutionDataflowBlockOptions { CancellationToken = ct, BoundedCapacity = 1 },
       new ExecutionDataflowBlockOptions { CancellationToken = ct, MaxDegreeOfParallelism = Environment.ProcessorCount * 5, BoundedCapacity = 100 },
       new ExecutionDataflowBlockOptions { CancellationToken = ct, BoundedCapacity = 1 },
-      BLOCK_NAME, true, parentImportJobController)
+      BLOCK_NAME, true, parentImportJobController, ct)
     {
       _forceQuickMode = forceQuickMode;
     }
@@ -101,7 +101,7 @@ namespace MediaPortal.Common.Services.MediaManagement.ImportDataflowBlocks
     {
       try
       {
-        importResource.Aspects = await ExtractMetadata(importResource.ResourceAccessor, importResource.ExistingAspects, !importResource.MediaItemId.HasValue, _forceQuickMode);
+        importResource.Aspects = await ExtractMetadata(importResource.ResourceAccessor, importResource.ExistingAspects, _forceQuickMode).ConfigureAwait(false);
         if (importResource.Aspects == null)
           importResource.Aspects = importResource.ExistingAspects;
         if (importResource.Aspects == null)

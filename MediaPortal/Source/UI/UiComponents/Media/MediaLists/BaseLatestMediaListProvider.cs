@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -34,7 +34,7 @@ namespace MediaPortal.UiComponents.Media.MediaLists
     protected override async Task<MediaItemQuery> CreateQueryAsync()
     {
       IFilter filter = await AppendUserFilterAsync(GetNavigationFilter(_navigationInitializerType), _necessaryMias);
-      return new MediaItemQuery(_necessaryMias, filter)
+      return new MediaItemQuery(_necessaryMias, _optionalMias, filter)
       {
         SortInformation = new List<ISortInformation> { new AttributeSortInformation(ImporterAspect.ATTR_DATEADDED, SortDirection.Descending) }
       };

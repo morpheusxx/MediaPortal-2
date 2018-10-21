@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -37,9 +37,8 @@ using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using SharpDX;
 using SharpDX.Direct3D9;
+using SharpDX.Mathematics.Interop;
 using Size = SharpDX.Size2;
-using SizeF = SharpDX.Size2F;
-using PointF = SharpDX.Vector2;
 
 namespace MediaPortal.Plugins.StatisticsRenderer
 {
@@ -301,12 +300,12 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     private void DrawLines()
     {
-      Vector2[] pointsFps = new Vector2[2];
-      Vector2[] pointsRenderTime = new Vector2[2];
-      Vector2[] pointsTimeToPresent = new Vector2[2];
-      Vector2[] pointsGlitches = new Vector2[2];
-      Vector2[] renderBaseLine = new Vector2[2];
-      Vector2[] presentBaseLine = new Vector2[2];
+      RawVector2[] pointsFps = new RawVector2[2];
+      RawVector2[] pointsRenderTime = new RawVector2[2];
+      RawVector2[] pointsTimeToPresent = new RawVector2[2];
+      RawVector2[] pointsGlitches = new RawVector2[2];
+      RawVector2[] renderBaseLine = new RawVector2[2];
+      RawVector2[] presentBaseLine = new RawVector2[2];
       renderBaseLine[0].X = presentBaseLine[0].X = RENDER_OFFSET_LEFT;
       renderBaseLine[1].X = presentBaseLine[1].X = RENDER_OFFSET_LEFT + MAX_STAT_VALUES;
       renderBaseLine[0].Y = renderBaseLine[1].Y = RENDER_OFFSET_TOP + 30;

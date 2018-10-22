@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using DirectShow;
 using DirectShow.Helper;
 using MediaPortal.Common;
+using MediaPortal.Common.Async;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.SkinEngine.Players;
@@ -67,13 +68,14 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
       //FilterGraphTools.TryDispose(ref _evr);
     }
 
-    public void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
+    public async void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
     {
+      await SkinContext.Form;
       //_evr = (IBaseFilter)new MadVideoRenderer();
       int hr = CreateMadVR(out _evr);
       //_evr = new Vmr9VideoRenderer();
       _basicVideo = (IBasicVideo)_evr;
-      _videoWindow = (IVideoWindow)_evr;
+      _videoWindow = (IVideoWindow)graphBuilder;
       graphBuilder.AddFilter(_evr, MADVR_FILTER_NAME);
       //Marshal.ReleaseComObject(_videoWindow);
       //Marshal.ReleaseComObject(_basicVideo);
@@ -83,8 +85,9 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
     public bool SyncRendering { get { return false; } }
     public IBaseFilter Filter { get { return _evr; } }
 
-    public void OnGraphRunning()
+    public async void OnGraphRunning()
     {
+      await SkinContext.Form;
       var videoWindow = _videoWindow;
       if (videoWindow != null)
       {

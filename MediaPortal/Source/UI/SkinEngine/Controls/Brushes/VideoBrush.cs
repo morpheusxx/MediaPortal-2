@@ -93,7 +93,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       public void Dispose()
       {
         if (_overlayRenderer != null)
-          _overlayRenderer.SetOverlayPosition(0, 0, 0, 0);
+          _overlayRenderer.SetOverlayPositionAsync(0, 0, 0, 0).Wait();
         TryDispose(ref _texture);
       }
 
@@ -163,7 +163,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
         if (overlayPlayer != null && overlayPlayer.Renderer != null)
         {
           _overlayRenderer = overlayPlayer.Renderer;
-          overlayPlayer.Renderer.SetOverlayPosition((int)targetPos.Width, (int)targetPos.Height, (int)targetSizeF.Width, (int)targetSizeF.Height);
+          _overlayRenderer.SetOverlayPositionAsync((int)targetPos.Width, (int)targetPos.Height, (int)targetSizeF.Width, (int)targetSizeF.Height).Wait();
         }
 
         // Cache inverse RelativeTransform

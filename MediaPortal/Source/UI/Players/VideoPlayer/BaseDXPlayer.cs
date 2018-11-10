@@ -631,9 +631,6 @@ namespace MediaPortal.UI.Players.Video
           Marshal.FreeCoTaskMem(_instancePtr);
           _instancePtr = IntPtr.Zero;
         }
-        FilterGraphTools.TryRelease(ref _mc);
-        FilterGraphTools.TryRelease(ref _me);
-
         FreeCodecs();
       }
       // Dispose resource locator and accessor

@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using DirectShow;
 using DirectShow.Helper;
 using MediaPortal.Common;
@@ -15,69 +16,82 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
   {
     // DirectShow objects
     protected IBaseFilter _evr;
+    protected MVRCallback _evrCallback;
     protected IBasicVideo _basicVideo;
     protected IVideoWindow _videoWindow;
     protected volatile bool _shutdown;
 
-    protected const string MADVR_FILTER_NAME = "madVR";
-
-    #region Classes & interfaces
-
-    [ComImport, Guid("E1A8B82A-32CE-4B0D-BE0D-AA68C772E423")]
-    public class MadVideoRenderer { }
-
-    //[Guid("E1A8B82A-32CE-4B0D-BE0D-AA68C772E423")]
-    //public class MadVideoRenderer : DSFilter { }
-
-    [Guid("51B4ABF3-748F-4E3B-A276-C828330E926A")]
-    public class Vmr9VideoRenderer : DSFilter { }
+    #region DLL imports
 
     [DllImport("EVRPresenter.dll", ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern int CreateMadVR(out IBaseFilter presenterInstance);
+    private static extern int MadVRInit(IMVRPresentCallback callback, int xposition, int yposition, int width, int height, IntPtr dwD3DDevice, IntPtr parent, ref IBaseFilter madFilter, IGraphBuilder pMediaControl);
+
     [DllImport("EVRPresenter.dll", ExactSpelling = true, CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern int ReleaseMadVR(IBaseFilter presenterInstance);
+    private static extern void MadVRDeinit();
 
     #endregion
+
+    public MadVR()
+    {
+      _evrCallback = new MVRCallback();
+    }
 
 
     public void Dispose()
     {
-      ReleaseVideoRenderer();
-    }
-
-    private void ReleaseVideoRenderer()
-    {
-      _shutdown = true;
-      ReleaseMadVR(_evr);
-      var videoWindow = _videoWindow;
-      if (videoWindow != null)
+      try
       {
-        videoWindow.put_Owner(IntPtr.Zero);
-        videoWindow.put_MessageDrain(IntPtr.Zero);
-        videoWindow.put_Visible(0);
+        if (_evr != null)
+        {
+          //FilterGraphTools.DisconnectPins(_evr);
+
+          Marshal.ReleaseComObject(_videoWindow);
+          Marshal.ReleaseComObject(_basicVideo);
+          //Marshal.ReleaseComObject(_evr);
+        }
       }
-      ServiceRegistration.Get<ILogger>().Info("Releasing _basicVideo");
-      FilterGraphTools.TryFinalRelease(ref _basicVideo);
-      ServiceRegistration.Get<ILogger>().Info("Releasing _videoWindow");
-      FilterGraphTools.TryFinalRelease(ref _videoWindow);
-      ServiceRegistration.Get<ILogger>().Info("Final Releasing _evr");
-      FilterGraphTools.TryFinalRelease(ref _evr);
-      //FilterGraphTools.TryFinalRelease(ref _basicVideo);
-      //FilterGraphTools.TryFinalRelease(ref _videoWindow);
-      //FilterGraphTools.TryDispose(ref _evr);
+      catch (Exception ex)
+      {
+      }
+      _videoWindow = null;
+      _basicVideo = null;
+      _evr = null;
+      GC.Collect();
+
+      SkinContext.Form.Invoke(new Action(() =>
+      {
+        MadVRDeinit();
+      }));
     }
 
     public void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
     {
-      //_evr = (IBaseFilter)new MadVideoRenderer();
-      int hr = CreateMadVR(out _evr);
-      //_evr = new Vmr9VideoRenderer();
-      _basicVideo = (IBasicVideo)_evr;
-      _videoWindow = (IVideoWindow)_evr;
-      graphBuilder.AddFilter(_evr, MADVR_FILTER_NAME);
-      //Marshal.ReleaseComObject(_videoWindow);
-      //Marshal.ReleaseComObject(_basicVideo);
-      //Marshal.ReleaseComObject(_evr);
+      IntPtr upDevice = SkinContext.Device.NativePointer;
+
+      SkinContext.Form.BeginInvoke(new Action(() =>
+      {
+        int hr = MadVRInit(_evrCallback, 0, 0, SkinContext.Form.Width, SkinContext.Form.Height, upDevice, SkinContext.Form.Handle, ref _evr, graphBuilder);
+        if (hr != 0)
+          throw new VideoPlayerException("Initializing of MadVR failed");
+
+        //_evr = (IBaseFilter)new MadVideoRenderer();
+        //_evr = new Vmr9VideoRenderer();
+        _basicVideo = (IBasicVideo)_evr;
+        _videoWindow = (IVideoWindow)_evr;
+        //graphBuilder.AddFilter(_evr, MADVR_FILTER_NAME);
+        //Marshal.ReleaseComObject(_videoWindow);
+        //Marshal.ReleaseComObject(_basicVideo);
+        //Marshal.ReleaseComObject(_evr);
+
+        //var handle = SkinContext.Form.Handle;
+        //_videoWindow.put_Owner(handle);
+        ////_videoWindow.put_MessageDrain(handle);
+        //_videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
+        //_videoWindow.put_Left(0);
+        //_videoWindow.put_Top(0);
+        //_videoWindow.put_Height(SkinContext.Form.Height / 2);
+        //_videoWindow.put_Width(SkinContext.Form.Width);
+      }));
     }
 
     public bool SyncRendering { get { return false; } }
@@ -85,13 +99,21 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
 
     public void OnGraphRunning()
     {
-      var videoWindow = _videoWindow;
-      if (videoWindow != null)
-      {
-        videoWindow.put_Owner(SkinContext.Form.Handle);
-        videoWindow.put_MessageDrain(SkinContext.Form.Handle);
-        videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
-      }
+      //SkinContext.Form.BeginInvoke(new Action(() =>
+      //{
+      //  var videoWindow = _videoWindow;
+      //  if (videoWindow != null)
+      //  {
+      //    var handle = SkinContext.Form.Handle;
+      //    videoWindow.put_Owner(handle);
+      //    videoWindow.put_MessageDrain(handle);
+      //    videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
+      //    videoWindow.put_Left(0);
+      //    videoWindow.put_Top(0);
+      //    videoWindow.put_Height(SkinContext.Form.Height);
+      //    videoWindow.put_Width(SkinContext.Form.Width);
+      //  }
+      //}));
     }
 
     public void SetOverlayPosition(int left, int top, int width, int height)

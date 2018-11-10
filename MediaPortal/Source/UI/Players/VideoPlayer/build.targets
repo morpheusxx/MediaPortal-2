@@ -22,7 +22,11 @@
       <References Include="$(TargetDir)DVBSub3.ax" />
       <References Include="$(TargetDir)mpcSubs.dll" />
       <References Include="$(TargetDir)cccp.ax" />
-      <References Include="$(SolutionDir)\Ui\Players\EVRPresenter\Release\EVRPresenter.dll" />
+      <References Include="$(SolutionDir)\Ui\Players\EVRPresenter\$(Configuration)\EVRPresenter.dll" />
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug'">
+      <References Include="$(SolutionDir)\Ui\Players\EVRPresenter\$(Configuration)\EVRPresenter.pdb" />
     </ItemGroup>
 
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />

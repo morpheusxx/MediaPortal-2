@@ -3,5 +3,5 @@ LIBRARY	"EVRPresenter"
 EXPORTS
 EvrInit                 @1
 EvrDeinit               @2
-CreateMadVR             @3
-ReleaseMadVR            @4
+MadVRInit               @3
+MadVRDeinit             @4

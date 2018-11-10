@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -24,6 +24,7 @@
 
 using MediaPortal.Common;
 using MediaPortal.Common.PluginManager;
+using MediaPortal.Plugins.SlimTv.Client.Helpers;
 using MediaPortal.Plugins.SlimTv.Client.MediaExtensions;
 using MediaPortal.Plugins.SlimTv.Client.Notifications;
 using MediaPortal.Plugins.SlimTv.Client.TvHandler;
@@ -39,9 +40,11 @@ namespace MediaPortal.Plugins.SlimTv.Client
     {
       ServiceRegistration.Set<ITvHandler>(new SlimTvHandler());
       ServiceRegistration.Set<ISlimTvNotificationService>(new SlimTvNotificationService());
-      
       // Register recording section in MediaLibrary
       RecordingsLibrary.RegisterOnMediaLibrary();
+
+      // Dummy call to static instance which creates required message handlers
+      var channels = ChannelContext.Instance.Channels;
     }
 
     public bool RequestEnd()

@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -55,6 +55,16 @@ namespace MediaPortal.Plugins.SlimTv.Interfaces.Items
     /// Gets or Sets the Genre.
     /// </summary>
     String Genre { get; set; }
+
+    /// <summary>
+    /// Gets or Sets the EPG Genre Id.
+    /// </summary>
+    int EpgGenreId { get; set; }
+
+    /// <summary>
+    /// Gets or Sets the EPG Genre Color.
+    /// </summary>
+    string EpgGenreColor { get; set; }
 
     /// <summary>
     /// Gets or Sets the Start time.

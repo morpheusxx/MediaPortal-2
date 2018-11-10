@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -35,6 +35,7 @@ using MediaPortal.Common.Logging;
 using MediaPortal.Common.Messaging;
 using MediaPortal.Common.Runtime;
 using MediaPortal.Common.Settings;
+using MediaPortal.Common.UserManagement;
 using MediaPortal.Plugins.SlimTv.Client.Helpers;
 using MediaPortal.Plugins.SlimTv.Client.Player;
 using MediaPortal.Plugins.SlimTv.Client.Settings;
@@ -51,7 +52,6 @@ using MediaPortal.UiComponents.Media.Models;
 using MediaPortal.UI.ServerCommunication;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.Utilities.Events;
-using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.Common.UserProfileDataManagement;
 using Task = System.Threading.Tasks.Task;
 
@@ -678,9 +678,6 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
         if (userProfile.HasValue)
         {
           var userResult = await userProfileDataManagement.UserProfileDataManagement.GetUserAdditionalDataAsync(userProfile.Value, UserDataKeysKnown.KEY_CHANNEL_PLAY_COUNT, channel.ChannelId);
-          if (!userResult.Success)
-            return;
-
           string data = userResult.Result;
           double count = (data != null ? Convert.ToDouble(data, CultureInfo.InvariantCulture) : 0) + (DateTime.UtcNow - _watchStart[channel]).TotalHours;
           await userProfileDataManagement.UserProfileDataManagement.SetUserAdditionalDataAsync(userProfile.Value,
@@ -703,18 +700,23 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
 
     protected async Task UpdateForChannel(IChannel channel, ProgramProperties current, ProgramProperties next, AbstractProperty channelNameProperty, AbstractProperty progressProperty)
     {
-      channelNameProperty.SetValue(channel.Name);
-      var result = await _tvHandler.ProgramInfo.GetNowNextProgramAsync(channel);
-      if (result.Success)
+      bool success = channel != null;
+      if (success)
       {
-        var currentProgram = result.Result[0];
-        var nextProgram = result.Result[1];
-        current.SetProgram(currentProgram, channel);
-        next.SetProgram(nextProgram, channel);
-        double progress = (DateTime.Now - currentProgram.StartTime).TotalSeconds / (currentProgram.EndTime - currentProgram.StartTime).TotalSeconds * 100;
-        progressProperty.SetValue(progress);
+        channelNameProperty.SetValue(channel.Name);
+        var result = await _tvHandler.ProgramInfo.GetNowNextProgramAsync(channel);
+        success = result.Success;
+        if (success)
+        {
+          var currentProgram = result.Result[0];
+          var nextProgram = result.Result[1];
+          current.SetProgram(currentProgram, channel);
+          next.SetProgram(nextProgram, channel);
+          double progress = currentProgram == null ? 100d : (DateTime.Now - currentProgram.StartTime).TotalSeconds / (currentProgram.EndTime - currentProgram.StartTime).TotalSeconds * 100;
+          progressProperty.SetValue(progress);
+        }
       }
-      else
+      if (!success)
       {
         current.SetProgram(null);
         next.SetProgram(null);
@@ -891,7 +893,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
               {
                 currentProgram = result.Result[0];
                 nextProgram = result.Result[1];
-                double progress = (DateTime.Now - currentProgram.StartTime).TotalSeconds /
+                double progress = currentProgram == null ? 100d : (DateTime.Now - currentProgram.StartTime).TotalSeconds /
                                   (currentProgram.EndTime - currentProgram.StartTime).TotalSeconds * 100;
                 _programProgressProperty.SetValue(progress);
               }

@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -50,6 +50,7 @@ namespace MediaPortal.UI.SkinEngine.MarkupExtensions
       TYPE_MAPPING.Add("WorkflowManager", typeof(IWorkflowManager));
       TYPE_MAPPING.Add("InputManager", typeof(IInputManager));
       TYPE_MAPPING.Add("Players", typeof(IPlayerManager));
+      TYPE_MAPPING.Add("PlayerContextManager", typeof(IPlayerContextManager));
       TYPE_MAPPING.Add("DialogManager", typeof(IDialogManager));
       TYPE_MAPPING.Add("Window", typeof(IScreenControl));
       TYPE_MAPPING.Add("PathBrowser", typeof(IPathBrowser));

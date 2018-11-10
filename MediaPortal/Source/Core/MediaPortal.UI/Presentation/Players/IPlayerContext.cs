@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -255,6 +255,22 @@ namespace MediaPortal.UI.Presentation.Players
     /// the playback rate will be set to -0.5.
     /// </summary>
     void SeekBackward();
+
+    /// <summary>
+    /// Skips to previous chapter of current item.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c>, if the previous chapter could be started, else <c>false</c>.
+    /// </returns>
+    bool PreviousChapter();
+
+    /// <summary>
+    /// Skips to next chapter of current item.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c>, if the next item could be started, else <c>false</c>.
+    /// </returns>
+    bool NextChapter();
 
     /// <summary>
     /// Plays the previous item from the playlist.

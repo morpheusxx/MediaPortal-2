@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -59,8 +59,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.FFMpegLib
     /// </summary>
     static FFMpegBinary()
     {
-      _ffMpegBinPath = FileUtils.BuildAssemblyRelativePath(FFMPEG_EXECUTABLE);
-      _ffProbeBinPath = FileUtils.BuildAssemblyRelativePath(FFPROBE_EXECUTABLE);
+      _ffMpegBinPath = FileUtils.BuildAssemblyRelativePathForArchitecture(FFMPEG_EXECUTABLE);
+      _ffProbeBinPath = FileUtils.BuildAssemblyRelativePathForArchitecture(FFPROBE_EXECUTABLE);
     }
 
     /// <summary>

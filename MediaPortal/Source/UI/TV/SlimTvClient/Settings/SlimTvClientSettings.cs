@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -57,6 +57,12 @@ namespace MediaPortal.Plugins.SlimTv.Client.Settings
     /// </summary>
     [Setting(SettingScope.User, DefaultValue = true)]
     public bool EpgShowChannelLogos { get; set; }
+
+    /// <summary>
+    /// Whether to show genre colors in EPG.
+    /// </summary>
+    [Setting(SettingScope.User, DefaultValue = false)]
+    public bool EpgShowGenreColors { get; set; }
 
     /// <summary>
     /// Defines the zapping timeout in seconds.

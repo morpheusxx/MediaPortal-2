@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -38,6 +38,7 @@ using MediaPortal.Common.MediaManagement.DefaultItemAspects;
 using System.Collections;
 using MediaPortal.Utilities;
 using MediaPortal.Common.Logging;
+using MediaPortal.Common.UserManagement;
 
 namespace MediaPortal.UiComponents.Media.Views.RemovableMediaDrives
 {

@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -119,6 +119,7 @@ namespace MediaPortal.UiComponents.Configuration
     {
       Register(new YesNoController());
       Register(new EntryController());
+      Register(new SingleSelectionColoredListController());
       Register(new SingleSelectionListController());
       Register(new MultiSelectionListController());
       Register(new NumberSelectController());
@@ -470,7 +471,7 @@ namespace MediaPortal.UiComponents.Configuration
           // Create transient state for new config section
           WorkflowState newState = WorkflowState.CreateTransientState(
               string.Format("Config: '{0}'", childNode.Location), section.SectionMetadata.Text, false, CONFIGURATION_SECTION_SCREEN,
-              false, WorkflowType.Workflow);
+              false, WorkflowType.Workflow, context.WorkflowState.HideGroups);
           // Add action for menu
           IResourceString res = LocalizationHelper.CreateResourceString(section.Metadata.Text);
           WorkflowAction wa = new PushTransientStateNavigationTransition(

@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -314,7 +314,7 @@ namespace MediaPortal.Common.Services.MediaManagement
         controller.Dispose();
 
       //Set updated media items to changed
-      _mediaBrowsing.MarkUpdatableMediaItems();
+      _mediaBrowsing?.MarkUpdatableMediaItems();
 
       var importJobController = new ImportJobController(new ImportJobNewGen(importJobInformation, null), Interlocked.Increment(ref _numberOfLastImportJob), this);
       _importJobControllers[importJobInformation] = importJobController;

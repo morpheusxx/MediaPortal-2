@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -143,7 +143,7 @@ namespace MediaPortal.Common.MediaManagement
     /// </summary>
     /// <remarks>
     /// Every media item aspect whose attributes might be equipped by the metadata extractor
-    /// should be defined here. If the ME still provides metadata in method <see cref="IMetadataExtractor.TryExtractMetadata"/>
+    /// should be defined here. If the ME still provides metadata in method <see cref="IMetadataExtractor.TryExtractMetadataAsync"/>
     /// for aspects which aren't returned here, these attributes might be discarded by the system.
     /// </remarks>
     public IDictionary<Guid, MediaItemAspectMetadata> ExtractedAspectTypes

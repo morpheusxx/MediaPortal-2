@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -339,7 +339,7 @@ namespace MediaPortal.UI.Players.Video
     /// <param name="targetTexture"></param>
     protected virtual void PostProcessTexture(Texture targetTexture)
     {
-      _mpcSubsRenderer.DrawItem(targetTexture, false);
+      _mpcSubsRenderer?.DrawItem(targetTexture, false);
     }
 
     public IGeometry GeometryOverride
@@ -1162,6 +1162,9 @@ namespace MediaPortal.UI.Players.Video
     public virtual bool GetResumeState(out IResumeState state)
     {
       TimeSpan currentTime = CurrentTime;
+      // Workaround for TsReader handling on playback end: it reports a negative position, so we treat it to "stream end"
+      if (currentTime.TotalSeconds < 0)
+        currentTime = Duration;
       TimeSpan duration = Duration;
       // If we already played back more then 99%, we don't want to ask user to resume playback.
       if (currentTime.TotalSeconds / duration.TotalSeconds > 0.99)

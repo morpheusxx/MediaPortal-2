@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -58,6 +58,13 @@ namespace MediaPortal.Plugins.ServerStateService.Client.UPnP
         proxy.TryGetState(stateId, out state);
       state = default(T);
       return false;
+    }
+
+    public void ClearStates()
+    {
+      var proxy = _proxy;
+      if (proxy != null)
+        proxy.ClearStates();
     }
 
     public void RegisterService()

@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -42,7 +42,7 @@ namespace MediaPortal.UiComponents.Media.MediaLists
       if (navigationFilter != null)
         filter = BooleanCombinationFilter.CombineFilters(BooleanOperator.And, filter, navigationFilter);
 
-      return new MediaItemQuery(_necessaryMias, filter)
+      return new MediaItemQuery(_necessaryMias, _optionalMias, filter)
       {
         SortInformation = new List<ISortInformation> { new DataSortInformation(UserDataKeysKnown.KEY_PLAY_COUNT, SortDirection.Descending), new DataSortInformation(UserDataKeysKnown.KEY_PLAY_DATE, SortDirection.Descending) }
       };

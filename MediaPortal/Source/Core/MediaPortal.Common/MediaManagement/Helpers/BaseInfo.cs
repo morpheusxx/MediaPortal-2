@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -30,10 +30,6 @@ using MediaPortal.Utilities.Graphics;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using DuoVia.FuzzyStrings;
-using MediaPortal.Common.Services.ResourceAccess.VirtualResourceProvider;
-using MediaPortal.Common.ResourceAccess;
-using System.Reflection;
-using System.Text;
 using MediaPortal.Utilities;
 
 namespace MediaPortal.Common.MediaManagement.Helpers
@@ -61,10 +57,17 @@ namespace MediaPortal.Common.MediaManagement.Helpers
     /// </summary>
     public byte[] Thumbnail = null;
 
+    private IDictionary<Guid, IList<MediaItemAspect>> _linkedAspects;
     private bool _hasThumbnail = false;
     private bool _hasChanged = false;
     private DateTime? _lastChange = null;
     private DateTime? _dateAdded = null;
+
+    public IDictionary<Guid, IList<MediaItemAspect>> LinkedAspects
+    {
+      get { return _linkedAspects; }
+    }
+
 
     public bool HasThumbnail
     {
@@ -137,7 +140,7 @@ namespace MediaPortal.Common.MediaManagement.Helpers
     private const string CLEAN_WHITESPACE_REGEX = @"[\.|_](\S|$)";
     private const string SORT_REGEX = @"(^The\s+)|(^An?\s+)|(^De[rsmn]\s+)|(^Die\s+)|(^Das\s+)|(^Ein(e[srmn]?)?\s+)";
     private const string CLEAN_REGEX = @"<[^>]+>|&nbsp;";
-    private const string CLEAN_NAME_REGEX = @"[©®™\s'.-]";
+    private const string CLEAN_NAME_REGEX = @"[ï¿½ï¿½ï¿½\s'.-]";
 
     #region Members
 
@@ -280,9 +283,26 @@ namespace MediaPortal.Common.MediaManagement.Helpers
       }
     }
 
-    public abstract bool SetMetadata(IDictionary<Guid, IList<MediaItemAspect>> aspectData);
+    public abstract bool SetMetadata(IDictionary<Guid, IList<MediaItemAspect>> aspectData, bool force = false);
 
     public abstract bool FromMetadata(IDictionary<Guid, IList<MediaItemAspect>> aspectData);
+
+    public abstract bool MergeWith(object other, bool overwriteShorterStrings = true, bool updatePrimaryChildList = false);
+
+    public virtual bool SetLinkedMetadata()
+    {
+      if (_linkedAspects == null)
+        return false;
+      return SetMetadata(_linkedAspects);
+    }
+
+    public virtual bool FromLinkedMetadata(IDictionary<Guid, IList<MediaItemAspect>> aspectData)
+    {
+      if (aspectData == null)
+        return false;
+      _linkedAspects = aspectData;
+      return FromMetadata(aspectData);
+    }
 
     public abstract void AssignNameId();
 
@@ -314,44 +334,6 @@ namespace MediaPortal.Common.MediaManagement.Helpers
           return nameId;
       }
       return null;
-    }
-
-    protected T CloneProperties<T>(T obj)
-    {
-      if (obj == null)
-        return default(T);
-      Type type = obj.GetType();
-
-      if (type.IsValueType || type == typeof(string))
-      {
-        return obj;
-      }
-      else if (type.IsArray)
-      {
-        Type elementType = obj.GetType().GetElementType();
-        var array = obj as Array;
-        Array arrayCopy = Array.CreateInstance(elementType, array.Length);
-        for (int i = 0; i < array.Length; i++)
-        {
-          arrayCopy.SetValue(CloneProperties(array.GetValue(i)), i);
-        }
-        return (T)Convert.ChangeType(arrayCopy, obj.GetType());
-      }
-      else if (type.IsClass)
-      {
-        T newInstance = (T)Activator.CreateInstance(obj.GetType());
-        FieldInfo[] fields = type.GetFields(BindingFlags.Public |
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-        foreach (FieldInfo field in fields)
-        {
-          object fieldValue = field.GetValue(obj);
-          if (fieldValue == null)
-            continue;
-          field.SetValue(newInstance, CloneProperties(fieldValue));
-        }
-        return newInstance;
-      }
-      return default(T);
     }
 
     #endregion

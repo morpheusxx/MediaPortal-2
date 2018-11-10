@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -458,6 +458,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Models
       GuideStartTime = DateTime.Now.RoundDateTime(15, DateFormatExtension.RoundingDirection.Down);
       var settings = ServiceRegistration.Get<ISettingsManager>().Load<SlimTvClientSettings>();
       VisibleHours = settings.EpgVisibleHours;
+      ShowGenreColors = settings.EpgShowGenreColors;
       _bufferStartTime = _bufferEndTime = DateTime.MinValue;
     }
 

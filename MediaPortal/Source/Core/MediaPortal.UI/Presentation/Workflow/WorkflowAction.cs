@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -25,6 +25,7 @@
 using System;
 using System.Collections.Generic;
 using MediaPortal.Common.Localization;
+using MediaPortal.Common.UserProfileDataManagement;
 
 namespace MediaPortal.UI.Presentation.Workflow
 {
@@ -35,7 +36,7 @@ namespace MediaPortal.UI.Presentation.Workflow
   /// Typically, a workflow state action will provide the data for a menu item at the GUI.
   /// Sub classes will implement the abstract properties and methods of this class.
   /// </summary>
-  public abstract class WorkflowAction
+  public abstract class WorkflowAction: IUserRestriction
   {
     #region Protected fields
 
@@ -43,6 +44,7 @@ namespace MediaPortal.UI.Presentation.Workflow
     protected string _sortOrder = null;
     protected Guid _actionId;
     protected string _name;
+    protected string _group;
     protected ICollection<Guid> _sourceStateIds;
     protected IResourceString _displayTitle;
     protected IResourceString _helpText;
@@ -172,6 +174,17 @@ namespace MediaPortal.UI.Presentation.Workflow
     /// Can be overridden in sub classes to track a usage counter. See <see cref="AddRef"/>.
     /// </summary>
     public virtual void RemoveRef() { }
+
+    /// <summary>
+    /// Action group definition. This can be used to filter them out in specific workflow states.
+    /// </summary>
+    public string Group { get; set; }
+
+    #region IUserRestriction members
+
+    public string RestrictionGroup { get; set; }
+
+    #endregion
 
     public override string ToString()
     {

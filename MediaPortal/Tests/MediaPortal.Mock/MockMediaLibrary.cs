@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -45,19 +45,6 @@ namespace MediaPortal.Mock
     }
 
     public bool UpdateRelationshipsEnabled { get; set; }
-
-    protected override void Reconcile(Guid mediaItemId, IDictionary<Guid, IList<MediaItemAspect>> aspects, bool isRefresh, CancellationToken cancelToken)
-    {
-      UpdateRelationships(mediaItemId, aspects, true, cancelToken);
-    }
-
-    protected override void UpdateRelationships(Guid mediaItemId, IDictionary<Guid, IList<MediaItemAspect>> aspects, bool isRefresh, CancellationToken cancelToken)
-    {
-      if (UpdateRelationshipsEnabled)
-        base.UpdateRelationships(mediaItemId, aspects, isRefresh, cancelToken);
-      else
-        ServiceRegistration.Get<ILogger>().Debug("Update relationships is disabled");
-    }
 
     public void AddMediaItemId(Guid mediaItemId)
     {

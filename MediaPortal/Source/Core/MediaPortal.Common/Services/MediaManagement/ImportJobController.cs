@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -388,6 +388,7 @@ namespace MediaPortal.Common.Services.MediaManagement
           _dataflowBlocks.Add(new MediaItemLoadBlock(_cts.Token, _importJobInformation, this));
           _dataflowBlocks.Add(new MetadataExtractorBlock(_cts.Token, _importJobInformation, this, false));
           _dataflowBlocks.Add(new MediaItemSaveBlock(_cts.Token, _importJobInformation, this));
+          _dataflowBlocks.Add(new RelationshipExtractorBlock(_cts.Token, _importJobInformation, this));
 
           // Link the blocks
           for (int i = 0; i < _dataflowBlocks.Count - 1; i++)

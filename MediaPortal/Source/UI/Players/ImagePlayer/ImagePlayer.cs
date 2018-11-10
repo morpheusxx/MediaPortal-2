@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -46,6 +46,7 @@ using PointF = SharpDX.Vector2;
 using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.Common.UserProfileDataManagement;
 using MediaPortal.Common.SystemCommunication;
+using MediaPortal.Common.UserManagement;
 using MediaPortal.UI.ServerCommunication;
 
 namespace MediaPortal.UI.Players.Image
@@ -389,16 +390,6 @@ namespace MediaPortal.UI.Players.Image
       RightAngledRotation rotation = RightAngledRotation.Zero;
       bool flipX = false;
       bool flipY = false;
-      SingleMediaItemAspect imageAspect;
-      MediaItemAspect.TryGetAspect(mediaItem.Aspects, ImageAspect.Metadata, out imageAspect);
-      if (imageAspect != null)
-      {
-        int orientationInfo = (int)imageAspect[ImageAspect.ATTR_ORIENTATION];
-        ImageRotation imageRotation;
-        ImageAspect.OrientationToRotation(orientationInfo, out imageRotation);
-        rotation = PlayerRotationTranslator.TranslateToRightAngledRotation(imageRotation);
-        ImageAspect.OrientationToFlip(orientationInfo, out flipX, out flipY);
-      }
       SetMediaItemData(locator, title, rotation, flipX, flipY);
 
       IServerConnectionManager scm = ServiceRegistration.Get<IServerConnectionManager>();

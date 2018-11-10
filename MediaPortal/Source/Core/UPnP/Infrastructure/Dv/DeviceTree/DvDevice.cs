@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -22,13 +22,13 @@
 
 #endregion
 
-using HttpServer;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using Microsoft.Owin;
 using UPnP.Infrastructure.Utils;
 
 namespace UPnP.Infrastructure.Dv.DeviceTree
@@ -288,7 +288,7 @@ namespace UPnP.Infrastructure.Dv.DeviceTree
         return BuildRootDeviceDescription(null, serverData, config, culture);
     }
 
-    public string BuildRootDeviceDescription(IHttpRequest request, ServerData serverData, EndpointConfiguration config, CultureInfo culture)
+    public string BuildRootDeviceDescription(IOwinRequest request, ServerData serverData, EndpointConfiguration config, CultureInfo culture)
     {
       StringBuilder result = new StringBuilder(10000);
       using (StringWriterWithEncoding stringWriter = new StringWriterWithEncoding(result, UPnPConsts.UTF8_NO_BOM))
@@ -329,7 +329,7 @@ namespace UPnP.Infrastructure.Dv.DeviceTree
         AddDeviceDescriptionsRecursive(null, writer, config, culture);
     }
 
-    internal void AddDeviceDescriptionsRecursive(IHttpRequest request, XmlWriter writer, EndpointConfiguration config, CultureInfo culture)
+    internal void AddDeviceDescriptionsRecursive(IOwinRequest request, XmlWriter writer, EndpointConfiguration config, CultureInfo culture)
     {
       GenerateDescriptionDlgt dgh = DescriptionGenerateHook;
       GetDeviceInfoForEndpointDlgt dih = DeviceInfoHook;

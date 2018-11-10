@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -22,12 +22,13 @@
 
 #endregion
 
+using System.Threading.Tasks;
+
 namespace MediaPortal.Extensions.OnlineLibraries.Libraries
 {
   public interface IMatcher
   {
-    bool Init();
-    bool Primary { get; set; }
+    Task<bool> InitAsync();
     bool Enabled { get; set; }
     string Id { get; }
     string PreferredLanguageCulture { get; set; }

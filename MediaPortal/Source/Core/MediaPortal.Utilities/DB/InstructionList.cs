@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -42,6 +42,18 @@ namespace MediaPortal.Utilities.DB
     public InstructionList(TextReader reader)
     {
       Parse(reader.ReadToEnd());
+    }
+
+    public IEnumerable<string> ParseStream(TextReader reader)
+    {
+      string line;
+      while ((line = reader.ReadLine()) != "exit")
+      {
+        Parse(line);
+        foreach (var instruction in _instructions)
+          yield return instruction;
+        _instructions.Clear();
+      }
     }
 
     public InstructionList() { }

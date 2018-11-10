@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -198,6 +198,20 @@ namespace MediaPortal.UiComponents.SkinBase.Models
     {
       IPlayerContextManager playerContextManager = ServiceRegistration.Get<IPlayerContextManager>();
       playerContextManager.NextItem();
+    }
+
+    public static void PreviousChapterOrTitle()
+    {
+      IPlayerContextManager playerContextManager = ServiceRegistration.Get<IPlayerContextManager>();
+      if (!playerContextManager.PreviousChapter())
+        playerContextManager.PreviousItem();
+    }
+
+    public static void NextChapterOrTitle()
+    {
+      IPlayerContextManager playerContextManager = ServiceRegistration.Get<IPlayerContextManager>();
+      if (!playerContextManager.NextChapter())
+        playerContextManager.NextItem();
     }
 
     public static void VolumeUp()

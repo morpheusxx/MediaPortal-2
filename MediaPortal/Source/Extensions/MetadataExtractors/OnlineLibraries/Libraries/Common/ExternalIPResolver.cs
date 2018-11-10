@@ -1,11 +1,36 @@
-﻿using System;
+﻿#region Copyright (C) 2007-2018 Team MediaPortal
+
+/*
+    Copyright (C) 2007-2018 Team MediaPortal
+    http://www.team-mediaportal.com
+
+    This file is part of MediaPortal 2
+
+    MediaPortal 2 is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    MediaPortal 2 is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with MediaPortal 2. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#endregion
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
 using MediaPortal.Common;
+using MediaPortal.Common.Async;
 using MediaPortal.Common.Logging;
+using MediaPortal.Common.Services.ServerCommunication;
 
 namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Common
 {
@@ -24,22 +49,20 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Common
     /// <summary>
     /// Tries to lookup the external IP address.
     /// </summary>
-    /// <param name="ip">IP</param>
-    /// <returns><c>true</c> if successful.</returns>
-    public static bool GetExternalIPAddress(out IPAddress ip)
+    /// <returns>AsyncResult.Success = <c>true</c> if successful.</returns>
+    public static async Task<AsyncResult<IPAddress>> GetExternalIPAddressAsync()
     {
-      using (var client = new WebClient())
+      IPAddress ip;
+      using (var client = new HttpClient())
       {
-        client.Headers["User-Agent"] = "Mozilla/4.0 (Compatible; Windows NT 5.1; MSIE 6.0) (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)";
-
         foreach (var site in LOOKUP_SITES)
         {
           try
           {
-            string response = client.DownloadString(site);
+            string response = await client.GetStringAsync(site).ConfigureAwait(false);
             var result = response.Trim(' ', '\r', '\n');
             if (IPAddress.TryParse(result, out ip))
-              return true;
+              return new AsyncResult<IPAddress>(true, ip);
           }
           catch (Exception ex)
           {
@@ -47,8 +70,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Common
           }
         }
       }
-      ip = null;
-      return false;
+      return new AsyncResult<IPAddress>(false, null);
     }
   }
 }

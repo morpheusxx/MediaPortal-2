@@ -1,7 +1,7 @@
-#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -97,8 +97,8 @@ namespace MediaPortal.UiComponents.SkinBase
         AddKeyBinding_NeedLock(Key.Stop, GeneralPlayerModel.Stop);
         AddKeyBinding_NeedLock(Key.Rew, GeneralPlayerModel.SeekBackward);
         AddKeyBinding_NeedLock(Key.Fwd, GeneralPlayerModel.SeekForward);
-        AddKeyBinding_NeedLock(Key.Previous, GeneralPlayerModel.Previous);
-        AddKeyBinding_NeedLock(Key.Next, GeneralPlayerModel.Next);
+        AddKeyBinding_NeedLock(Key.Previous, GeneralPlayerModel.PreviousChapterOrTitle);
+        AddKeyBinding_NeedLock(Key.Next, GeneralPlayerModel.NextChapterOrTitle);
 
         // ------------------------ Volume -----------------------
         AddKeyBinding_NeedLock(Key.Mute, GeneralPlayerModel.ToggleMute);

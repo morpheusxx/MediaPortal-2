@@ -1,7 +1,7 @@
-﻿#region Copyright (C) 2007-2017 Team MediaPortal
+#region Copyright (C) 2007-2018 Team MediaPortal
 
 /*
-    Copyright (C) 2007-2017 Team MediaPortal
+    Copyright (C) 2007-2018 Team MediaPortal
     http://www.team-mediaportal.com
 
     This file is part of MediaPortal 2
@@ -65,7 +65,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.MovieMetadataExtractor.Setti
     /// <summary>
     /// If <c>true</c>, the MovieMetadataExtractor does not fetch any information for missing movies in a collection.
     /// </summary>
-    [Setting(SettingScope.Global, false)]
+    [Setting(SettingScope.Global, true)]
     public bool OnlyLocalMedia { get; set; }
 
     /// <summary>

@@ -328,8 +328,6 @@ IBaseFilter* MPMadPresenter::Initialize()
       }
     }
 
-    ULONG count = GetRefCount();
-
     m_pCallback->AddRef();
     Log("MPMadPresenter::Constructor() store device surface");
     // Store device surface MP GUI for later
@@ -350,7 +348,6 @@ IBaseFilter* MPMadPresenter::Initialize()
       return nullptr;
     }
     m_pSRCB->AddRef();
-    count = GetRefCount();
 
     // IOsdRenderCallback
     CComQIPtr<IMadVROsdServices> pOR = m_pMad;
@@ -366,7 +363,6 @@ IBaseFilter* MPMadPresenter::Initialize()
       m_pMad = nullptr;
     }
     m_pORCB->AddRef();
-    count = GetRefCount();
 
     m_hWnd = reinterpret_cast<HWND>(m_hParent);
 
@@ -382,12 +378,9 @@ IBaseFilter* MPMadPresenter::Initialize()
     }
     /*CComQIPtr<IBasicVideo> video = CComQIPtr<IBasicVideo>(pRenderer);
     video->SetDestinationPosition(m_Xposition, m_Yposition, m_dwGUIWidth, m_dwGUIHeight);*/
-    count = GetRefCount();
 
     // Configure initial Madvr Settings
     ConfigureMadvr();
-
-    count = GetRefCount();
 
     return baseFilter;
   }
@@ -405,8 +398,6 @@ void MPMadPresenter::DeInitialize()
     return;
   }
 
-  LONG count = GetRefCount();
-
   if (m_pMad)
   {
     if (CComQIPtr<IVideoWindow> window = m_pMad)
@@ -416,7 +407,6 @@ void MPMadPresenter::DeInitialize()
       window->put_Owner(NULL);
     }
   }
-  count = GetRefCount();
 
   //Sleep(2000);
   
@@ -446,7 +436,6 @@ void MPMadPresenter::DeInitialize()
     m_pORCB->Release();
     m_pORCB = nullptr;
   }
-  count = GetRefCount();
 
   if (m_pSRCB)
   {
@@ -471,7 +460,6 @@ void MPMadPresenter::DeInitialize()
     m_pSRCB->Release();
     m_pSRCB = nullptr;
   }
-  count = GetRefCount();
 
   // Stop in current thread
   CComPtr<IMediaControl> m_pControl = nullptr;
@@ -500,7 +488,6 @@ void MPMadPresenter::DeInitialize()
       m_pControl = nullptr;
     }
   }
-  count = GetRefCount();
 
   // Restore windowed overlay settings
   if (m_pMad)
@@ -526,7 +513,6 @@ void MPMadPresenter::DeInitialize()
     m_pMadD3DDev.Release();
     m_pMadD3DDev = nullptr;
   }
-  count = GetRefCount();
 
   if (m_pCallback)
   {
@@ -539,14 +525,12 @@ void MPMadPresenter::DeInitialize()
     m_pCallback->Release();
     m_pCallback = nullptr;
   }
-  count = GetRefCount();
-
+  
   if (m_pDevice != nullptr)
   {
     m_pDevice.Release();
     m_pDevice = nullptr;
   }
-  count = GetRefCount();
 
   if (m_pSurfaceDevice != nullptr)
   {
@@ -570,21 +554,7 @@ void MPMadPresenter::DeInitialize()
     m_hWnd = NULL;
   }
 
-  count = GetRefCount();
-
   Log("MPMadPresenter::DeInitialize() complete");
-}
-
-ULONG MPMadPresenter::GetRefCount()
-{
-  CComQIPtr<IBaseFilter> baseFilter = nullptr;
-  if (baseFilter = m_pMad)
-  {
-    IBaseFilter* test = baseFilter;
-    test->AddRef();
-    return test->Release();
-  }
-  return 0;
 }
 
 STDMETHODIMP MPMadPresenter::SetGrabEvent(HANDLE pGrabEvent)

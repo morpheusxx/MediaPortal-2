@@ -262,7 +262,6 @@ class MPMadPresenter : public CUnknown, public CCritSec
     void ReinitOSD(bool type);
     void ReinitD3DDevice();
     HRESULT SetupMadDeviceState();
-    ULONG GetRefCount();
 
     OAHWND m_hParent = reinterpret_cast<OAHWND>(nullptr);
 

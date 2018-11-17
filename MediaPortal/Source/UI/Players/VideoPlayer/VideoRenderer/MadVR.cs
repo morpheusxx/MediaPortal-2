@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using DirectShow;
 using DirectShow.Helper;
 using MediaPortal.Common;
+using MediaPortal.Common.Async;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.SkinEngine.Players;
@@ -58,13 +59,25 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
       _evr = null;
       GC.Collect();
 
+    private void ReleaseVideoRenderer()
+    {
+      _shutdown = true;
+      var videoWindow = _videoWindow;
+      if (videoWindow != null)
+      {
+        videoWindow.put_Owner(IntPtr.Zero);
+        videoWindow.put_MessageDrain(IntPtr.Zero);
+        videoWindow.put_Visible(0);
+      }
+      ServiceRegistration.Get<ILogger>().Info("Disposing _madVR");
+      FilterGraphTools.TryDispose(ref _madVR);
       SkinContext.Form.Invoke(new Action(() =>
       {
         MadVRDeinit();
       }));
     }
 
-    public void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
+    public async void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
     {
       IntPtr upDevice = SkinContext.Device.NativePointer;
 
@@ -95,44 +108,33 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
     }
 
     public bool SyncRendering { get { return false; } }
-    public IBaseFilter Filter { get { return _evr; } }
+    public IBaseFilter Filter { get { return _rendererFilter; } }
 
-    public void OnGraphRunning()
+    public async void OnGraphRunning()
     {
-      //SkinContext.Form.BeginInvoke(new Action(() =>
-      //{
-      //  var videoWindow = _videoWindow;
-      //  if (videoWindow != null)
-      //  {
-      //    var handle = SkinContext.Form.Handle;
-      //    videoWindow.put_Owner(handle);
-      //    videoWindow.put_MessageDrain(handle);
-      //    videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
-      //    videoWindow.put_Left(0);
-      //    videoWindow.put_Top(0);
-      //    videoWindow.put_Height(SkinContext.Form.Height);
-      //    videoWindow.put_Width(SkinContext.Form.Width);
-      //  }
-      //}));
+      await SkinContext.Form;
+      var videoWindow = _videoWindow;
+      if (videoWindow != null)
+      {
+        videoWindow.put_Owner(SkinContext.Form.Handle);
+        videoWindow.put_MessageDrain(SkinContext.Form.Handle);
+        videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
+      }
     }
 
-    public void SetOverlayPosition(int left, int top, int width, int height)
-    {
-      _ = SetOverlayPositionAsync(left, top, width, height);
-    }
     public async Task SetOverlayPositionAsync(int left, int top, int width, int height)
     {
-      await Task.Yield();
+      await SkinContext.Form;
 
       bool isVisible = width != 0 && height != 0;
       if (_videoWindow == null || _basicVideo == null || _shutdown)
         return;
-      var videoWindow = _videoWindow;
-      videoWindow.put_Visible(isVisible ? 1 : 0);
-      if (!isVisible)
-        return;
-      _basicVideo.SetDestinationPosition(left, top, width, height);
-      videoWindow.SetWindowPosition(left, top, width, height);
+      if (isVisible)
+      {
+        _basicVideo.SetDestinationPosition(left, top, width, height);
+        _videoWindow.SetWindowPosition(left, top, width, height);
+      }
+      _videoWindow.put_Visible(isVisible ? 1 : 0);
     }
   }
 }

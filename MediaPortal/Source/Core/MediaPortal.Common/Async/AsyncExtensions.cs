@@ -98,29 +98,29 @@ namespace MediaPortal.Common.Async
     {
       return new ControlAwaiter(control);
     }
+  }
 
-    public struct ControlAwaiter : INotifyCompletion
+  public struct ControlAwaiter : INotifyCompletion
+  {
+    private readonly Control _control;
+
+    public ControlAwaiter(Control control)
     {
-      private readonly Control _control;
+      _control = control;
+    }
 
-      public ControlAwaiter(Control control)
-      {
-        _control = control;
-      }
+    public bool IsCompleted
+    {
+      get { return !_control.InvokeRequired; }
+    }
 
-      public bool IsCompleted
-      {
-        get { return !_control.InvokeRequired; }
-      }
+    public void OnCompleted(Action continuation)
+    {
+      _control.BeginInvoke(continuation);
+    }
 
-      public void OnCompleted(Action continuation)
-      {
-        _control.BeginInvoke(continuation);
-      }
-
-      public void GetResult()
-      {
-      }
+    public void GetResult()
+    {
     }
   }
 }

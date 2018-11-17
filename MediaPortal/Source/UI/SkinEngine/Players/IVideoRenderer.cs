@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace MediaPortal.UI.SkinEngine.Players
 {
   public interface IOverlayPlayer
@@ -7,6 +9,6 @@ namespace MediaPortal.UI.SkinEngine.Players
 
   public interface IOverlayRenderer
   {
-    void SetOverlayPosition(int left, int top, int width, int height);
+    Task SetOverlayPositionAsync(int left, int top, int width, int height);
   }
 }

@@ -43,9 +43,7 @@ using MediaPortal.UI.Players.Video.Tools;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Exceptions;
-using Size = SharpDX.Size2;
-using SizeF = SharpDX.Size2F;
-using PointF = SharpDX.Vector2;
+
 
 namespace MediaPortal.UI.Players.Video
 {
@@ -101,6 +99,7 @@ namespace MediaPortal.UI.Players.Video
     protected IResourceLocator _resourceLocator;
     protected IResourceAccessor _resourceAccessor;
     protected Stream _resourceStream; // Will be opened for Stream based access
+    protected DotNetStreamSourceFilter _streamFilter;
     protected string _mediaItemTitle = null;
     protected AsynchronousMessageQueue _messageQueue = null;
 
@@ -115,6 +114,7 @@ namespace MediaPortal.UI.Players.Video
     private readonly object _syncObj = new object();
     protected IMediaControl _mc;
     protected IMediaEventEx _me;
+    protected IMediaSeeking _ms;
 
     #endregion
 
@@ -145,7 +145,7 @@ namespace MediaPortal.UI.Players.Video
 
     protected void SubscribeToMessages()
     {
-      _messageQueue = new AsynchronousMessageQueue(this, new [] { WindowsMessaging.CHANNEL });
+      _messageQueue = new AsynchronousMessageQueue(this, new[] { WindowsMessaging.CHANNEL });
       _messageQueue.MessageReceived += OnMessageReceived;
       _messageQueue.Start();
     }
@@ -162,7 +162,7 @@ namespace MediaPortal.UI.Players.Video
     {
       if (message.ChannelName == WindowsMessaging.CHANNEL)
       {
-        Message m = (Message) message.MessageData[WindowsMessaging.MESSAGE];
+        Message m = (Message)message.MessageData[WindowsMessaging.MESSAGE];
         if (m.LParam.Equals(_instancePtr))
         {
           if (m.Msg == WM_GRAPHNOTIFY)
@@ -206,21 +206,10 @@ namespace MediaPortal.UI.Players.Video
 
     public void SetMediaItem(IResourceLocator locator, string mediaItemTitle)
     {
-      // Force graph construction to use Main thread of form, this is required by all video renderers (except EVR)
-      //SkinContext.Form.InvokeIfRequired(c => 
-      SetMediaItemInternal(locator, mediaItemTitle, null);
-      //);
+      SetMediaItem(locator, mediaItemTitle, null);
     }
 
     public void SetMediaItem(IResourceLocator locator, string mediaItemTitle, MediaItem mediaItem)
-    {
-      // Force graph construction to use Main thread of form, this is required by all video renderers (except EVR)
-      //SkinContext.Form.InvokeIfRequired(c => 
-      SetMediaItemInternal(locator, mediaItemTitle, mediaItem);
-      //);
-    }
-    
-    protected void SetMediaItemInternal(IResourceLocator locator, string mediaItemTitle, MediaItem mediaItem)
     {
       _mediaItem = mediaItem;
 
@@ -303,14 +292,17 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     public string SourcePathOrUrl
     {
-      get { return IsNetworkResource ? ((INetworkResourceAccessor)_resourceAccessor).URL : 
-        IsLocalFilesystemResource ? ((ILocalFsResourceAccessor)_resourceAccessor).LocalFileSystemPath : null; }
+      get
+      {
+        return IsNetworkResource ? ((INetworkResourceAccessor)_resourceAccessor).URL :
+          IsLocalFilesystemResource ? ((ILocalFsResourceAccessor)_resourceAccessor).LocalFileSystemPath : null;
+      }
     }
 
     /// <summary>
     /// Add presenter can be used by derived classes to add and configure EVR presenter, which is only needed for video players.
     /// </summary>
-    protected virtual void AddPresenter () {}
+    protected virtual void AddPresenter() { }
 
     #endregion
 
@@ -407,9 +399,10 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     protected virtual void CreateGraphBuilder()
     {
-      _graphBuilder = (IFilterGraph2) new FilterGraph();
+      _graphBuilder = (IFilterGraph2)new FilterGraph();
       _mc = (IMediaControl)_graphBuilder;
       _me = (IMediaEventEx)_graphBuilder;
+      _ms = (IMediaSeeking)_graphBuilder;
     }
 
     /// <summary>
@@ -449,13 +442,14 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     protected virtual void AddSourceFilter()
     {
+      int hr = 0;
       var networkResourceAccessor = _resourceAccessor as INetworkResourceAccessor;
       if (networkResourceAccessor != null)
       {
         ServiceRegistration.Get<ILogger>().Debug("{0}: Initializing for network media item '{1}'", PlayerTitle, networkResourceAccessor.URL);
 
         // try to render the url and let DirectShow choose the source filter
-        int hr = _graphBuilder.RenderFile(networkResourceAccessor.URL, null);
+        hr = _graphBuilder.RenderFile(networkResourceAccessor.URL, null);
         new HRESULT(hr).Throw();
 
         return;
@@ -466,14 +460,24 @@ namespace MediaPortal.UI.Players.Video
       {
         ServiceRegistration.Get<ILogger>().Debug("{0}: Initializing for file system media item '{1}'", PlayerTitle, fileSystemResourceAccessor.Path);
 
+        // For locally accessible files prefer the default filters
+        ILocalFsResourceAccessor lfsra = fileSystemResourceAccessor as ILocalFsResourceAccessor;
+        if (lfsra != null)
+        {
+          // try to render the file and let DirectShow choose the source filter
+          hr = _graphBuilder.RenderFile(lfsra.LocalFileSystemPath, null);
+          new HRESULT(hr).Throw();
+          return;
+        }
+
         // use the DotNetStreamSourceFilter as source filter
-        var sourceFilter = new DotNetStreamSourceFilter();
+        _streamFilter = new DotNetStreamSourceFilter();
         _resourceStream = fileSystemResourceAccessor.OpenRead();
-        sourceFilter.SetSourceStream(_resourceStream, fileSystemResourceAccessor.ResourcePathName);
-        int hr = _graphBuilder.AddFilter(sourceFilter, sourceFilter.Name);
+        _streamFilter.SetSourceStream(_resourceStream, fileSystemResourceAccessor.ResourcePathName);
+        hr = _graphBuilder.AddFilter(_streamFilter, _streamFilter.Name);
         new HRESULT(hr).Throw();
 
-        using (DSFilter source2 = new DSFilter(sourceFilter))
+        using (DSFilter source2 = new DSFilter(_streamFilter))
           hr = source2.OutputPin.Render();
         new HRESULT(hr).Throw();
 
@@ -580,7 +584,6 @@ namespace MediaPortal.UI.Players.Video
       finally
       {
         FilterGraphTools.TryRelease(ref dspc);
-        FilterGraphTools.TryRelease(ref pc);
       }
     }
 
@@ -593,6 +596,12 @@ namespace MediaPortal.UI.Players.Video
     /// </summary>
     protected virtual void FreeCodecs()
     {
+      if (_streamFilter != null)
+      {
+        if(_graphBuilder != null)
+          _graphBuilder.RemoveFilter(_streamFilter);
+        FilterGraphTools.TryDispose(ref _streamFilter);
+      }
       // If we opened an own Stream, dispose it here
       FilterGraphTools.TryDispose(ref _resourceStream);
     }
@@ -654,7 +663,7 @@ namespace MediaPortal.UI.Players.Video
     /// <returns>Volume in the range from -10000 to 0, in a logarithmic scale.</returns>
     protected static int VolumeToHundredthDeciBel(int volume)
     {
-      return (int) ((Math.Log10(volume * 99f / 100f + 1) - 2) * 5000);
+      return (int)((Math.Log10(volume * 99f / 100f + 1) - 2) * 5000);
     }
 
     protected void CheckAudio()
@@ -673,21 +682,20 @@ namespace MediaPortal.UI.Players.Video
     {
       get
       {
-        if (!_initialized || !(_graphBuilder is IMediaSeeking))
+        if (!_initialized || _ms == null)
           return new TimeSpan();
-        IMediaSeeking mediaSeeking = (IMediaSeeking) _graphBuilder;
         long lStreamPos;
 
-        mediaSeeking.GetCurrentPosition(out lStreamPos); // stream position
+        _ms.GetCurrentPosition(out lStreamPos); // stream position
         double fCurrentPos = lStreamPos;
         fCurrentPos /= 10000000d;
 
         long lContentStart, lContentEnd;
-        mediaSeeking.GetAvailable(out lContentStart, out lContentEnd);
+        _ms.GetAvailable(out lContentStart, out lContentEnd);
         double fContentStart = lContentStart;
         fContentStart /= 10000000d;
         fCurrentPos -= fContentStart;
-        return new TimeSpan(0, 0, 0, 0, (int) (fCurrentPos * 1000.0f));
+        return new TimeSpan(0, 0, 0, 0, (int)(fCurrentPos * 1000.0f));
       }
       set
       {
@@ -698,15 +706,14 @@ namespace MediaPortal.UI.Players.Video
           // player from run.
           Pause();
 
-        IMediaSeeking mediaSeeking = _graphBuilder as IMediaSeeking;
-        if (mediaSeeking == null)
+        if (_ms == null)
           return;
         double dTimeInSecs = value.TotalSeconds;
         dTimeInSecs *= 10000000d;
 
         long lContentStart, lContentEnd;
 
-        mediaSeeking.GetAvailable(out lContentStart, out lContentEnd);
+        _ms.GetAvailable(out lContentStart, out lContentEnd);
         double dContentStart = lContentStart;
         double dContentEnd = lContentEnd;
 
@@ -714,10 +721,10 @@ namespace MediaPortal.UI.Players.Video
         if (dTimeInSecs > dContentEnd)
           dTimeInSecs = dContentEnd;
 
-        DsLong seekPos = new DsLong((long) dTimeInSecs);
+        DsLong seekPos = new DsLong((long)dTimeInSecs);
         DsLong stopPos = new DsLong(0);
 
-        int hr = mediaSeeking.SetPositions(seekPos, AMSeekingSeekingFlags.AbsolutePositioning, stopPos, AMSeekingSeekingFlags.NoPositioning);
+        int hr = _ms.SetPositions(seekPos, AMSeekingSeekingFlags.AbsolutePositioning, stopPos, AMSeekingSeekingFlags.NoPositioning);
         if (hr != 0)
           ServiceRegistration.Get<ILogger>().Warn("{0}: Failed to seek, hr: {1}", PlayerTitle, hr);
       }
@@ -727,17 +734,17 @@ namespace MediaPortal.UI.Players.Video
     {
       get
       {
-        if (!_initialized || !(_graphBuilder is IMediaSeeking))
+        if (!_initialized || _ms == null)
           return new TimeSpan();
-        IMediaSeeking mediaSeeking = (IMediaSeeking) _graphBuilder;
+
         long lContentStart, lContentEnd;
-        mediaSeeking.GetAvailable(out lContentStart, out lContentEnd);
+        _ms.GetAvailable(out lContentStart, out lContentEnd);
         double fContentStart = lContentStart;
         double fContentEnd = lContentEnd;
         fContentStart /= 10000000d;
         fContentEnd /= 10000000d;
         fContentEnd -= fContentStart;
-        return new TimeSpan(0, 0, 0, 0, (int) (fContentEnd * 1000.0f));
+        return new TimeSpan(0, 0, 0, 0, (int)(fContentEnd * 1000.0f));
       }
     }
 
@@ -745,9 +752,8 @@ namespace MediaPortal.UI.Players.Video
     {
       get
       {
-        IMediaSeeking mediaSeeking = _graphBuilder as IMediaSeeking;
         double rate;
-        if (mediaSeeking == null || mediaSeeking.GetRate(out rate) != 0)
+        if (_ms == null || _ms.GetRate(out rate) != 0)
           return 1.0;
         return rate;
       }
@@ -755,15 +761,12 @@ namespace MediaPortal.UI.Players.Video
 
     public virtual bool SetPlaybackRate(double value)
     {
-      if (_graphBuilder == null)
-        return false;
-      IMediaSeeking mediaSeeking = _graphBuilder as IMediaSeeking;
-      if (mediaSeeking == null)
+      if (_graphBuilder == null || _ms == null)
         return false;
       double currentRate;
-      if (mediaSeeking.GetRate(out currentRate) == 0 && currentRate != value)
+      if (_ms.GetRate(out currentRate) == 0 && currentRate != value)
       {
-        bool result = mediaSeeking.SetRate(value) == 0;
+        bool result = _ms.SetRate(value) == 0;
         if (result)
           FirePlaybackStateChanged();
         return result;
@@ -790,9 +793,8 @@ namespace MediaPortal.UI.Players.Video
     {
       get
       {
-        IMediaSeeking mediaSeeking = _graphBuilder as IMediaSeeking;
         AMSeekingSeekingCapabilities capabilities;
-        if (mediaSeeking == null || mediaSeeking.GetCapabilities(out capabilities) != 0)
+        if (_ms == null || _ms.GetCapabilities(out capabilities) != 0)
           return false;
         return (capabilities & AMSeekingSeekingCapabilities.CanSeekForwards) != 0;
       }
@@ -802,9 +804,8 @@ namespace MediaPortal.UI.Players.Video
     {
       get
       {
-        IMediaSeeking mediaSeeking = _graphBuilder as IMediaSeeking;
         AMSeekingSeekingCapabilities capabilities;
-        if (mediaSeeking == null || mediaSeeking.GetCapabilities(out capabilities) != 0)
+        if (_ms == null || _ms.GetCapabilities(out capabilities) != 0)
           return false;
         return (capabilities & AMSeekingSeekingCapabilities.CanSeekBackwards) != 0;
       }
@@ -878,8 +879,7 @@ namespace MediaPortal.UI.Players.Video
     public void Restart()
     {
       CurrentTime = new TimeSpan(0, 0, 0);
-      IMediaControl mc = (IMediaControl) _graphBuilder;
-      mc.Run();
+      _mc.Run();
       StopSeeking();
       _isPaused = false;
       _state = PlayerState.Active;

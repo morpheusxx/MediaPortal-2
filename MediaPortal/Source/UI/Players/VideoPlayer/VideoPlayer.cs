@@ -73,8 +73,10 @@ namespace MediaPortal.UI.Players.Video
 
     #region Variables
 
+    // DirectShow objects
     protected GraphRebuilder _graphRebuilder;
     protected IBaseFilter _subsFilter = null;
+
     // Managed Direct3D Resources
     protected Size _displaySize = new Size(100, 100);
 
@@ -117,7 +119,6 @@ namespace MediaPortal.UI.Players.Video
 
     protected IVideoRenderer _videoRenderer;
     protected EVRCallback _evrCallback;
-
     #endregion
 
     #region Ctor & dtor
@@ -229,7 +230,6 @@ namespace MediaPortal.UI.Players.Video
       base.OnGraphRunning();
       _videoRenderer.OnGraphRunning();
     }
-
     #endregion
 
     #region Graph shutdown
@@ -243,8 +243,7 @@ namespace MediaPortal.UI.Players.Video
       if (_streamSelectors != null)
         foreach (IAMStreamSelect streamSelector in _streamSelectors)
         {
-          if (Marshal.IsComObject(streamSelector))
-            Marshal.ReleaseComObject(streamSelector);
+          FilterGraphTools.TryReleaseComObject(streamSelector);
         }
       _streamSelectors = null;
       _streamInfoAudio = null;
@@ -262,12 +261,7 @@ namespace MediaPortal.UI.Players.Video
 
       // Free EVR
       ReleaseVideoRenderer();
-
       base.FreeCodecs();
-
-      // Free all filters from graph
-      if (_graphBuilder != null)
-        FilterGraphTools.RemoveAllFilters(_graphBuilder, true);
 
       FilterGraphTools.TryDispose(ref _mpcSubsRenderer);
       FilterGraphTools.TryDispose(ref _rot);
@@ -795,7 +789,6 @@ namespace MediaPortal.UI.Players.Video
       FilterGraphTools.TryDispose(ref _videoRenderer);
     }
 
-
     public virtual void ReallocGUIResources()
     {
       if (_graphBuilder == null)
@@ -1186,12 +1179,9 @@ namespace MediaPortal.UI.Players.Video
     /// <returns><c>true</c> if successful, otherwise <c>false</c>.</returns>
     public virtual bool SetResumeState(IResumeState state)
     {
-//      return SkinContext.Form.InvokeIfRequired2((c) =>
-      {
-        PositionResumeState
-          pos = state as PositionResumeState;
-        if (pos == null)
-          return false;
+      PositionResumeState pos = state as PositionResumeState;
+      if (pos == null)
+        return false;
 
       if (_mediaItem != null)
       {
@@ -1205,9 +1195,8 @@ namespace MediaPortal.UI.Players.Video
             return false;
         }
       }
-        CurrentTime = pos.ResumePosition;
-        return true;
-      }//);
+      CurrentTime = pos.ResumePosition;
+      return true;
     }
 
     #endregion

@@ -209,11 +209,6 @@ class MPMadPresenter : public CUnknown, public CCritSec
     IBaseFilter* Initialize();
     void DeInitialize();
     void SetMadVrPaused(bool paused);
-    void RepeatFrame();
-    void GrabCurrentFrame();
-    void GrabScreenshot();
-    void MadVr3DSizeRight(int x, int y, int width, int height);
-    void MadVr3DSizeLeft(int x, int y, int width, int height);
     void MadVrScreenResize(int x, int y, int width, int height, bool displayChange);
     void MadVr3D(bool Enable);
 
@@ -237,21 +232,14 @@ class MPMadPresenter : public CUnknown, public CCritSec
     STDMETHOD(RenderEx2)(REFERENCE_TIME frameStart, REFERENCE_TIME frameStop, REFERENCE_TIME avgTimePerFrame, RECT croppedVideoRect, RECT originalVideoRect, RECT viewportRect, const double videoStretchFactor = 1.0);
     // ISubRenderCallback4
     STDMETHOD(RenderEx3)(REFERENCE_TIME frameStart, REFERENCE_TIME frameStop, REFERENCE_TIME avgTimePerFrame, RECT croppedVideoRect, RECT originalVideoRect, RECT viewportRect, const double videoStretchFactor = 1.0, int xOffsetInPixels = 0, DWORD flags = 0);
-    // Frame Grabbing
-    STDMETHODIMP SetGrabEvent(HANDLE pGrabEvent);
-
-    virtual void EnableExclusive(bool bEnable);
-    virtual void EnableOriginalDisplayMode(bool bEnable);
 
     bool m_pShutdown = false;
-    bool m_pInitOSD = false;
     bool m_pReInitOSD = false;
     bool m_pPausedDone = false;
     bool m_pRunDone = false;
     int m_pPausedCount = 0;
     bool m_pPaused = false;
     IMVRCallback* m_pCallback = nullptr;
-    HANDLE m_pGrabEvent = nullptr;
 
   private:
     void RenderToTexture(IDirect3DTexture9* pTexture);

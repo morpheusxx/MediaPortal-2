@@ -16,8 +16,8 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
   public class MadVR : IVideoRenderer, IOverlayRenderer
   {
     // DirectShow objects
-    protected IBaseFilter _evr;
-    protected MVRCallback _evrCallback;
+    protected IBaseFilter _rendererFilter;
+    protected MVRCallback _mvrCallback;
     protected IBasicVideo _basicVideo;
     protected IVideoWindow _videoWindow;
     protected volatile bool _shutdown;
@@ -34,92 +34,48 @@ namespace MediaPortal.UI.Players.Video.VideoRenderer
 
     public MadVR()
     {
-      _evrCallback = new MVRCallback();
+      _mvrCallback = new MVRCallback();
     }
-
 
     public void Dispose()
     {
-      try
-      {
-        if (_evr != null)
-        {
-          //FilterGraphTools.DisconnectPins(_evr);
-
-          Marshal.ReleaseComObject(_videoWindow);
-          Marshal.ReleaseComObject(_basicVideo);
-          //Marshal.ReleaseComObject(_evr);
-        }
-      }
-      catch (Exception ex)
-      {
-      }
-      _videoWindow = null;
-      _basicVideo = null;
-      _evr = null;
-      GC.Collect();
+      ReleaseVideoRenderer();
+    }
 
     private void ReleaseVideoRenderer()
     {
       _shutdown = true;
-      var videoWindow = _videoWindow;
-      if (videoWindow != null)
-      {
-        videoWindow.put_Owner(IntPtr.Zero);
-        videoWindow.put_MessageDrain(IntPtr.Zero);
-        videoWindow.put_Visible(0);
-      }
-      ServiceRegistration.Get<ILogger>().Info("Disposing _madVR");
-      FilterGraphTools.TryDispose(ref _madVR);
-      SkinContext.Form.Invoke(new Action(() =>
-      {
-        MadVRDeinit();
-      }));
+      ServiceRegistration.Get<ILogger>().Info("Disposing madVR");
+
+      SkinContext.Form.Invoke((Action)delegate { MadVRDeinit(); });
+      GC.Collect();
+
+      _videoWindow = null;
+      _basicVideo = null;
+      _rendererFilter = null;
     }
 
-    public async void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
+    public void AddToGraph(IGraphBuilder graphBuilder, uint streamCount)
     {
+      int hr = -1;
       IntPtr upDevice = SkinContext.Device.NativePointer;
-
-      SkinContext.Form.BeginInvoke(new Action(() =>
+      //Must be initialized synchroniously on gui thread
+      SkinContext.Form.Invoke((Action)delegate
       {
-        int hr = MadVRInit(_evrCallback, 0, 0, SkinContext.Form.Width, SkinContext.Form.Height, upDevice, SkinContext.Form.Handle, ref _evr, graphBuilder);
-        if (hr != 0)
-          throw new VideoPlayerException("Initializing of MadVR failed");
+        hr = MadVRInit(_mvrCallback, 0, 0, SkinContext.Form.Width, SkinContext.Form.Height, upDevice, SkinContext.Form.Handle, ref _rendererFilter, graphBuilder);
+      });
+      if (hr != 0)
+        throw new VideoPlayerException("Initializing of madVR failed");
 
-        //_evr = (IBaseFilter)new MadVideoRenderer();
-        //_evr = new Vmr9VideoRenderer();
-        _basicVideo = (IBasicVideo)_evr;
-        _videoWindow = (IVideoWindow)_evr;
-        //graphBuilder.AddFilter(_evr, MADVR_FILTER_NAME);
-        //Marshal.ReleaseComObject(_videoWindow);
-        //Marshal.ReleaseComObject(_basicVideo);
-        //Marshal.ReleaseComObject(_evr);
-
-        //var handle = SkinContext.Form.Handle;
-        //_videoWindow.put_Owner(handle);
-        ////_videoWindow.put_MessageDrain(handle);
-        //_videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
-        //_videoWindow.put_Left(0);
-        //_videoWindow.put_Top(0);
-        //_videoWindow.put_Height(SkinContext.Form.Height / 2);
-        //_videoWindow.put_Width(SkinContext.Form.Width);
-      }));
+      _basicVideo = (IBasicVideo)_rendererFilter;
+      _videoWindow = (IVideoWindow)graphBuilder;
     }
 
     public bool SyncRendering { get { return false; } }
     public IBaseFilter Filter { get { return _rendererFilter; } }
 
-    public async void OnGraphRunning()
+    public void OnGraphRunning()
     {
-      await SkinContext.Form;
-      var videoWindow = _videoWindow;
-      if (videoWindow != null)
-      {
-        videoWindow.put_Owner(SkinContext.Form.Handle);
-        videoWindow.put_MessageDrain(SkinContext.Form.Handle);
-        videoWindow.put_WindowStyle((int)(0x40000000L /*WindowStyle.Child*/| 0x04000000L /*WindowStyle.ClipSiblings*/| 0x02000000L /*WindowStyle.ClipChildren*/));
-      }
     }
 
     public async Task SetOverlayPositionAsync(int left, int top, int width, int height)

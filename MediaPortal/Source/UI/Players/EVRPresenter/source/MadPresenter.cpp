@@ -61,6 +61,7 @@ __declspec(dllexport) void MadVRDeinit()
     {
       Log("MadVRDeinit: shutdown");
       m_pMadPresenter->DeInitialize();
+      m_pMadFilter = nullptr;
     }
   }
   catch (...)
@@ -88,22 +89,269 @@ MPMadPresenter::MPMadPresenter(IMVRCallback* pCallback, int xposition, int yposi
 MPMadPresenter::~MPMadPresenter()
 {
   {
-    //Log("MPMadPresenter::Destructor() graphbuilder release");
-    //if (m_pGraphbuilder)
-    //{
-    //  m_pGraphbuilder = nullptr;
-    //}
-
-    if (m_pMad)
-    {
-      m_pMad.Release();
-      m_pMad = nullptr;
-    }
-
-    //m_hWnd = nullptr;
-
+    m_pGraphbuilder = nullptr;
+    m_pMad = nullptr;
+    m_hWnd = nullptr;
+    
     Log("MPMadPresenter::Destructor() instance 0x%x", this);
   }
+}
+
+IBaseFilter* MPMadPresenter::Initialize()
+{
+  CAutoLock lock(this);
+
+  CComQIPtr<IBaseFilter> baseFilter = nullptr;
+  if (m_pMad)
+  {
+    baseFilter = m_pMad;
+    return baseFilter;
+  }
+
+  HRESULT hr = m_pMad.CoCreateInstance(CLSID_madVR, GetOwner());
+  if (FAILED(hr))
+  {
+    m_pMad = nullptr;
+    return nullptr;
+  }
+  if (m_pMad)
+  {
+    if (baseFilter = m_pMad)
+    {
+      hr = m_pGraphbuilder->AddFilter(baseFilter, L"madVR");
+      if (FAILED(hr))
+      {
+        m_pMad = nullptr;
+        return nullptr;
+      }
+      baseFilter.Release();
+    }
+
+    // Configure initial Madvr Settings
+    ConfigureMadvr();
+
+    if (CComQIPtr<IVideoWindow> window = m_pMad)
+    {
+      window->put_Owner(m_hParent);
+      window->put_MessageDrain(m_hParent);
+      window->put_WindowStyle(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+      window->put_Left(m_Xposition);
+      window->put_Top(m_Yposition);
+      window->put_Height(m_dwGUIHeight);
+      window->put_Width(m_dwGUIWidth);
+      window.Release();
+    }
+
+    m_pCallback->AddRef();
+    Log("MPMadPresenter::Constructor() store device surface");
+    // Store device surface MP GUI for later
+    m_pCallback->RestoreDeviceSurface(m_pSurfaceDevice);
+
+    // ISubRenderCallback
+    CComQIPtr<ISubRender> pSR = m_pMad;
+    if (!pSR)
+    {
+      m_pMad = nullptr;
+      return nullptr;
+    }
+
+    m_pSRCB = new CSubRenderCallback(this);
+    if (pSR && FAILED(pSR->SetCallback(m_pSRCB)))
+    {
+      m_pMad = nullptr;
+      return nullptr;
+    }
+    m_pSRCB->AddRef();
+    pSR.Release();
+
+    // IOsdRenderCallback
+    CComQIPtr<IMadVROsdServices> pOR = m_pMad;
+    if (!pOR)
+    {
+      m_pMad = nullptr;
+      return nullptr;
+    }
+
+    m_pORCB = new COsdRenderCallback(this);
+    if (pOR && FAILED(pOR->OsdSetRenderCallback("MP2-GUI", m_pORCB)))
+    {
+      m_pMad = nullptr;
+      return nullptr;
+    }
+    m_pORCB->AddRef();
+    pOR.Release();
+
+    m_hWnd = reinterpret_cast<HWND>(m_hParent);
+
+    return baseFilter;
+  }
+  m_pMad = nullptr;
+  return nullptr;
+}
+
+void MPMadPresenter::DeInitialize()
+{
+  m_pShutdown = true;
+  CAutoLock lock(this);
+
+  if (!m_pMad)
+  {
+    return;
+  }
+
+  if (m_pMad)
+  {
+    if (CComQIPtr<IVideoWindow> window = m_pMad)
+    {
+      window->put_Visible(OAFALSE);
+      window->put_MessageDrain(NULL);
+      window->put_Owner(NULL);
+      window.Release();
+    }
+
+    if (CComQIPtr<IBaseFilter> baseFilter = m_pMad)
+    {
+      m_pGraphbuilder->RemoveFilter(baseFilter);
+      baseFilter.Release();
+    }
+  }
+
+  //CComQIPtr<IBaseFilter> baseFilter = nullptr;
+  //if (baseFilter = m_pMad)
+  //{
+  //  IBaseFilter* test = baseFilter;
+  //  ULONG ultest = test->AddRef();
+  //}
+
+  //Sleep(2000);
+
+  if (m_pORCB)
+  {
+    // IOsdRenderCallback
+    Log("MPMadPresenter::DeInitialize() osd render");
+    CComQIPtr<IMadVROsdServices> pOR = m_pMad;
+    if (!pOR)
+    {
+      m_pMad = nullptr;
+      return;
+    }
+
+    if (pOR && FAILED(pOR->OsdSetRenderCallback("MP2-GUI", nullptr)))
+    {
+      m_pMad = nullptr;
+      return;
+    }
+
+    // nasty, but we have to let it know about our death somehow
+    static_cast<COsdRenderCallback*>(static_cast<IOsdRenderCallback*>(m_pORCB))->SetShutdownOsd(true);
+    static_cast<COsdRenderCallback*>(static_cast<IOsdRenderCallback*>(m_pORCB))->SetDXRAP(nullptr);
+    m_pORCB->Release();
+    m_pORCB = nullptr;
+
+    pOR.Release();
+  }
+
+  if (m_pSRCB)
+  {
+    // ISubRenderCallback
+    Log("MPMadPresenter::DeInitialize() subtitle render");
+    CComQIPtr<ISubRender> pSR = m_pMad;
+    if (!pSR)
+    {
+      m_pMad = nullptr;
+      return;
+    }
+
+    if (pSR && (FAILED(pSR->SetCallback(nullptr))))
+    {
+      m_pMad = nullptr;
+      return;
+    }
+
+    // nasty, but we have to let it know about our death somehow
+    static_cast<CSubRenderCallback*>(static_cast<ISubRenderCallback*>(m_pSRCB))->SetShutdownSub(true);
+    static_cast<CSubRenderCallback*>(static_cast<ISubRenderCallback*>(m_pSRCB))->SetDXRAPSUB(nullptr);
+    m_pSRCB->Release();
+    m_pSRCB = nullptr;
+
+    pSR.Release();
+  }
+
+  // Stop in current thread
+  //CComPtr<IMediaControl> m_pControl = nullptr;
+  //if ((m_pGraphbuilder) && (SUCCEEDED(m_pGraphbuilder->QueryInterface(__uuidof(IMediaControl), reinterpret_cast<LPVOID*>(&m_pControl)))) && (m_pControl))
+  //{
+  //  if (m_pControl)
+  //  {
+  //    OAFilterState state;
+  //    m_pControl->GetState(INFINITE, &state);
+  //    if (state != State_Stopped)
+  //    {
+  //      m_pControl->Pause();
+  //      m_pControl->GetState(1000, nullptr);
+
+  //      m_pControl->Stop();
+  //      m_pControl->GetState(1000, nullptr);
+
+  //      for (int i1 = 0; i1 < 200; i1++)
+  //      {
+  //        m_pControl->GetState(INFINITE, &state);
+  //        if (state == State_Stopped)
+  //          break;
+  //        Sleep(10);
+  //      }
+  //    }
+  //    m_pControl = nullptr;
+  //  }
+  //}
+
+  // Restore windowed overlay settings
+  //if (m_pMad)
+  //{
+  //  if (CComQIPtr<IMadVRSettings> settings = m_pMad)
+  //  {
+  //    // Read enableOverlay settings
+  //    settings->SettingsGetBoolean(L"enableOverlay", &m_enableOverlay);
+  //    if (m_enableOverlay)
+  //    {
+  //      Log("MPMadPresenter::DeInitialize() disable windowed overlay mode");
+  //      settings->SettingsSetBoolean(L"enableOverlay", false);
+
+  //    }
+  //    settings.Release();
+  //  }
+  //}
+
+  //Sleep(1000);
+
+  if (m_pCallback)
+  {
+    Log("MPMadPresenter::DeInitialize() reset subtitle device");
+    m_pCallback->SetSubtitleDevice(reinterpret_cast<LONG>(nullptr));
+    Log("MPMadPresenter::DeInitialize() RestoreDeviceSurface");
+    m_pCallback->RestoreDeviceSurface(m_pSurfaceDevice);
+
+    Log("MPMadPresenter::DeInitialize() callback release");
+    m_pCallback->Release();
+    m_pCallback = nullptr;
+  }
+
+  if (m_pMadD3DDev)
+    m_pMadD3DDev.Release();
+  m_pMadD3DDev = nullptr;
+  if (m_pDevice)
+    m_pDevice.Release();
+  m_pDevice = nullptr;
+  if (m_pSurfaceDevice)
+    m_pSurfaceDevice.Release();
+  m_pSurfaceDevice = nullptr;
+  if (m_pGraphbuilder)
+    m_pGraphbuilder.Release();
+  m_pGraphbuilder = nullptr;
+  m_hParent = NULL;
+  m_hWnd = NULL;
+
+  Log("MPMadPresenter::DeInitialize() complete");
 }
 
 void MPMadPresenter::SetMadVrPaused(bool paused)
@@ -148,132 +396,6 @@ void MPMadPresenter::SetMadVrPaused(bool paused)
   }
 }
 
-void MPMadPresenter::RepeatFrame()
-{
-  if (m_pShutdown)
-  {
-    Log("MPMadPresenter::RepeatFrame() shutdown");
-    return;
-  }
-
-  // Render frame to try to fix HD4XXX GPU flickering issue
-  if (CComQIPtr<IMadVROsdServices> pOR = m_pMad)
-  {
-    pOR->OsdRedrawFrame();
-  }
-}
-
-void MPMadPresenter::GrabScreenshot()
-{
-  if (m_pShutdown)
-  {
-    if (m_pCallback)
-    {
-      m_pCallback->GrabScreenshot(nullptr);
-    }
-    return;
-  }
-
-  try
-  {
-    if (m_pMad && m_pCallback)
-    {
-      if (CComQIPtr<IBasicVideo> m_pBV = m_pMad)
-      {
-        LONG nBufferSize = 0;
-        HRESULT hr = E_NOTIMPL;
-        hr = m_pBV->GetCurrentImage(&nBufferSize, NULL);
-        if (hr != S_OK)
-        {
-          return;
-        }
-        long* ppData = static_cast<long *>(malloc(nBufferSize));
-        hr = m_pBV->GetCurrentImage(&nBufferSize, ppData);
-        if (hr != S_OK || !ppData)
-        {
-          free(ppData);
-          return;
-        }
-        if (ppData)
-        {
-          PBITMAPINFO bi = PBITMAPINFO(ppData);
-          PBITMAPINFOHEADER bih = &bi->bmiHeader;
-          int bpp = bih->biBitCount;
-          if (bpp != 16 && bpp != 24 && bpp != 32)
-          {
-            free(ppData);
-            return;
-          }
-          m_pCallback->GrabScreenshot(LPVOID(ppData));
-          free(ppData);
-        }
-      }
-    }
-  }
-  catch (...)
-  {
-  }
-}
-
-void MPMadPresenter::GrabCurrentFrame()
-{
-  {
-    try
-    {
-      if (m_pShutdown)
-      {
-        if (m_pCallback)
-        {
-          m_pCallback->GrabCurrentFrame(nullptr);
-        }
-        return;
-      }
-      if (m_pCallback && m_pMad)
-      {
-        if (CComQIPtr<IMadVRFrameGrabber> pMadVrFrame = m_pMad)
-        {
-          LPVOID dibImageBuffer = nullptr;
-          pMadVrFrame->GrabFrame(ZOOM_50_PERCENT, FLAGS_NO_SUBTITLES | FLAGS_NO_ARTIFACT_REMOVAL | FLAGS_NO_IMAGE_ENHANCEMENTS | FLAGS_NO_UPSCALING_REFINEMENTS | FLAGS_NO_HDR_SDR_CONVERSION,
-            CHROMA_UPSCALING_NGU_AA, IMAGE_DOWNSCALING_SSIM1D100, IMAGE_UPSCALING_NGU_SHARP_GRAIN, 0, &dibImageBuffer, nullptr);
-
-          // Send the DIB to C#
-          m_pCallback->GrabCurrentFrame(dibImageBuffer);
-          LocalFree(dibImageBuffer);
-          dibImageBuffer = nullptr;
-          //Log("GrabFrame() hr");
-        }
-      }
-    }
-    catch (...)
-    {
-    }
-  }
-}
-
-void MPMadPresenter::MadVr3DSizeRight(int x, int y, int width, int height)
-{
-  if (m_pMadD3DDev)
-  {
-    m_dwLeft = x;
-    m_dwTop = y;
-    m_dwWidth = width;
-    m_dwHeight = height;
-    Log("%s : init ok for Auto D3D : %d x %d", __FUNCTION__, width, height);
-  }
-}
-
-void MPMadPresenter::MadVr3DSizeLeft(int x, int y, int width, int height)
-{
-  if (m_pMadD3DDev)
-  {
-    m_dwLeftLeft = x;
-    m_dwTopLeft = y;
-    m_dwWidthLeft = width;
-    m_dwHeightLeft = height;
-    Log("%s : init ok for Auto D3D : %d x %d", __FUNCTION__, width, height);
-  }
-}
-
 void MPMadPresenter::MadVrScreenResize(int x, int y, int width, int height, bool displayChange)
 {
   // Set window video position when screen change.
@@ -299,306 +421,6 @@ void MPMadPresenter::MadVr3D(bool Enable)
   m_madVr3DEnable = Enable;
 }
 
-IBaseFilter* MPMadPresenter::Initialize()
-{
-  CAutoLock lock(this);
-
-  CComQIPtr<IBaseFilter> baseFilter = nullptr;
-  if (m_pMad)
-  {
-    baseFilter = m_pMad;
-    return baseFilter;
-  }
-
-  HRESULT hr = m_pMad.CoCreateInstance(CLSID_madVR, GetOwner());
-  if (FAILED(hr))
-  {
-    m_pMad = nullptr;
-    return nullptr;
-  }
-  if (m_pMad)
-  {
-    if (baseFilter = m_pMad)
-    {
-      hr = m_pGraphbuilder->AddFilter(baseFilter, L"madVR");
-      if (FAILED(hr))
-      {
-        m_pMad = nullptr;
-        return nullptr;
-      }
-    }
-
-    m_pCallback->AddRef();
-    Log("MPMadPresenter::Constructor() store device surface");
-    // Store device surface MP GUI for later
-    m_pCallback->RestoreDeviceSurface(m_pSurfaceDevice);
-
-    // ISubRenderCallback
-    CComQIPtr<ISubRender> pSR = m_pMad;
-    if (!pSR)
-    {
-      m_pMad = nullptr;
-      return nullptr;
-    }
-
-    m_pSRCB = new CSubRenderCallback(this);
-    if (pSR && FAILED(pSR->SetCallback(m_pSRCB)))
-    {
-      m_pMad = nullptr;
-      return nullptr;
-    }
-    m_pSRCB->AddRef();
-
-    // IOsdRenderCallback
-    CComQIPtr<IMadVROsdServices> pOR = m_pMad;
-    if (!pOR)
-    {
-      m_pMad = nullptr;
-      return nullptr;
-    }
-
-    m_pORCB = new COsdRenderCallback(this);
-    if (pOR && FAILED(pOR->OsdSetRenderCallback("MP2-GUI", m_pORCB)))
-    {
-      m_pMad = nullptr;
-    }
-    m_pORCB->AddRef();
-
-    m_hWnd = reinterpret_cast<HWND>(m_hParent);
-
-    if (CComQIPtr<IVideoWindow> window = m_pMad)
-    {
-      window->put_Owner(m_hParent);
-      window->put_MessageDrain(m_hParent);
-      window->put_WindowStyle(WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
-      window->put_Left(m_Xposition);
-      window->put_Top(m_Yposition);
-      window->put_Height(m_dwGUIHeight);
-      window->put_Width(m_dwGUIWidth);
-    }
-    /*CComQIPtr<IBasicVideo> video = CComQIPtr<IBasicVideo>(pRenderer);
-    video->SetDestinationPosition(m_Xposition, m_Yposition, m_dwGUIWidth, m_dwGUIHeight);*/
-
-    // Configure initial Madvr Settings
-    ConfigureMadvr();
-
-    return baseFilter;
-  }
-  m_pMad = nullptr;
-  return nullptr;
-}
-
-void MPMadPresenter::DeInitialize()
-{
-  m_pShutdown = true;
-  CAutoLock lock(this);
-
-  if (!m_pMad)
-  {
-    return;
-  }
-
-  if (m_pMad)
-  {
-    if (CComQIPtr<IVideoWindow> window = m_pMad)
-    {
-      window->put_Visible(OAFALSE);
-      window->put_MessageDrain(NULL);
-      window->put_Owner(NULL);
-    }
-  }
-
-  //Sleep(2000);
-  
-  // Enable DisplayModeChanger is set by using DRR when player enters/leaves fullscreen (if we use profiles)
-  EnableOriginalDisplayMode(true);
-
-  if (m_pORCB)
-  {
-    // IOsdRenderCallback
-    Log("MPMadPresenter::DeInitialize() osd render");
-    CComQIPtr<IMadVROsdServices> pOR = m_pMad;
-    if (!pOR)
-    {
-      m_pMad = nullptr;
-      return;
-    }
-
-    if (pOR && FAILED(pOR->OsdSetRenderCallback("MP2-GUI", nullptr)))
-    {
-      m_pMad = nullptr;
-      return;
-    }
-
-    // nasty, but we have to let it know about our death somehow
-    static_cast<COsdRenderCallback*>(static_cast<IOsdRenderCallback*>(m_pORCB))->SetShutdownOsd(true);
-    static_cast<COsdRenderCallback*>(static_cast<IOsdRenderCallback*>(m_pORCB))->SetDXRAP(nullptr);
-    m_pORCB->Release();
-    m_pORCB = nullptr;
-  }
-
-  if (m_pSRCB)
-  {
-    // ISubRenderCallback
-    Log("MPMadPresenter::DeInitialize() subtitle render");
-    CComQIPtr<ISubRender> pSR = m_pMad;
-    if (!pSR)
-    {
-      m_pMad = nullptr;
-      return;
-    }
-
-    if (pSR && (FAILED(pSR->SetCallback(nullptr))))
-    {
-      m_pMad = nullptr;
-      return;
-    }
-
-    // nasty, but we have to let it know about our death somehow
-    static_cast<CSubRenderCallback*>(static_cast<ISubRenderCallback*>(m_pSRCB))->SetShutdownSub(true);
-    static_cast<CSubRenderCallback*>(static_cast<ISubRenderCallback*>(m_pSRCB))->SetDXRAPSUB(nullptr);
-    m_pSRCB->Release();
-    m_pSRCB = nullptr;
-  }
-
-  // Stop in current thread
-  CComPtr<IMediaControl> m_pControl = nullptr;
-  if ((m_pGraphbuilder) && (SUCCEEDED(m_pGraphbuilder->QueryInterface(__uuidof(IMediaControl), reinterpret_cast<LPVOID*>(&m_pControl)))) && (m_pControl))
-  {
-    if (m_pControl)
-    {
-      OAFilterState state;
-      m_pControl->GetState(INFINITE, &state);
-      if (state != State_Stopped)
-      {
-        m_pControl->Pause();
-        m_pControl->GetState(1000, nullptr);
-
-        m_pControl->Stop();
-        m_pControl->GetState(1000, nullptr);
-
-        for (int i1 = 0; i1 < 200; i1++)
-        {
-          m_pControl->GetState(INFINITE, &state);
-          if (state == State_Stopped)
-            break;
-          Sleep(10);
-        }
-      }
-      m_pControl = nullptr;
-    }
-  }
-
-  // Restore windowed overlay settings
-  if (m_pMad)
-  {
-    if (CComQIPtr<IMadVRSettings> settings = m_pMad)
-    {
-      // Read enableOverlay settings
-      settings->SettingsGetBoolean(L"enableOverlay", &m_enableOverlay);
-      if (m_enableOverlay)
-      {
-        Log("MPMadPresenter::DeInitialize() disable windowed overlay mode");
-        settings->SettingsSetBoolean(L"enableOverlay", false);
-
-      }
-    }
-  }
-
-  //Sleep(1000);
-
-  if (m_pMadD3DDev != nullptr)
-  {
-    Log("MPMadPresenter::DeInitialize() release 3d device");
-    m_pMadD3DDev.Release();
-    m_pMadD3DDev = nullptr;
-  }
-
-  if (m_pCallback)
-  {
-    Log("MPMadPresenter::DeInitialize() reset subtitle device");
-    m_pCallback->SetSubtitleDevice(reinterpret_cast<LONG>(nullptr));
-    Log("MPMadPresenter::DeInitialize() RestoreDeviceSurface");
-    m_pCallback->RestoreDeviceSurface(m_pSurfaceDevice);
-
-    Log("MPMadPresenter::DeInitialize() callback release");
-    m_pCallback->Release();
-    m_pCallback = nullptr;
-  }
-  
-  if (m_pDevice != nullptr)
-  {
-    m_pDevice.Release();
-    m_pDevice = nullptr;
-  }
-
-  if (m_pSurfaceDevice != nullptr)
-  {
-    m_pSurfaceDevice.Release();
-    m_pSurfaceDevice = nullptr;
-  }
-
-  if (m_pGraphbuilder != nullptr)
-  {
-    m_pGraphbuilder.Release();
-    m_pGraphbuilder = nullptr;
-  }
-
-  if (m_hParent)
-  {
-    m_hParent = NULL;
-  }
-
-  if (m_hWnd)
-  {
-    m_hWnd = NULL;
-  }
-
-  Log("MPMadPresenter::DeInitialize() complete");
-}
-
-STDMETHODIMP MPMadPresenter::SetGrabEvent(HANDLE pGrabEvent)
-{
-  m_pGrabEvent = pGrabEvent;
-  return S_OK;
-}
-
-void MPMadPresenter::EnableExclusive(bool bEnable)
-{
-  if (m_pMad)
-  {
-    if (CComQIPtr<IMadVRCommand> pMadVrCmd = m_pMad)
-    {
-      pMadVrCmd->SendCommandBool("disableExclusiveMode", !bEnable);
-    }
-  }
-};
-
-void MPMadPresenter::EnableOriginalDisplayMode(bool bEnable)
-{
-  if (m_pMad)
-  {
-    if (CComQIPtr<IMadVRSettings> settings = m_pMad)
-    {
-      // Read DisplayModeChanger settings
-      BOOL enableDisplayModeChanger;
-      BOOL enableDisplayModeRestore;
-      settings->SettingsGetBoolean(L"enableDisplayModeChanger", &enableDisplayModeChanger);
-      settings->SettingsGetBoolean(L"restoreDisplayMode", &enableDisplayModeRestore);
-      if (enableDisplayModeChanger)
-      {
-        settings->SettingsSetBoolean(L"enableDisplayModeChanger", true);
-        settings->SettingsSetBoolean(L"changeDisplayModeOnPlay", false);
-      }
-      if (enableDisplayModeRestore)
-      {
-        settings->SettingsSetBoolean(L"restoreDisplayMode", true);
-        settings->SettingsSetBoolean(L"restoreDisplayModeOnClose", false);
-      }
-    }
-  }
-};
-
 void MPMadPresenter::ConfigureMadvr()
 {
   if (m_pMad)
@@ -607,24 +429,15 @@ void MPMadPresenter::ConfigureMadvr()
     {
       cmd->SendCommandBool("disableSeekbar", true);
       cmd->SendCommandString("setZoomMode", L"touchInside");
+      cmd.Release();
     }
 
     if (CComQIPtr<IMadVRDirect3D9Manager> manager = m_pMad)
     {
-      manager->ConfigureDisplayModeChanger(true, true);
+      //Display mode changing handled by MP
+      manager->ConfigureDisplayModeChanger(false, false);
+      manager.Release();
     }
-
-    // TODO implement IMadVRSubclassReplacement (if enable, it 's breaking mouse event on FSE for MVC)
-    /*if (CComQIPtr<IMadVRSubclassReplacement> pSubclassReplacement = m_pMad)
-    {
-      pSubclassReplacement->DisableSubclassing();
-    }*/
-
-    //if (Com::SmartQIPtr<IVideoWindow> pWindow = m_pMad) // Fix DXVA for FSE
-    //{
-    //  pWindow->SetWindowPosition(m_Xposition, m_Yposition, m_dwGUIWidth, m_dwGUIHeight);
-    //  //pWindow->put_Owner(m_hParent);
-    //}
 
     if (CComQIPtr<IMadVRSettings> settings = m_pMad)
     {
@@ -635,6 +448,8 @@ void MPMadPresenter::ConfigureMadvr()
         //settings->SettingsSetBoolean(L"exclusiveDelay", true);
         settings->SettingsSetBoolean(L"enableExclusive", true);
       }
+
+      settings.Release();
     }
   }
 }
@@ -671,6 +486,7 @@ HRESULT MPMadPresenter::ClearBackground(LPCSTR name, REFERENCE_TIME frameStart, 
     {
       // Use IMadVRInfo to get size. See http://bugs.madshi.net/view.php?id=180
       m_pMVRI->GetSize("originalVideoSize", &szVideoFrame);
+      m_pMVRI.Release();
     }
   }
 
@@ -732,6 +548,7 @@ HRESULT MPMadPresenter::RenderOsd(LPCSTR name, REFERENCE_TIME frameStart, RECT* 
     {
       // Use IMadVRInfo to get size. See http://bugs.madshi.net/view.php?id=180
       m_pMVRI->GetSize("originalVideoSize", &szVideoFrame);
+      m_pMVRI.Release();
     }
   }
 
@@ -788,8 +605,6 @@ HRESULT MPMadPresenter::RenderOsd(LPCSTR name, REFERENCE_TIME frameStart, RECT* 
       // Draw MP texture on madVR device's side
       RenderTexture(m_pMadOsdVertexBuffer, m_pRenderTextureOsd);
   }
-
-  SetEvent(m_pGrabEvent);
 
   SetMadVrPaused(m_pPaused);
 
@@ -947,9 +762,6 @@ void MPMadPresenter::ReinitOSD(bool type)
         Log("%s : ReinitOSD from : RenderOsd", __FUNCTION__);
       }
 
-      // Enable DisplayModeChanger is set by using DRR when player goes /leaves fullscreen (if we use profiles)
-      EnableOriginalDisplayMode(true);
-
       m_pReInitOSD = false;
       m_pMPTextureGui = nullptr;
       m_pMPTextureOsd = nullptr;
@@ -1080,16 +892,11 @@ HRESULT MPMadPresenter::SetDeviceOsd(IDirect3DDevice9* pD3DDev)
           // TODO disable OSD delay for now (used to force IVideoWindow on C# side)
           m_pCallback->ForceOsdUpdate(true);
           Log("%s : ForceOsdUpdate", __FUNCTION__);
-
-          int frameCount = m_pCallback->ReduceFrame();
-          Log("%s : reduce madVR frame to : %i", __FUNCTION__, frameCount);
           //=============================================
         }
       // Authorize OSD placement
       m_pReInitOSD = true;
 
-      // Enable DisplayModeChanger is set by using DRR when player goes /leaves fullscreen
-      EnableOriginalDisplayMode(true);
       return hr;
     }
     Log("MPMadPresenter::SetDeviceOsd() init madVR Window");
@@ -1106,8 +913,10 @@ STDMETHODIMP MPMadPresenter::ChangeDevice(IUnknown* pDev)
   if (m_pMadD3DDev != pD3DDev)
   {
     m_pMadD3DDev = pD3DDev;
+    pD3DDev.Release();
     return S_OK;
   }
+  pD3DDev.Release();
   return hr;
 }
 
@@ -1162,7 +971,7 @@ HRESULT MPMadPresenter::RenderEx3(REFERENCE_TIME rtStart, REFERENCE_TIME rtStop,
 
     SetupMadDeviceState();
 
-    m_pCallback->RenderSubtitleEx(rtStart, viewportRect, croppedVideoRect, xOffsetInPixels);
+    m_pCallback->RenderSubtitle(rtStart, viewportRect, croppedVideoRect, xOffsetInPixels);
 
     // Commented out but useful for testing
     //Log("%s : RenderSubtitle : rtStart: %i, croppedVideoRect.left: %d, croppedVideoRect.top: %d, croppedVideoRect.right: %d, croppedVideoRect.bottom: %d", __FUNCTION__, rtStart, croppedVideoRect.left, croppedVideoRect.top, croppedVideoRect.right, croppedVideoRect.bottom);

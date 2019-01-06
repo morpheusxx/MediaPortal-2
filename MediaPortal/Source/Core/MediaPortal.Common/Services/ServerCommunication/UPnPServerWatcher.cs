@@ -25,9 +25,11 @@
 using System.Collections.Generic;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
-using MediaPortal.Common.Logging;
 using MediaPortal.Common.SystemCommunication;
+using MediaPortal.Common.Threading;
+using UPnP.Infrastructure;
 using UPnP.Infrastructure.CP;
+using ILogger = MediaPortal.Common.Logging.ILogger;
 
 namespace MediaPortal.Common.Services.ServerCommunication
 {
@@ -74,8 +76,9 @@ namespace MediaPortal.Common.Services.ServerCommunication
     void OnUPnPRootDeviceAdded(RootDescriptor rootDescriptor)
     {
       ICollection<ServerDescriptor> availableServers;
-      lock (_networkTracker.SharedControlPointData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_networkTracker.SharedControlPointData.SyncObj);
         ServerDescriptor serverDescriptor = ServerDescriptor.GetMPBackendServerDescriptor(rootDescriptor);
         if (serverDescriptor == null || _availableServers.Contains(serverDescriptor))
           return;
@@ -91,8 +94,9 @@ namespace MediaPortal.Common.Services.ServerCommunication
     void OnUPnPRootDeviceRemoved(RootDescriptor rootDescriptor)
     {
       ICollection<ServerDescriptor> availableServers;
-      lock (_networkTracker.SharedControlPointData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_networkTracker.SharedControlPointData.SyncObj);
         ServerDescriptor serverDescriptor = ServerDescriptor.GetMPBackendServerDescriptor(rootDescriptor);
         if (serverDescriptor == null || !_availableServers.Contains(serverDescriptor))
           return;

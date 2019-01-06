@@ -222,8 +222,9 @@ namespace UPnP.Infrastructure.CP.DeviceTree
       DeviceConnection connection = _connection;
       if (connection == null)
         return;
-      lock (connection.CPData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(connection.CPData.SyncObj);
         _connection = null;
       }
     }

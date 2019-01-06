@@ -166,8 +166,9 @@ namespace UPnP.Infrastructure.CP
     /// </summary>
     public void Start()
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (_isActive)
           throw new IllegalCallException("UPnP control point mustn't be started multiple times");
 
@@ -221,8 +222,9 @@ namespace UPnP.Infrastructure.CP
     public void Close()
     {
       ICollection<IDisposable> listenersToClose = new List<IDisposable>();
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (!_isActive)
           return;
         _isActive = false;
@@ -284,8 +286,11 @@ namespace UPnP.Infrastructure.CP
     public void DisconnectAll()
     {
       ICollection<string> connectedUUIDs;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         connectedUUIDs = new List<string>(_connectedDevices.Keys);
+      }
       foreach (string deviceUUID in connectedUUIDs)
         DoDisconnect(deviceUUID, true);
     }
@@ -294,8 +299,9 @@ namespace UPnP.Infrastructure.CP
 
     protected DeviceConnection DoConnect(RootDescriptor descriptor, string deviceUuid, DataTypeResolverDlgt dataTypeResolver, bool useHttpKeepAlive = true)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         DeviceConnection connection = new DeviceConnection(this, descriptor, deviceUuid, _cpData, dataTypeResolver, useHttpKeepAlive);
         _connectedDevices.Add(deviceUuid, connection);
         return connection;
@@ -305,8 +311,9 @@ namespace UPnP.Infrastructure.CP
     protected void DoDisconnect(string deviceUUID, bool unsubscribeEvents)
     {
       DeviceConnection connection;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (!_connectedDevices.TryGetValue(deviceUUID, out connection))
           return;
         _connectedDevices.Remove(deviceUUID);
@@ -317,8 +324,9 @@ namespace UPnP.Infrastructure.CP
 
     protected void DoDisconnect(DeviceConnection connection, bool unsubscribeEvents)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         string deviceUUID = connection.DeviceUUID;
         if (!_connectedDevices.ContainsKey(deviceUUID))
           throw new ArgumentException(string.Format("This control point instance doesn't manage the given device connection for device '{0}'",

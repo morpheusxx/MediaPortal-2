@@ -122,8 +122,9 @@ namespace UPnP.Infrastructure.CP.GENA
     public void Close(bool unsubscribeEvents)
     {
       WaitHandle notifyObject = new ManualResetEvent(false);
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (!_isActive)
           return;
         _isActive = false;
@@ -131,8 +132,9 @@ namespace UPnP.Infrastructure.CP.GENA
       }
       notifyObject.WaitOne();
       notifyObject.Close();
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         foreach (EventSubscription subscription in new List<EventSubscription>(_subscriptions.Values))
           if (unsubscribeEvents)
             UnsubscribeEvents(subscription);
@@ -203,9 +205,13 @@ namespace UPnP.Infrastructure.CP.GENA
 
     private void OnGENAReceive(IAsyncResult ar)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         if (!_isActive)
           return;
+      }
+
       UDPAsyncReceiveState<EndpointConfiguration> state = (UDPAsyncReceiveState<EndpointConfiguration>) ar.AsyncState;
       EndpointConfiguration config = state.Endpoint;
       Socket socket = state.Socket;
@@ -239,8 +245,9 @@ namespace UPnP.Infrastructure.CP.GENA
 
     internal void SubscribeEvents(CpService service, ServiceDescriptor serviceDescriptor)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         HttpWebRequest request = CreateEventSubscribeRequest(serviceDescriptor);
         ChangeEventSubscriptionState state = new ChangeEventSubscriptionState(serviceDescriptor, service, request);
         _pendingCalls.Add(state);
@@ -251,9 +258,12 @@ namespace UPnP.Infrastructure.CP.GENA
 
     internal void RenewAllEventSubscriptions()
     {
-      lock (_cpData.SyncObj) 
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         foreach (EventSubscription subscription in _subscriptions.Values)
           RenewEventSubscription(subscription);
+      }
     }
 
     protected void RenewEventSubscription(EventSubscription subscription)
@@ -261,8 +271,9 @@ namespace UPnP.Infrastructure.CP.GENA
       if (!subscription.Service.IsConnected)
         throw new IllegalCallException("Service '{0}' is not connected to a UPnP network service", subscription.Service.FullQualifiedName);
 
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         HttpWebRequest request = CreateRenewEventSubscribeRequest(subscription);
         ChangeEventSubscriptionState state = new ChangeEventSubscriptionState(subscription.ServiceDescriptor, subscription.Service, request);
         _pendingCalls.Add(state);
@@ -274,8 +285,12 @@ namespace UPnP.Infrastructure.CP.GENA
     private void OnSubscribeOrRenewSubscriptionResponseReceived(IAsyncResult ar)
     {
       ChangeEventSubscriptionState state = (ChangeEventSubscriptionState) ar.AsyncState;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         _pendingCalls.Remove(state);
+      }
+
       CpService service = state.Service;
       try
       {
@@ -311,8 +326,9 @@ namespace UPnP.Infrastructure.CP.GENA
             expiration = DateTime.Now.AddSeconds(timeout);
 
           EventSubscription subscription;
-          lock (_cpData.SyncObj)
+          using (var l = new SmartLock())
           {
+            l.TryEnter(_cpData.SyncObj);
             if (_subscriptions.TryGetValue(sid, out subscription))
               subscription.Expiration = expiration;
             else
@@ -336,8 +352,9 @@ namespace UPnP.Infrastructure.CP.GENA
 
     internal void UnsubscribeEvents(EventSubscription subscription)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         HttpWebRequest request = CreateEventUnsubscribeRequest(subscription);
         ChangeEventSubscriptionState state = new ChangeEventSubscriptionState(subscription.ServiceDescriptor, subscription.Service, request);
         _pendingCalls.Add(state);
@@ -360,8 +377,9 @@ namespace UPnP.Infrastructure.CP.GENA
         if (e.Response != null)
           e.Response.Close();
       }
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         _pendingCalls.Remove(state);
         if (subscription != null)
         { // As we are asynchronous, the subscription might have gone already (maybe as a result of a duplicate unsubscribe event
@@ -374,8 +392,9 @@ namespace UPnP.Infrastructure.CP.GENA
 
     private void OnSubscriptionRenewalTimerElapsed(object state)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         ICollection<EventSubscription> remainingEventSubscriptions = new List<EventSubscription>(_subscriptions.Count);
         DateTime threshold = DateTime.Now.AddSeconds(EVENT_SUBSCRIPTION_RENEWAL_GAP);
         foreach (EventSubscription subscription in _subscriptions.Values)
@@ -389,8 +408,9 @@ namespace UPnP.Infrastructure.CP.GENA
 
     protected void CheckSubscriptionRenewalTimer(IEnumerable<EventSubscription> subscriptionsToCheck)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         DateTime? minExpiration = null;
         foreach (EventSubscription subscription in subscriptionsToCheck)
           if (!minExpiration.HasValue || subscription.Expiration < minExpiration.Value)
@@ -411,10 +431,13 @@ namespace UPnP.Infrastructure.CP.GENA
 
     public EventSubscription FindEventSubscriptionByService(CpService service)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         foreach (EventSubscription subscription in _subscriptions.Values)
           if (subscription.Service == service)
             return subscription;
+      }
       return null;
     }
 
@@ -465,8 +488,9 @@ namespace UPnP.Infrastructure.CP.GENA
       string seqStr = request.Headers.Get("SEQ");
       string contentType = request.Headers.Get("CONTENT-TYPE");
 
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         EventSubscription subscription;
         if (nt != "upnp:event" || nts != "upnp:propchange" || string.IsNullOrEmpty(sid) ||
             !_subscriptions.TryGetValue(sid, out subscription))
@@ -519,8 +543,9 @@ namespace UPnP.Infrastructure.CP.GENA
       string svcid = request["SVCID"];
       string contentType = request["CONTENT-TYPE"];
 
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         CpService service;
         if (nt != "upnp:event" || nts != "upnp:propchange" || string.IsNullOrEmpty(sid) ||
             !TryGetService(usn, svcid, out service))

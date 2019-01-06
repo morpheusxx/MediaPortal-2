@@ -147,8 +147,9 @@ namespace UPnP.Infrastructure.CP
 
     public void Dispose()
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         DoDisconnect(false);
         foreach (AsyncWebRequestState state in new List<AsyncWebRequestState>(_pendingCalls))
           state.Request.Abort();
@@ -207,8 +208,12 @@ namespace UPnP.Infrastructure.CP
       HttpWebRequest request = CreateActionCallRequest(sd, action);
       ActionCallState state = new ActionCallState(action, clientState, request);
       state.SetRequestMessage(message);
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         _pendingCalls.Add(state);
+      }
+
       IAsyncResult result = state.Request.BeginGetResponse(OnCallResponseReceived, state);
       NetworkHelper.AddTimeout(request, result, PENDING_ACTION_CALL_TIMEOUT * 1000);
     }
@@ -216,8 +221,12 @@ namespace UPnP.Infrastructure.CP
     private void OnCallResponseReceived(IAsyncResult ar)
     {
       ActionCallState state = (ActionCallState) ar.AsyncState;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         _pendingCalls.Remove(state);
+      }
+
       HttpWebResponse response = null;
       Stream body = null;
       try
@@ -258,8 +267,12 @@ namespace UPnP.Infrastructure.CP
           return;
         }
         UPnPVersion uPnPVersion;
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
+        {
+          l.TryEnter(_cpData.SyncObj);
           uPnPVersion = _rootDescriptor.SSDPRootEntry.UPnPVersion;
+        }
+
         SOAPHandler.HandleResult(body, contentEncoding, state.Action, state.ClientState, uPnPVersion);
       }
       finally
@@ -414,8 +427,11 @@ namespace UPnP.Infrastructure.CP
     /// <c>false</c>.</returns>
     public bool IsServiceSubscribedForEvents(CpService service)
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         return _genaClientController.FindEventSubscriptionByService(service) != null;
+      }
     }
   }
 }

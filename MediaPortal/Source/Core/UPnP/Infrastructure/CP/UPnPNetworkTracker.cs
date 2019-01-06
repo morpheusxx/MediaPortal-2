@@ -164,8 +164,9 @@ namespace UPnP.Infrastructure.CP
     {
       get
       {
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
         {
+          l.TryEnter(_cpData.SyncObj);
           if (!_active)
             return null;
           IDictionary<string, RootDescriptor> result = new Dictionary<string, RootDescriptor>();
@@ -196,8 +197,9 @@ namespace UPnP.Infrastructure.CP
     /// </summary>
     public void Start()
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (_active)
           throw new IllegalCallException("UPnPNetworkTracker is already active");
         _active = true;
@@ -218,8 +220,9 @@ namespace UPnP.Infrastructure.CP
     /// </summary>
     public void Close()
     {
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         if (!_active)
           return;
         _active = false;
@@ -300,22 +303,33 @@ namespace UPnP.Infrastructure.CP
         {
             State = RootDescriptorState.AwaitingDeviceDescription
         };
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         SetRootDescriptor(rootEntry, rd);
+      }
+
       try
       {
         LinkData preferredLink = rootEntry.PreferredLink;
         HttpWebRequest request = CreateHttpGetRequest(new Uri(preferredLink.DescriptionLocation), preferredLink.Endpoint.EndPointIPAddress);
         DescriptionRequestState state = new DescriptionRequestState(rd, request);
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
+        {
+          l.TryEnter(_cpData.SyncObj);
           _pendingRequests.Add(state);
+        }
+
         IAsyncResult result = request.BeginGetResponse(OnDeviceDescriptionReceived, state);
         NetworkHelper.AddTimeout(request, result, PENDING_REQUEST_TIMEOUT * 1000);
       }
       catch (Exception) // Don't log messages at this low protocol level
       {
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
+        {
+          l.TryEnter(_cpData.SyncObj);
           rd.State = RootDescriptorState.Erroneous;
+        }
       }
     }
 
@@ -334,8 +348,9 @@ namespace UPnP.Infrastructure.CP
           using (Stream body = CompressionHelper.Decompress(response))
           {
             XPathDocument xmlDeviceDescription = new XPathDocument(body);
-            lock (_cpData.SyncObj)
+            using (var l = new SmartLock())
             {
+              l.TryEnter(_cpData.SyncObj);
               rd.DeviceDescription = xmlDeviceDescription;
               DeviceDescriptor rootDeviceDescriptor = DeviceDescriptor.CreateRootDeviceDescriptor(rd);
               if (rootDeviceDescriptor == null)
@@ -374,8 +389,9 @@ namespace UPnP.Infrastructure.CP
       IEnumerator<ServiceDescriptor> enumer = state.PendingServiceDescriptions.GetEnumerator();
       if (!enumer.MoveNext())
       {
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
         {
+          l.TryEnter(_cpData.SyncObj);
           if (rootDescriptor.State != RootDescriptorState.AwaitingServiceDescriptions)
             return;
           _pendingRequests.Remove(state);
@@ -386,9 +402,12 @@ namespace UPnP.Infrastructure.CP
       }
       else
       {
-        lock (_cpData.SyncObj)
+        using (var l = new SmartLock())
+        {
+          l.TryEnter(_cpData.SyncObj);
           if (rootDescriptor.State != RootDescriptorState.AwaitingServiceDescriptions)
             return;
+        }
         state.CurrentServiceDescriptor = enumer.Current;
         string url = state.CurrentServiceDescriptor.DescriptionURL;
         state.PendingServiceDescriptions.Remove(state.CurrentServiceDescriptor);
@@ -404,8 +423,11 @@ namespace UPnP.Infrastructure.CP
         }
         catch (Exception) // Don't log exceptions at this low protocol level
         {
-          lock (_cpData.SyncObj)
+          using (var l = new SmartLock())
+          {
+            l.TryEnter(_cpData.SyncObj);
             state.CurrentServiceDescriptor.State = ServiceDescriptorState.Erroneous;
+          }
         }
       }
     }
@@ -414,8 +436,9 @@ namespace UPnP.Infrastructure.CP
     {
       DescriptionRequestState state = (DescriptionRequestState) asyncResult.AsyncState;
       RootDescriptor rd = state.RootDescriptor;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_cpData.SyncObj);
         HttpWebRequest request = state.Request;
         try
         {
@@ -435,8 +458,11 @@ namespace UPnP.Infrastructure.CP
             catch (Exception) // Don't log exceptions at this low protocol level
             {
               state.CurrentServiceDescriptor.State = ServiceDescriptorState.Erroneous;
-              lock (_cpData.SyncObj)
+              using (var l2 = new SmartLock())
+              {
+                l2.TryEnter(_cpData.SyncObj);
                 rd.State = RootDescriptorState.Erroneous;
+              }
             }
             finally
             {
@@ -447,9 +473,12 @@ namespace UPnP.Infrastructure.CP
         catch (WebException e)
         {
           state.CurrentServiceDescriptor.State = ServiceDescriptorState.Erroneous;
-          lock (_cpData.SyncObj)
+          using (var l2 = new SmartLock())
+          {
+            l2.TryEnter(_cpData.SyncObj);
             rd.State = RootDescriptorState.Erroneous;
-        if (e.Response != null)
+          }
+          if (e.Response != null)
             e.Response.Close();
         }
       }
@@ -469,8 +498,11 @@ namespace UPnP.Infrastructure.CP
       RootDescriptor rd = GetRootDescriptor(rootEntry);
       if (rd == null)
         return;
-      lock (_cpData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_cpData.SyncObj);
         InvalidateDescriptor(rd);
+      }
       InvokeRootDeviceRemoved(rd);
     }
 

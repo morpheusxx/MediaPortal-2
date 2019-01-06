@@ -26,13 +26,15 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using MediaPortal.Common.Exceptions;
-using MediaPortal.Common.Logging;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Threading;
 using MediaPortal.Common.UPnP;
 using MediaPortal.Utilities.Exceptions;
+using UPnP.Infrastructure;
 using UPnP.Infrastructure.CP;
 using UPnP.Infrastructure.CP.Description;
 using UPnP.Infrastructure.CP.DeviceTree;
+using ILogger = MediaPortal.Common.Logging.ILogger;
 
 namespace MediaPortal.Common.Services.ResourceAccess
 {
@@ -60,12 +62,14 @@ namespace MediaPortal.Common.Services.ResourceAccess
     protected IResourceInformationService TryGetResourceInformationService(RootDescriptor rootDescriptor)
     {
       DeviceConnection connection;
-      lock (_networkTracker.SharedControlPointData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(_networkTracker.SharedControlPointData.SyncObj);
         object service;
         if (rootDescriptor.SSDPRootEntry.ClientProperties.TryGetValue(KEY_RESOURCE_INFORMATION_SERVICE, out service))
           return service as IResourceInformationService;
       }
+
       DeviceDescriptor rootDevice = DeviceDescriptor.CreateRootDeviceDescriptor(rootDescriptor);
       DeviceDescriptor frontendServerDevice = rootDevice.FindFirstDevice(
           UPnPTypesAndIds.BACKEND_SERVER_DEVICE_TYPE, UPnPTypesAndIds.BACKEND_SERVER_DEVICE_TYPE_VERSION) ??
@@ -88,8 +92,11 @@ namespace MediaPortal.Common.Services.ResourceAccess
         if (rasStub == null)
           throw new InvalidDataException("ResourceAccess service not found in device '{0}'", deviceUuid);
         IResourceInformationService ris = new UPnPResourceInformationServiceProxy(rasStub);
-        lock (_networkTracker.SharedControlPointData.SyncObj)
+        using (var l = new SmartLock())
+        {
+          l.TryEnter(_networkTracker.SharedControlPointData.SyncObj);
           rootDescriptor.SSDPRootEntry.ClientProperties[KEY_RESOURCE_INFORMATION_SERVICE] = ris;
+        }
         return ris;
       }
       catch (Exception e)
@@ -109,7 +116,9 @@ namespace MediaPortal.Common.Services.ResourceAccess
     /// <paramref name="systemId"/> or <c>null</c>, if the system neither provides an MP2 client nor an MP2 server.</returns>
     protected IResourceInformationService FindResourceInformationService(string systemId)
     {
-      lock (_networkTracker.SharedControlPointData.SyncObj)
+      using (var l = new SmartLock())
+      {
+        l.TryEnter(_networkTracker.SharedControlPointData.SyncObj);
         foreach (RootDescriptor rootDeviceDescriptor in _networkTracker.KnownRootDevices.Values)
           if (rootDeviceDescriptor.State == RootDescriptorState.Ready && rootDeviceDescriptor.SSDPRootEntry.RootDeviceUUID == systemId)
           {
@@ -117,6 +126,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
             if (ris != null)
               return ris;
           }
+      }
       return null;
     }
 

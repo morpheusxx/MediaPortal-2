@@ -260,7 +260,7 @@ namespace UPnP.Infrastructure.CP.DeviceTree
         return inParameters == null || inParameters.Count == 0;
       if (inParameters == null)
         return false;
-      for (int i=0; i<_inArguments.Count; i++)
+      for (int i = 0; i < _inArguments.Count; i++)
       {
         if (inParameters.Count <= i)
           return false;
@@ -329,19 +329,19 @@ namespace UPnP.Infrastructure.CP.DeviceTree
     /// <exception cref="UPnPException">If an error occured during the action call.</exception>
     public IList<object> InvokeAction(IList<object> inParameters)
     {
-      AsyncActionCallResult ar = (AsyncActionCallResult) BeginInvokeAction(inParameters, null, null);
+      AsyncActionCallResult ar = (AsyncActionCallResult)BeginInvokeAction(inParameters, null, null);
       return EndInvokeAction(ar);
     }
 
     internal void ActionResultPresent(IList<object> outParams, object handle)
     {
-      AsyncActionCallResult asyncResult = (AsyncActionCallResult) handle;
+      AsyncActionCallResult asyncResult = (AsyncActionCallResult)handle;
       asyncResult.ActionResultPresent(outParams);
     }
 
     internal void ActionErrorResultPresent(UPnPError error, object handle)
     {
-      AsyncActionCallResult asyncResult = (AsyncActionCallResult) handle;
+      AsyncActionCallResult asyncResult = (AsyncActionCallResult)handle;
       asyncResult.ActionErrorResultPresent(error);
     }
 
@@ -370,8 +370,9 @@ namespace UPnP.Infrastructure.CP.DeviceTree
     internal static CpAction ConnectAction(DeviceConnection connection, CpService parentService, XPathNavigator actionNav,
         IXmlNamespaceResolver nsmgr)
     {
-      lock (connection.CPData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(connection.CPData.SyncObj);
         string name = ParserHelper.SelectText(actionNav, "s:name/text()", nsmgr);
         CpAction result = new CpAction(connection, parentService, name);
         XPathNodeIterator argumentIt = actionNav.Select("s:argumentList/s:argument", nsmgr);
@@ -392,8 +393,9 @@ namespace UPnP.Infrastructure.CP.DeviceTree
       DeviceConnection connection = _connection;
       if (connection == null)
         return;
-      lock (connection.CPData.SyncObj)
+      using (var l = new SmartLock())
       {
+        l.TryEnter(connection.CPData.SyncObj);
         _connection = null;
       }
     }

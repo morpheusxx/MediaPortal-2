@@ -5,6 +5,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace UPnP.Infrastructure
 {
@@ -13,14 +15,17 @@ namespace UPnP.Infrastructure
 #if DEBUG_LOCK_HOLDS
     private static readonly IDictionary<object, string> _lockHolders = new ConcurrentDictionary<object, string>();
 #endif
+
+    private const double MAX_LOCK_DURATION = 300; // Max ms within locked code
     private object _lockedObject;
     private bool _lockTaken;
+    private Timer _timer;
 
     public void TryEnter(object onObject, TimeSpan timeout)
     {
       TryEnter(onObject, (int)timeout.TotalMilliseconds);
     }
-    public void TryEnter(object onObject, int timeoutMillisecond = 200 /* ms */)
+    public void TryEnter(object onObject, int timeoutMillisecond = 400 /* ms */)
     {
 #if DEBUG
       if (onObject == null) throw new ArgumentNullException(nameof(onObject));
@@ -28,27 +33,43 @@ namespace UPnP.Infrastructure
       if (onObject.GetType().IsValueType) throw new InvalidOperationException("Illegal use of Lock. Must not lock on a value type object.");
 #endif
       _lockedObject = onObject;
+      _timer = new Timer();
+      _timer.Elapsed += ExitMonitor;
+      _timer.Interval = MAX_LOCK_DURATION;
+      _timer.AutoReset = false;
+      _timer.Enabled = true;
       Monitor.TryEnter(onObject, timeoutMillisecond, ref _lockTaken);
-      if (_lockTaken == false)
-      {
-        //ServiceRegistration.Get<ILogger>().Error("Could not aquire lock.");
-        string holdingStackTrace = string.Empty;
-#if DEBUG_LOCK_HOLDS
-        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
-#endif
-        throw new TimeoutException("Did not aquire lock in specified time. Hold by: " + holdingStackTrace);
-      }
+//      if (_lockTaken == false)
+//      {
+//        //ServiceRegistration.Get<ILogger>().Error("Could not aquire lock.");
+//        string holdingStackTrace = string.Empty;
+//#if DEBUG_LOCK_HOLDS
+//        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
+//#endif
+//        throw new TimeoutException("Did not aquire lock in specified time. Hold by: " + holdingStackTrace);
+//      }
 
 #if DEBUG_LOCK_HOLDS
       _lockHolders[_lockedObject] = new StackTrace().ToString();
 #endif
     }
 
-    public void Dispose()
+    private void ExitMonitor(object sender, ElapsedEventArgs e)
     {
-#if DEBUG
-      if (_lockedObject == null) throw new InvalidOperationException("Illegal use of Lock. Lock must have been called before releasing/disposing.");
+      using (EventLog eventLog = new EventLog("Application"))
+      {
+        string holdingStackTrace = string.Empty;
+#if DEBUG_LOCK_HOLDS
+        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
 #endif
+        eventLog.Source = "Application";
+        eventLog.WriteEntry("Failed to exit lock within timespan. Stacktrace: " + holdingStackTrace, EventLogEntryType.Error);
+      }
+      ExitMonitor();
+    }
+
+    private void ExitMonitor()
+    {
       if (_lockTaken)
       {
         _lockTaken = false;
@@ -57,6 +78,15 @@ namespace UPnP.Infrastructure
         _lockHolders.Remove(_lockedObject);
 #endif
       }
+    }
+
+    public void Dispose()
+    {
+#if DEBUG
+      if (_lockedObject == null) throw new InvalidOperationException("Illegal use of Lock. Lock must have been called before releasing/disposing.");
+#endif
+      ExitMonitor();
+      _timer?.Dispose();
     }
   }
 }

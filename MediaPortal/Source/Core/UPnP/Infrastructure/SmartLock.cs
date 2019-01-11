@@ -25,6 +25,7 @@ namespace UPnP.Infrastructure
     {
       TryEnter(onObject, (int)timeout.TotalMilliseconds);
     }
+
     public void TryEnter(object onObject, int timeoutMillisecond = 400 /* ms */)
     {
 #if DEBUG
@@ -39,33 +40,37 @@ namespace UPnP.Infrastructure
       _timer.AutoReset = false;
       _timer.Enabled = true;
       Monitor.TryEnter(onObject, timeoutMillisecond, ref _lockTaken);
-//      if (_lockTaken == false)
-//      {
-//        //ServiceRegistration.Get<ILogger>().Error("Could not aquire lock.");
-//        string holdingStackTrace = string.Empty;
-//#if DEBUG_LOCK_HOLDS
-//        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
-//#endif
-//        throw new TimeoutException("Did not aquire lock in specified time. Hold by: " + holdingStackTrace);
-//      }
-
 #if DEBUG_LOCK_HOLDS
-      _lockHolders[_lockedObject] = new StackTrace().ToString();
+      // Remember who got the lock
+      var st = new StackTrace().ToString();
+      if (_lockTaken)
+        _lockHolders[_lockedObject] = st;
+      else
+      {
+        string holdingStackTrace;
+        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
+        WriteLog("Did not aquire lock in specified time. Caller: " + st + "\r\nHeld by: " + holdingStackTrace);
+      }
 #endif
     }
 
     private void ExitMonitor(object sender, ElapsedEventArgs e)
     {
+      string holdingStackTrace = string.Empty;
+#if DEBUG_LOCK_HOLDS
+      _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
+#endif
+      WriteLog("Failed to exit lock within timespan. Stacktrace: " + holdingStackTrace);
+      ExitMonitor();
+    }
+
+    private void WriteLog(string message)
+    {
       using (EventLog eventLog = new EventLog("Application"))
       {
-        string holdingStackTrace = string.Empty;
-#if DEBUG_LOCK_HOLDS
-        _lockHolders.TryGetValue(_lockedObject, out holdingStackTrace);
-#endif
         eventLog.Source = "Application";
-        eventLog.WriteEntry("Failed to exit lock within timespan. Stacktrace: " + holdingStackTrace, EventLogEntryType.Error);
+        eventLog.WriteEntry(message, EventLogEntryType.Error);
       }
-      ExitMonitor();
     }
 
     private void ExitMonitor()

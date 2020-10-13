@@ -32,9 +32,14 @@ using MediaPortal.UiComponents.Media.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
+using MediaPortal.Common.Threading;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UiComponents.Media.Extensions;
+using MediaPortal.Common.Messaging;
+using MediaPortal.UI.SkinEngine.ScreenManagement;
 
 namespace MediaPortal.UiComponents.Media.MediaItemActions
 {
@@ -77,17 +82,83 @@ namespace MediaPortal.UiComponents.Media.MediaItemActions
         {
           if (mediaItem.Aspects.ContainsKey(aspectScreen.Key))
           {
-            var wf = ServiceRegistration.Get<IWorkflowManager>();
-            var contextConfig = new NavigationContextConfig { AdditionalContextVariables = new Dictionary<string, object> { { Consts.KEY_MEDIA_ITEM, mediaItem } } };
-            wf.NavigatePush(aspectScreen.Value, contextConfig);
+            ServiceRegistration.Get<IThreadPool>()
+              .Add(async () =>
+              {
+                await new MessageContext { Channel = WorkflowManagerMessaging.CHANNEL, MessageType = WorkflowManagerMessaging.MessageType.NavigationComplete };
+                //    Thread.Sleep(300);
+                var wf = ServiceRegistration.Get<IWorkflowManager>();
+                var contextConfig = new NavigationContextConfig { AdditionalContextVariables = new Dictionary<string, object> { { Consts.KEY_MEDIA_ITEM, mediaItem } } };
+                wf.NavigatePush(aspectScreen.Value, contextConfig);
+              });
             result = true;
             break;
           }
         }
       }
+
       return new AsyncResult<ContentDirectoryMessaging.MediaItemChangeType>(result, ContentDirectoryMessaging.MediaItemChangeType.None);
     }
 
-    public bool DoesChangeWorkflow { get; set; } = true;
+    public bool DoesChangeWorkflow { get; set; } = false;
+  }
+}
+
+public class MessageContext
+{
+  public string Channel;
+  public Enum MessageType;
+}
+
+public static class Extensions
+{
+  public static MessageAwaiter GetAwaiter(this MessageContext context)
+  {
+    return new MessageAwaiter(context);
+  }
+
+  public class MessageAwaiter : INotifyCompletion
+  {
+    private readonly AsynchronousMessageQueue _messageQueue;
+    private readonly MessageContext _context;
+    private bool _messageReceived;
+
+    public MessageAwaiter(MessageContext context)
+    {
+      _messageReceived = false;
+      _context = context;
+
+      _messageQueue = new AsynchronousMessageQueue(_context, new string[] { context.Channel });
+      _messageQueue.MessageReceived += OnMessageReceived;
+      _messageQueue.Start();
+    }
+
+    private void OnMessageReceived(AsynchronousMessageQueue queue, SystemMessage message)
+    {
+      if (_context.MessageType.Equals(message.MessageType))
+      {
+        _messageReceived = true;
+      }
+    }
+
+
+    public bool IsCompleted
+    {
+      get
+      {
+        return _messageReceived;
+      }
+    }
+
+    public void OnCompleted(Action continuation)
+    {
+      if (!_messageReceived)
+        return;
+
+      _messageQueue.Shutdown();
+      continuation();
+    }
+
+    public void GetResult() { }
   }
 }

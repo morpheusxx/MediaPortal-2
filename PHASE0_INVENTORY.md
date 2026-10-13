@@ -54,7 +54,7 @@ assumptions in `LocalFsResourceProviderBase.ToDosPath` and friends (Phase 1).
 ~10 platform copies of libSkiaSharp (filled the disk). The future Linux client will want `SkiaSharp.NativeAssets.Linux` (fontconfig)
 instead of the NoDependencies variant, not both.
 
-## Server solution: portable vs Windows-only (57 of 68 projects are plain `net10.0`)
+## Server solution: portable vs Windows-only (59 of 69 projects are plain `net10.0`)
 
 Retargeted to `net10.0` (and still building with CA1416 as error): `MediaPortal.Backend`, `ServerBase`, `ServerSettings.*`, `ServerStateService*`,
 `ConfigurationManager`, `SQLiteDatabase`, `OnlineLibraries`, `FanArtService.*`, `MediaInfoLib`, `FFMpegLib`, `FreeImageLib`, `OpenCvLib`, `TagLib`,
@@ -67,8 +67,7 @@ Still `net10.0-windows`, with the reason:
 | Project | Reason |
 |---|---|
 | `MediaPortal.Server` | WinForms `WinExe` + `ServiceBase`; Phase 1 replaces it with a generic host |
-| `ImageMetadataExtractor` | EXIF via `System.Drawing` property items (`ExifMetaInfo`); needs a managed EXIF reader (TagLib#) |
-| `GDIThumbnailProvider`, `WICThumbnailProvider` | GDI+ / WIC (SharpDX); a Skia thumbnail provider replaces them on Linux |
+| `GDIThumbnailProvider`, `WICThumbnailProvider` | GDI+ / WIC (SharpDX); on other platforms `SkiaThumbnailProvider` (priority 120, after WIC 50 and GDI 110) is the image provider |
 | `NetworkNeighborhoodResourceProvider` | Win32 network neighborhood (`mpr.dll`) |
 | `MP2Extended` | ~49 `System.Drawing` call sites (`Images.cs`, `BaseGetArtwork`, `OnlineVideosThumbs`); port to `ImageUtilities` |
 | `Tve3RecordingMetadataExtractor`, `SlimTv.Service35` | TV (out of scope), COM / TvEngine |
@@ -82,8 +81,19 @@ Known tooling issue: building/testing a single project outside its solution fail
 (`$(SolutionName)` is `*Undefined*`); build via the solution files (or pass `-p:SolutionName=... -p:SolutionDir=...`). The test projects were
 therefore not run.
 
+`ImageMetadataExtractor` is portable now: its EXIF code already read via FreeImage, `System.Drawing` was only used for an unused `Bitmap` thumbnail
+member (removed). Note FreeImage still needs Linux native libraries (`FreeImageLib` packaging, Phase 1).
+
+New `SkiaThumbnailProvider` plugin (`net10.0`, in `MP2-Server.sln` and `MP2-Client.sln`): uses `ImageUtilities.TryCreateThumbnail`
+(EXIF orientation applied via `SKCodec.EncodedOrigin`, no upscaling, PNG if the source has alpha else JPEG q95). Verified with a scratch program
+for all EXIF orientations used in practice (1, 2, 3, 6, 8), alpha PNG and invalid data.
+
+Output layout: `Directory.Build.props` sets `AppendTargetFrameworkToOutputPath=false`. The per-project `build.targets` copy plugins to
+`Bin\<solution>\<OutDir>`, which contained the TFM; with a mix of `net10.0` and `net10.0-windows` projects the plugins would have been split
+over two folders (the server exe only sees its own). Everything now lands in `Bin\<solution>in\<config>\`.
+
 ## Next
 
-1. `ExifMetaInfo` -> managed EXIF reader, `MP2Extended` -> `ImageUtilities`, Skia thumbnail provider (then the remaining Windows image projects can go).
+1. (`MP2Extended` -> `ImageUtilities` was deliberately skipped for now.)
 2. Linux server solution filter (`MP2-Server-Linux.slnf`) and a Linux CI job.
 3. Server host without WinForms/Windows service (Phase 1).

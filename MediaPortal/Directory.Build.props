@@ -4,5 +4,8 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <!-- Platform compatibility analyzer (CA1416) is the work list for the cross-platform rework. -->
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- Portable (net10.0) and Windows-only (net10.0-windows) projects must end up in the same output folder:
+         the per-project build.targets copy plugins to $(SolutionDir)..\Bin\$(SolutionName)\$(OutDir), which must not depend on the TFM. -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 </Project>

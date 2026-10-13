@@ -85,6 +85,101 @@ namespace MediaPortal.Utilities.Graphics
     }
 
     /// <summary>
+    /// Creates a thumbnail from the image in <paramref name="sourceStream"/>: the EXIF orientation is applied, the image is
+    /// scaled down to fit <paramref name="maxWidth"/> x <paramref name="maxHeight"/> (never upscaled) and encoded as PNG if the
+    /// source has an alpha channel, otherwise as JPEG.
+    /// </summary>
+    /// <param name="sourceStream">Source stream</param>
+    /// <param name="maxWidth">Max. width</param>
+    /// <param name="maxHeight">Max. height</param>
+    /// <param name="imageData">Encoded thumbnail</param>
+    /// <param name="format">Encoding of <paramref name="imageData"/></param>
+    /// <param name="jpegQuality">Quality (0-100) used for JPEG output</param>
+    /// <returns><c>true</c> if the image could be decoded and the thumbnail was created</returns>
+    public static bool TryCreateThumbnail(Stream sourceStream, int maxWidth, int maxHeight, out byte[] imageData, out ImageOutputFormat format, int jpegQuality = 95)
+    {
+      imageData = null;
+      format = ImageOutputFormat.Jpeg;
+      using (SKCodec codec = SKCodec.Create(sourceStream))
+      {
+        if (codec == null)
+          return false;
+        bool hasAlpha = codec.Info.AlphaType != SKAlphaType.Opaque;
+        SKEncodedOrigin origin = codec.EncodedOrigin;
+        using (SKBitmap decoded = SKBitmap.Decode(codec))
+        {
+          if (decoded == null)
+            return false;
+          using (SKBitmap oriented = ApplyOrigin(decoded, origin))
+          {
+            SKSizeI size = FitInto(oriented.Width, oriented.Height, maxWidth, maxHeight);
+            format = hasAlpha ? ImageOutputFormat.Png : ImageOutputFormat.Jpeg;
+            if (size.Width == oriented.Width && size.Height == oriented.Height)
+            {
+              using (Stream encoded = Encode(oriented, format, jpegQuality))
+                imageData = ((MemoryStream)encoded).ToArray();
+              return true;
+            }
+            using (SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, oriented.ColorType, oriented.AlphaType), SKFilterQuality.High))
+            {
+              if (resized == null)
+                return false;
+              using (Stream encoded = Encode(resized, format, jpegQuality))
+                imageData = ((MemoryStream)encoded).ToArray();
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    /// <summary>
+    /// Returns a bitmap in which the EXIF <paramref name="origin"/> (orientation) of <paramref name="source"/> is applied.
+    /// If no transformation is needed, <paramref name="source"/> itself is returned (the caller must not dispose twice,
+    /// <see cref="SKBitmap.Dispose"/> is idempotent).
+    /// </summary>
+    internal static SKBitmap ApplyOrigin(SKBitmap source, SKEncodedOrigin origin)
+    {
+      int w = source.Width;
+      int h = source.Height;
+      SKMatrix m;
+      switch (origin)
+      {
+        case SKEncodedOrigin.TopRight: // mirror horizontal
+          m = new SKMatrix { ScaleX = -1, TransX = w, ScaleY = 1, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.BottomRight: // rotate 180
+          m = new SKMatrix { ScaleX = -1, TransX = w, ScaleY = -1, TransY = h, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.BottomLeft: // mirror vertical
+          m = new SKMatrix { ScaleX = 1, ScaleY = -1, TransY = h, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.LeftTop: // transpose
+          m = new SKMatrix { SkewX = 1, SkewY = 1, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.RightTop: // rotate 90 clockwise
+          m = new SKMatrix { SkewX = -1, TransX = h, SkewY = 1, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.RightBottom: // transverse
+          m = new SKMatrix { SkewX = -1, TransX = h, SkewY = -1, TransY = w, Persp2 = 1 };
+          break;
+        case SKEncodedOrigin.LeftBottom: // rotate 270 clockwise
+          m = new SKMatrix { SkewX = 1, SkewY = -1, TransY = w, Persp2 = 1 };
+          break;
+        default:
+          return source;
+      }
+      bool swap = origin >= SKEncodedOrigin.LeftTop;
+      SKBitmap result = new SKBitmap(swap ? h : w, swap ? w : h, source.ColorType, source.AlphaType);
+      using (SKCanvas canvas = new SKCanvas(result))
+      {
+        canvas.SetMatrix(m);
+        canvas.DrawBitmap(source, 0, 0);
+      }
+      return result;
+    }
+
+    /// <summary>
     /// Decodes an image from <paramref name="imageData"/> and saves it as JPEG to <paramref name="path"/>.
     /// </summary>
     /// <exception cref="InvalidDataException">The data could not be decoded as an image.</exception>

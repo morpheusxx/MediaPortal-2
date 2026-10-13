@@ -1,0 +1,32 @@
+<Plugin
+    DescriptorVersion="1.0"
+    Name="SkiaThumbnailProvider"
+    PluginId="{4EB09E60-4843-4859-95C9-E036222425BC}"
+    Author = "Team MediaPortal"
+    Copyright="GPL"
+    Description="Platform independent thumbnail creator based on SkiaSharp.">
+
+  <Version
+    PluginVersion="1.0"
+    ReleaseDate="2026-10-13 12:00:00 GMT+01:00"
+    CurrentAPI="1"/>
+
+  <DependsOn>
+    <CoreDependency Name="MediaPortal.Common" CompatibleAPI="2" />
+    <CoreDependency Name="MediaPortal.Utilities" CompatibleAPI="1" />
+  </DependsOn>
+
+  <Runtime>
+    <Assembly FileName="SkiaThumbnailProvider.dll"/>
+    <Assembly FileName="..\..\MediaPortal.Common.dll"/>
+  </Runtime>
+
+  <Builder Name="ThumbnailProviderBuilder" ClassName="MediaPortal.Common.Services.ThumbnailGenerator.ThumbnailProviderBuilder"/>
+  <Register Location="/Thumbnails/Providers">
+    <ThumbnailProviderBuilder
+      Id="{C17511AC-D430-4895-B27E-A98D472E937F}"
+      ClassName="MediaPortal.Extensions.MetadataExtractors.SkiaThumbnailProvider.SkiaThumbnailProvider"
+      ProviderName="SkiaThumbnailProvider"
+      Priority="120"/>
+  </Register>
+</Plugin>

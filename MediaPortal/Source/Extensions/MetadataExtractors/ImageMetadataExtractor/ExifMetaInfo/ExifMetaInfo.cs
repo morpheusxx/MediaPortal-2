@@ -26,7 +26,6 @@ using FreeImageAPI;
 using FreeImageAPI.Metadata;
 using MediaPortal.Common.ResourceAccess;
 using System;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 
@@ -56,7 +55,6 @@ namespace MediaPortal.Extensions.MetadataExtractors.ImageMetadataExtractor.ExifM
     private bool _flashFired;
     private string _flashMode = string.Empty;
     private MeteringMode _meteringMode = MeteringMode.Unknown;
-    private Bitmap _thumbImage;
     private double? _longitude;
     private double? _latitude;
 
@@ -148,11 +146,6 @@ namespace MediaPortal.Extensions.MetadataExtractors.ImageMetadataExtractor.ExifM
     /// Metering mode.
     /// </summary>
     public MeteringMode MeteringMode { get { return _meteringMode; } }
-
-    /// <summary>
-    /// Embedded thumbnail image.
-    /// </summary>
-    public Bitmap ThumbImage { get { return _thumbImage; } }
 
     /// <summary>
     /// Gets the GPS latitude.
@@ -355,9 +348,6 @@ namespace MediaPortal.Extensions.MetadataExtractors.ImageMetadataExtractor.ExifM
     }
     public void Dispose()
     {
-      if (_thumbImage != null)
-        _thumbImage.Dispose();
-      _thumbImage = null;
     }
   }
 }

@@ -123,8 +123,8 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
       referenced by Client, ClientLauncher, ServiceMonitor, Server, SkinEngine). CA1416 inventory: see `PHASE0_INVENTORY.md`.
       `VersionInfo.cs` no longer stamps `SupportedOSPlatform("windows")` on every assembly (it hid all CA1416 warnings).
       `ImageUtilities` is now SkiaSharp-based (old API -> `GdiImageUtilities`). The CA1416 list in `Utilities`/`Common` is cleared (guards, Windows-only classes, null services; see `PHASE0_INVENTORY.md`)
-      and CA1416 is now an error for all non-`-windows` projects. 57 of 68 server-solution projects are now plain `net10.0`
-      (remaining Windows-only ones and reasons: `PHASE0_INVENTORY.md`). Still to do: EXIF/MP2Extended/thumbnail image ports,
-      Linux server solution filter + CI.
+      and CA1416 is now an error for all non-`-windows` projects. 59 of 69 server-solution projects are now plain `net10.0`
+      (remaining Windows-only ones and reasons: `PHASE0_INVENTORY.md`); new portable `SkiaThumbnailProvider`; output folder no longer
+      contains the TFM. Skipped for now: `MP2Extended` image port. Still to do: Linux server solution filter + CI.
 - [ ] Phase 0c: Setup/WiX/AppVeyor/.bat migration; remove dead `.NETFramework`-conditional ItemGroups/build.targets branches;
       Tests retargeted but not run

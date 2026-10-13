@@ -288,6 +288,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Webradio.Stations.Scrapper"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaPortal.Utilities.Windows", "Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj", "{76F8CAC7-492E-4F86-8F95-8F45B4D69BAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkiaThumbnailProvider", "Extensions\MetadataExtractors\SkiaThumbnailProvider\SkiaThumbnailProvider.csproj", "{4DF6BA38-57C4-499F-8143-37306F00C3C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1478,6 +1480,18 @@ Global
 		{76F8CAC7-492E-4F86-8F95-8F45B4D69BAE}.Release|x64.Build.0 = Release|Any CPU
 		{76F8CAC7-492E-4F86-8F95-8F45B4D69BAE}.Release|x86.ActiveCfg = Release|Any CPU
 		{76F8CAC7-492E-4F86-8F95-8F45B4D69BAE}.Release|x86.Build.0 = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|x64.Build.0 = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Debug|x86.Build.0 = Debug|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|x64.ActiveCfg = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|x64.Build.0 = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|x86.ActiveCfg = Release|Any CPU
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1615,6 +1629,7 @@ Global
 		{665BCA81-36B3-47F2-93E8-CD15DD78A5C0} = {AD2B34C0-774F-4A38-B30B-288A3BA964A3}
 		{28D68614-CF47-44D6-9DE5-3DA582933D83} = {AD2B34C0-774F-4A38-B30B-288A3BA964A3}
 		{76F8CAC7-492E-4F86-8F95-8F45B4D69BAE} = {843A0AD1-33FC-4952-9465-B5E79C2C67D1}
+		{4DF6BA38-57C4-499F-8143-37306F00C3C9} = {1B4741DC-78EA-4D93-8EED-00CB9617AD2F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2EFE6986-DFCD-450F-BFEE-15D3F8642201}

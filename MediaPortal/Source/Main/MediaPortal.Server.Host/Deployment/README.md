@@ -24,6 +24,5 @@ elsewhere. Services and containers should always pass `--data`.
 * The database is SQLite through Microsoft.Data.Sqlite (SQLitePCLRaw, native builds for Windows/Linux/macOS are shipped in the plugin folder). It keeps the schema,
   the PRAGMAs and the 16 byte GUID storage of the former System.Data.SQLite based version, but opening a database file created by that version is **not verified yet**.
   The culture sensitive NOCASE collation differs between Windows (native) and other platforms (managed), so do not copy database files between operating systems.
-* Local file system access is still Windows path based (`ResourcePath`/`LocalFsResourceProvider` drive letter conventions), so
-  importing shares from Linux directories is not supported yet.
+* Local file system access: provider paths are `//home/user/Music` style on Linux (`/C:/Music` on Windows); the virtual root lists the single root `//`. Provider code is adapted but untested on Linux.
 * Native libraries for MediaInfo, FreeImage, OpenCV, FFmpeg are not packaged for Linux yet.

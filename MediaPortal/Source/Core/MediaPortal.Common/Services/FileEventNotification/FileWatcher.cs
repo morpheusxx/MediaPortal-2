@@ -507,6 +507,9 @@ namespace MediaPortal.Common.Services.FileEventNotification
     /// <returns>Whether the drive type associated with the specified <paramref name="path"/> can be watched.</returns>
     private static bool IsValidDriveType(string path)
     {
+      // The drive format restrictions are specific to ReadDirectoryChangesW (Windows); inotify works for all local file systems
+      if (!OperatingSystem.IsWindows())
+        return true;
       if (path.StartsWith(@"\\"))
         return true;
       try

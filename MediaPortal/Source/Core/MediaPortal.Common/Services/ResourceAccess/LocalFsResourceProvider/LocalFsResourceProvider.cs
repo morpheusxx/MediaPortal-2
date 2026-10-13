@@ -120,7 +120,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.LocalFsResourceProvider
 
     protected ICollection<ChangeTrackerRegistrationKey> GetAllChangeTrackerRegistrationsByPath(string path)
     {
-      return _changeTrackers.Keys.Where(key => string.Equals(key.Path, path, StringComparison.InvariantCultureIgnoreCase)).ToList();
+      return _changeTrackers.Keys.Where(key => string.Equals(key.Path, path, OperatingSystem.IsWindows() ? StringComparison.InvariantCultureIgnoreCase : StringComparison.Ordinal)).ToList();
     }
 
     protected static MediaSourceChangeType TranslateChangeType(FileWatchChangeType changeType)

@@ -67,7 +67,13 @@ namespace MediaPortal.Common.ResourceAccess
       if (string.IsNullOrEmpty(providerPath) || providerPath == "/")
         return null;
       providerPath = StringUtils.RemovePrefixIfPresent(providerPath, "/");
-      return providerPath.Replace('/', Path.DirectorySeparatorChar);
+      string result = providerPath.Replace('/', Path.DirectorySeparatorChar);
+      // Provider paths of local files are always absolute. Windows paths start with the drive ("/C:/dir" => "C:\dir"), on
+      // other platforms the root directory is "//" ("//home/user" => "/home/user"). A relative result means that the given path
+      // is not a local provider path (e.g. a plain "/home/user"), which must not be resolved against the working directory.
+      if (!OperatingSystem.IsWindows() && !Path.IsPathRooted(result))
+        return null;
+      return result;
     }
 
     /// <summary>

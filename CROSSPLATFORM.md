@@ -119,7 +119,10 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
 - `PathManager`: path patterns (for example `<DATA>\Config`) are converted to the platform separator; `COMMON_APPLICATION_DATA` is the per-user data folder off Windows.
 - Verified on Windows: new host starts, creates the database schema, loads plugins, reaches `Running`, shuts down cleanly via IPC; `MP2-Server.exe -c` still reaches `Running`.
   **Not run on Linux.**
-- Open for Phase 1: local file system / `ResourcePath` handling for POSIX paths (share import), native libraries per RID (MediaInfo, FreeImage, OpenCV, FFmpeg), skipping
+- Local file system provider handles POSIX paths: provider paths are `//home/user/Music` (root `//`), the virtual root `/` has the single child `//` off Windows (drives on Windows),
+  `ToDosPath` rejects non-rooted results, change tracking compares paths case-sensitively, `FileWatcher` no longer requires NTFS off Windows. `ResourcePath` (de)serialization
+  of such paths is verified; the provider itself was not run on Linux. Remaining: `ResourcePath.Equals` is still case-insensitive.
+- Open for Phase 1: native libraries per RID (MediaInfo, FreeImage, OpenCV, FFmpeg), skipping
   Windows-only plugins cleanly in the portable host, verifying an existing System.Data.SQLite database with the new provider, Linux run + Docker image.
 
 ## Status

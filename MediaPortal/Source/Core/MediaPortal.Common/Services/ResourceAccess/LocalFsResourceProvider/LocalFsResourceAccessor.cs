@@ -184,8 +184,13 @@ namespace MediaPortal.Common.Services.ResourceAccess.LocalFsResourceProvider
       if (string.IsNullOrEmpty(_path))
         return null;
       if (_path == "/")
+      {
+        // The virtual root level contains the logical drives on Windows. Other platforms have a single file system tree, its root is "//".
+        if (!OperatingSystem.IsWindows())
+          return new List<IFileSystemResourceAccessor> { new LocalFsResourceAccessor(_provider, "//") };
         return Directory.GetLogicalDrives().Where(drive => new DriveInfo(drive).IsReady).Select<string, IFileSystemResourceAccessor>(
             drive => new LocalFsResourceAccessor(_provider, "/" + FileUtils.RemoveTrailingPathDelimiter(drive) + "/")).ToList();
+      }
       string dosPath = LocalFsResourceProviderBase.ToDosPath(_path);
       return (!string.IsNullOrEmpty(dosPath) && Directory.Exists(dosPath)) ? CreateChildResourceAccessors(Directory.GetDirectories(dosPath), true) : null;
     }
@@ -239,6 +244,8 @@ namespace MediaPortal.Common.Services.ResourceAccess.LocalFsResourceProvider
         if (!_path.StartsWith("/"))
           return null;
         string path = _path.Substring(1);
+        if (!OperatingSystem.IsWindows() && path == "/")
+          return "/"; // Root directory
         if (path.EndsWith(":/"))
         {
           DriveInfo di = new DriveInfo(path);

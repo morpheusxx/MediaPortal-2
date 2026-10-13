@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
+    <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>MP2-Client</AssemblyName>
     <ApplicationIcon>MP2.ico</ApplicationIcon>
     <StartupObject>MediaPortal.Client.ApplicationLauncher</StartupObject>
@@ -9,17 +10,15 @@
     <UseWindowsForms>true</UseWindowsForms>
     <LargeAddressAware>true</LargeAddressAware>
     <Platforms>AnyCPU;x64</Platforms>
-    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Prefer32Bit>true</Prefer32Bit>
     <OutputPath>..\..\..\Bin\MP2-Client\bin\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>bin\x64\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <Prefer32Bit>true</Prefer32Bit>
     <OutputPath>..\..\..\Bin\MP2-Client\bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

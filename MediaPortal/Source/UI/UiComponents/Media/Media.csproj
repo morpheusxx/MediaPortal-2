@@ -8,16 +8,6 @@
     <UseWindowsForms>true</UseWindowsForms>
     <NoWarn>CS0067</NoWarn>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <NoWarn>CS0067</NoWarn>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
-    <NoWarn>CS0067</NoWarn>
-  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Extensions\BassLibraries\BassLibraries.csproj" />
     <ProjectReference Include="..\..\..\Extensions\ResourceProviders\AudioCDResourceProvider\AudioCDResourceProvider.csproj" />

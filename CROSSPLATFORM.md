@@ -109,6 +109,15 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
 - Don't modify skin files to make the new backend work; fix the backend instead. Skin compatibility is the point.
 - Update the status section of this file at the end of each session.
 
+## Decision: Windows is x64 only
+
+x86 is dropped. Done: the `|x86` build configurations were removed from 86 SDK-style csprojs and from `MP2-Server.sln`, `MP2-Client.sln`, `MP2-ServiceMonitor.sln`;
+default platform of the few projects that defaulted to x86 is now AnyCPU; the Windows executables (`MP2-Server.exe`, `MP2-Client.exe`, `MP2-ClientLauncher.exe`,
+`MP2-ServiceMonitor.exe`) are built with `PlatformTarget=x64` (verified in the PE header), the client's `RuntimeIdentifiers` is `win-x64`. Libraries and the portable
+`MP2-Server-Host` stay AnyCPU (arm64 Linux must keep working).
+Still to do (part 3, with the Setup migration): `Build/Build.proj` (client built for AnyCPU and x64, setup with `Platform=x86`), WiX setup flavours, x86 native
+copies in `build.targets` (FreeImage, OpenCV, MediaInfo), `win-x86`/`linux-x86`/arm runtime folders of SQLite and Skia, legacy non-SDK projects (Tools, `ShellThumbnailProvider`, old DB plugins).
+
 ## Phase 1 (server on Linux) - progress
 
 - `MediaPortal.Server.Hosting` (`net10.0`): `ServerRuntime` = the server life cycle (services, plugins, backend, IPC, suspend level) without UI.

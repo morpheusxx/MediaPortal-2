@@ -1,0 +1,29 @@
+/*
+** Used by the ShaderBlurEffect.
+** Applies a blur filter to the UIElement.
+*/
+
+// vertexcolors
+
+half4 main(float2 uv)
+{
+  // Calculate the offsets
+  float2 offset = float2(2.0 / 256.0, 2.0 / 256.0);
+
+  // Create the blur
+  // By extracting pixels from the texture we can shift them as we extract them.
+  float4 top = SampleClamped(float2(uv.x, uv.y + offset.y));
+  float4 top_left = SampleClamped(float2(uv.x - offset.x, uv.y + offset.y));
+  float4 top_right = SampleClamped(float2(uv.x + offset.x, uv.y + offset.y));
+  float4 bottom = SampleClamped(float2(uv.x, uv.y - offset.y));
+  float4 bottom_left = SampleClamped(float2(uv.x - offset.x, uv.y - offset.y));
+  float4 bottom_right = SampleClamped(float2(uv.x + offset.x, uv.y + offset.y));
+  float4 left = SampleClamped(float2(uv.x - offset.x, uv.y));
+  float4 right = SampleClamped(float2(uv.x - offset.x, uv.y));
+
+  // Extract the color from the texture
+  float4 average = (top + bottom + right + left + top_left + top_right + bottom_left + bottom_right) / 8.0;
+
+  // The alpha is taken from the vertex colors, which are applied after this shader
+  return half4(half3(average.rgb), 1.0);
+}

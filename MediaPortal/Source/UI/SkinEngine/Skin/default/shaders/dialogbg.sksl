@@ -1,0 +1,33 @@
+/*
+** Used by the DialogBackgroundEffect shader.
+** Applies a blur and darken filter to a texture. It can be applied to any UIElement or to the whole rendered backbuffer when using the
+** BackgroundCapture control.
+*/
+
+// vertexcolors
+
+half4 main(float2 uv)
+{
+  // Calculate the offsets
+  float2 offset = float2(0.5 / 256.0, 0.5 / 256.0);
+
+  // Create the blur
+  float4 top = SampleClamped(float2(uv.x, uv.y + offset.y));
+  float4 top_left = SampleClamped(float2(uv.x - offset.x, uv.y + offset.y));
+  float4 top_right = SampleClamped(float2(uv.x + offset.x, uv.y + offset.y));
+  float4 bottom = SampleClamped(float2(uv.x, uv.y - offset.y));
+  float4 bottom_left = SampleClamped(float2(uv.x - offset.x, uv.y - offset.y));
+  float4 bottom_right = SampleClamped(float2(uv.x + offset.x, uv.y + offset.y));
+  float4 left = SampleClamped(float2(uv.x - offset.x, uv.y));
+  float4 right = SampleClamped(float2(uv.x - offset.x, uv.y));
+
+  float4 average = (top + bottom + right + left + top_left + top_right + bottom_left + bottom_right) / 8.0;
+
+  float avg = (average.r + average.g + average.b) / 3.0;
+  float weight = 0.3;
+  float darken = 0.1;
+  float3 rgb = clamp(float3(avg) + average.rgb * weight - float3(darken), 0.0, 1.0);
+
+  // The alpha is taken from the vertex colors, which are applied after this shader
+  return half4(half3(rgb), 1.0);
+}

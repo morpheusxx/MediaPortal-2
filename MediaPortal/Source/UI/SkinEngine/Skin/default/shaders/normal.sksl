@@ -1,0 +1,11 @@
+/*
+** Renders a texture, modulated with the vertex colors (see the marker below).
+*/
+
+// vertexcolors
+
+half4 main(float2 uv)
+{
+  // The colors of the vertices are applied after this shader, with premultiplied alpha
+  return half4(Premul(SampleDecal(uv)));
+}

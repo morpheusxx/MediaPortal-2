@@ -1,0 +1,13 @@
+const float Tiles = 5.0;
+const float BevelWidth = 1.0;
+const float Offset = 1.0;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float2 newUV1 = texcoord + tan((Tiles * 2.5) * texcoord + Offset) * (BevelWidth / 100.0);
+  float4 c1 = SampleWhich(which, newUV1);
+  if (newUV1.x < 0.0 || newUV1.x > 1.0 || newUV1.y < 0.0 || newUV1.y > 1.0)
+    c1 = float4(0.0);
+  c1.a = 1.0;
+  return c1;
+}

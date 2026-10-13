@@ -1,0 +1,12 @@
+/*
+ * Applies a sepia color effect.
+*/
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float4 color = SampleWhich(which, texcoord);
+  float4 result = color;
+  result.r = (color.r * 0.393) + (color.g * 0.769) + (color.b * 0.189);
+  result.g = (color.r * 0.349) + (color.g * 0.686) + (color.b * 0.168);
+  result.b = (color.r * 0.272) + (color.g * 0.534) + (color.b * 0.131);
+  return result;
+}

@@ -1,0 +1,33 @@
+/*
+** Used by Controls.Brushes.RadialGradientBrush
+** Renders a radial gradient defined by a texture, radius, focus and gradient.
+*/
+
+uniform float4x4 g_transform;
+uniform float4x4 g_relativetransform;
+uniform float2 g_radius;
+uniform float2 g_center;
+uniform float2 g_focus;
+uniform float g_opacity;
+
+float GetColor(float2 pos)
+{
+  // Vector between center and focus, relative to radius
+  float2 v1 = (g_center - g_focus) / g_radius;
+  // Length of v2, squared
+  float v2s = dot(pos, pos);
+  float d = dot(float2(v1.y, -v1.x), pos);
+  return v2s / (dot(v1, pos) + sqrt(v2s - d * d));
+}
+
+half4 main(float2 uv)
+{
+  // Apply relative transform
+  float4 pos = g_transform * float4(uv.x, uv.y, 0.0, 1.0);
+  pos = g_relativetransform * float4(pos.x, pos.y, 0.0, 1.0);
+  float2 p = (pos.xy - g_focus) / g_radius;
+  float4 color = SampleGradient(GetColor(p));
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

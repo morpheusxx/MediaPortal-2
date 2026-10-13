@@ -1,0 +1,7 @@
+/*
+** Basic alpha dissolve between A/B
+*/
+float4 Transition(float mixAB, float2 relativePos, float4 colorA, float4 colorB)
+{
+  return colorA * (1.0 - mixAB) + colorB * mixAB;
+}

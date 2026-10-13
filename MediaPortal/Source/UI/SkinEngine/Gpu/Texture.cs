@@ -144,7 +144,8 @@ namespace MediaPortal.UI.SkinEngine.Gpu
         _renderSurface.Canvas.Clear(SKColors.Transparent);
       }
       else
-        _bitmap = new SKBitmap(new SKImageInfo(width, height, format.ToColorType(), SKAlphaType.Premul));
+        // CPU textures are filled with straight (not premultiplied) pixel data
+        _bitmap = new SKBitmap(new SKImageInfo(width, height, format.ToColorType(), SKAlphaType.Unpremul));
     }
 
     protected Texture(SKImage image, Format format)

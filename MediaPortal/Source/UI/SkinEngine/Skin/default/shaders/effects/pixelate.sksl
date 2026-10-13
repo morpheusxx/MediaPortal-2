@@ -1,0 +1,18 @@
+uniform float g_horizontalPixelCounts;
+uniform float g_verticalPixelCounts;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float2 brickCounts = float2(g_horizontalPixelCounts, g_verticalPixelCounts);
+  float2 brickSize = 1.0 / brickCounts;
+
+  // Offset every other row of bricks
+  float2 offsetuv = texcoord;
+  bool oddRow = mod(floor(offsetuv.y / brickSize.y), 2.0) >= 1.0;
+  if (oddRow)
+    offsetuv.x += brickSize.x / 2.0;
+
+  float2 brickNum = floor(offsetuv / brickSize);
+  float2 centerOfBrick = brickNum * brickSize + brickSize / 2.0;
+  return SampleWhich(which, centerOfBrick);
+}

@@ -205,6 +205,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         paint.Shader = GraphicsDevice.CurrentShader;
         paint.BlendMode = GraphicsDevice.SkBlendMode;
         paint.IsAntialias = true;
+        paint.FilterQuality = SKFilterQuality.Low; // Bilinear filtering for the textures of the shader
         canvas.SetMatrix(GraphicsDevice.CurrentMatrix);
         canvas.DrawVertices(vertices, SKBlendMode.Modulate, paint);
         canvas.ResetMatrix();

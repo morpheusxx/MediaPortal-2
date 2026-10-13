@@ -1,0 +1,71 @@
+/*
+** Used by Control.Brushes.TileBrush (also ImageBrush, VisualBrush)
+** Renders an image allowing cropping to a defined sub-area, transformations and different wrapping modes. Some simple cases
+** are handled in an optimised way by tile_simple.sksl.
+*/
+
+uniform float4x4 g_transform;
+uniform float g_opacity;
+uniform float4 g_textureviewport;
+uniform float4x4 g_relativetransform;
+uniform float4 g_brushtransform;
+uniform float g_uoffset;
+uniform float g_voffset;
+uniform float g_tileu; // Texture address mode: 1 = wrap, 2 = mirror, 3 = clamp, 4 = border
+uniform float g_tilev;
+
+// Applies the address mode of the sampler to a coordinate of one axis
+float Address(float c, float mode)
+{
+  if (mode < 1.5)
+    return fract(c);
+  if (mode < 2.5)
+    return 1.0 - abs(mod(c, 2.0) - 1.0);
+  return clamp(c, 0.0, 1.0);
+}
+
+// Returns false (via the w component) if the pixel should be discarded
+float3 wrapTextureCoord(float2 pos, float2 offset, float2 size)
+{
+  // Convert to viewport coords
+  float2 fraction = (pos - offset) / size;
+  // Split ratio into integer and fractional components
+  float2 wrap = floor(fraction);
+  fraction = fraction - wrap;
+  // Clamp to slightly within viewport to prevent rounding errors creating borders when tiling
+  fraction = clamp(fraction, 0.01, 0.99);
+  // Convert back to texture coords
+  fraction = fraction * size + offset;
+  // Account for texture borders
+  float2 odd = abs(mod(wrap, 2.0));
+  fraction += float2(odd.x * g_uoffset, odd.y * g_voffset);
+  // Discard pixels outside of texture (outside 0-1 range)
+  float visible = 1.0;
+  if (fraction.x < 0.0 || fraction.y < 0.0 || fraction.x > 1.0 || fraction.y > 1.0)
+    visible = 0.0;
+  // Add wrap factor to get correct sampler tiling in CLAMP and MIRROR modes
+  float2 result = fraction + wrap;
+  return float3(result.x, result.y, visible);
+}
+
+half4 main(float2 uv)
+{
+  // Apply relative transform
+  float2 pos = (g_relativetransform * float4(uv.x, uv.y, 0.0, 1.0)).xy;
+  // Transform vertex coords to place brush texture
+  pos = pos * g_brushtransform.zw - g_brushtransform.xy;
+  // Apply other transformation
+  pos = (pos - g_textureviewport.xy) / g_textureviewport.zw;
+  pos = (g_transform * float4(pos.x, pos.y, 0.0, 1.0)).xy;
+  float2 texcoord = pos * g_textureviewport.zw + g_textureviewport.xy;
+
+  float3 wrapped = wrapTextureCoord(texcoord, g_textureviewport.xy, g_textureviewport.zw);
+  if (wrapped.z < 0.5)
+    return half4(0.0);
+
+  float2 c = float2(Address(wrapped.x, g_tileu), Address(wrapped.y, g_tilev));
+  float4 color = SampleClamped(c);
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

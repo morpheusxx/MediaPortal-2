@@ -1,0 +1,13 @@
+/*
+** Can be used by GenericShaderEffect.
+** Renders a texture with it's color channels averaged.
+*/
+
+// vertexcolors
+
+half4 main(float2 uv)
+{
+  float4 color = SampleClamped(uv);
+  float grey = (color.r + color.g + color.b) / 3.0;
+  return half4(Premul(float4(grey, grey, grey, color.a)));
+}

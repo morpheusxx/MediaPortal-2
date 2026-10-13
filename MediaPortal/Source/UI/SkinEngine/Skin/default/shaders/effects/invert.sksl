@@ -1,0 +1,8 @@
+/*
+ * Inverts colors.
+*/
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float4 color = SampleWhich(which, texcoord);
+  return float4(1.0 - color.r, 1.0 - color.g, 1.0 - color.b, color.a);
+}

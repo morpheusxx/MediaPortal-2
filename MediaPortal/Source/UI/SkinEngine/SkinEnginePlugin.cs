@@ -42,6 +42,7 @@ using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.UI.SkinEngine.InputManagement;
 using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Settings;
+using MediaPortal.UI.SkinEngine.Utils;
 using MediaPortal.Utilities.SystemAPI;
 
 namespace MediaPortal.UI.SkinEngine
@@ -123,10 +124,6 @@ namespace MediaPortal.UI.SkinEngine
     {
       ILogger logger = ServiceRegistration.Get<ILogger>();
       logger.Info("SkinEnginePlugin: Startup");
-      logger.Info("SkinEnginePlugin: Setting platform specific paths");
-      string absolutePlatformDir;
-      if (!NativeMethods.SetPlatformSearchDirectories(out absolutePlatformDir))
-        throw new Exception("Error adding dll probe path");
 #if DEBUG
       // Enable object tracking only in debug builds, as it adds overhead to each object creation.
       // Commented out for newer SharpDX versions, as the performance impact is too high. Enable only for DX debugging.
@@ -202,6 +199,12 @@ namespace MediaPortal.UI.SkinEngine
 
     public void Activated(PluginRuntime pluginRuntime)
     {
+      // The native libraries of GLFW (window) and Skia (drawing) are located in the plugin directory
+      NativeLibraryHelper.Preload(typeof(SkinEnginePlugin).Assembly,
+          new[] { "glfw3.dll", "libSkiaSharp.dll" },
+          new[] { "libglfw.so.3", "libSkiaSharp.so" },
+          new[] { "libglfw.3.dylib", "libSkiaSharp.dylib" });
+
       ServiceRegistration.Set<ISkinEngine>(this);
       _screenSaverWasEnabled = WindowsAPI.ScreenSaverEnabled;
       WindowsAPI.ScreenSaverEnabled = false;

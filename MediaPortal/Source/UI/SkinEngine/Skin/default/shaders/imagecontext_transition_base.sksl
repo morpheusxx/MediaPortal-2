@@ -1,0 +1,32 @@
+/*
+** Used by Rendering.ImageContext
+** This a partial shader used for rendering transitions between images with various effects. In order for it to work it must be assembled
+** with other files containing definitions for:
+**   float2 PixelTransform(float2 texcoord);
+**   float4 PixelEffect(float2 texcoord, int which, float4 framedata);   // which: 0 = g_texture, 1 = g_textureA
+**   float4 Transition(float mixAB, float2 relativePos, float4 colorA, float4 colorB);
+*/
+
+uniform float g_opacity;
+uniform float4x4 g_relativetransformA;
+uniform float4 g_imagetransformA;
+uniform float4 g_framedataA; // xy = width, height in pixels. z = time since rendering start in seconds. Max value 5 hours.
+uniform float4x4 g_relativetransform;
+uniform float4 g_imagetransform;
+uniform float4 g_framedata;
+uniform float g_mixAB;
+
+half4 main(float2 uv)
+{
+  float2 posA = (g_relativetransformA * float4(uv.x, uv.y, 0.0, 1.0)).xy;
+  float2 texcoordA = PixelTransform(posA * g_imagetransformA.zw - g_imagetransformA.xy);
+  float2 posB = (g_relativetransform * float4(uv.x, uv.y, 0.0, 1.0)).xy;
+  float2 texcoordB = PixelTransform(posB * g_imagetransform.zw - g_imagetransform.xy);
+
+  float4 colorA = PixelEffect(texcoordA, 1, g_framedataA);
+  float4 colorB = PixelEffect(texcoordB, 0, g_framedata);
+  float4 color = Transition(g_mixAB, uv, colorA, colorB);
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

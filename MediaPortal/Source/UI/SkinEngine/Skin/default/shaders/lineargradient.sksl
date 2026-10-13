@@ -1,0 +1,27 @@
+/*
+** Used by Controls.Brushes.LinearGradientBrush
+** Renders a linear gradient defined by a texture and start/end points.
+*/
+
+uniform float4x4 g_transform;
+uniform float g_opacity;
+uniform float2 g_startpoint;
+uniform float2 g_endpoint;
+uniform float2 g_framesize;
+
+float GetColor(float2 pos)
+{
+  float2 vPos = (pos - g_startpoint) * g_framesize;
+  float2 vDist = (g_endpoint - g_startpoint) * g_framesize;
+  return dot(vPos, vDist) / dot(vDist, vDist);
+}
+
+half4 main(float2 uv)
+{
+  float4 pos = g_transform * float4(uv.x, uv.y, 0.0, 1.0);
+  float dist = clamp(GetColor(pos.xy), 0.0, 0.9999);
+  float4 color = SampleGradient(dist);
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

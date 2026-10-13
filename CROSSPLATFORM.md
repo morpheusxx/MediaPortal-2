@@ -134,9 +134,13 @@ Done (builds, **not yet run**):
   `BluRayPlayer`, `Cinema`, `UPnPRenderer`, `WifiRemote`, `Tests.Client`, `Tests.TVMosaic`.
 - Windows-only input plugins (`HidInput`, `InputDeviceManager`, `MceRemoteReceiver`, ...) are `net10.0-windows` with explicit WinForms; they receive `WindowsMessage` via `WindowsMessageExtensions`.
 
+**Milestone 1 reached (2026-10-13, Windows): the client starts and the Nereus skin renders (configuration screen with images, text, blur, gradients) via Skia/OpenGL.**
+- All 35 HLSL shaders were ported to SkSL (`*.sksl`, shared prelude `Gpu/EffectPrelude.cs`; 61 effect/transform/transition combinations compile). This needs SkiaSharp 3.116 (modern SkSL); the repo now uses SkiaSharp 3.116.1.
+- Native GLFW/Skia libraries of the plugin directory are preloaded by `NativeLibraryHelper` (plugin assemblies are not probed by the runtime).
+- New plugin `MpvPlayer` (same plugin id as the old `VideoPlayers`, so skins keep their dependency); its builder is a stub until Phase 3.1.
+
 Open (next steps, in order):
-1. Port the 35 HLSL shaders (`SkinEngine/Skin/default/shaders/**/*.fx`) to SkSL (`.sksl`, loaded by `EffectAssetCore`); until then no effect loads and nothing is drawn.
-2. Run the client on Windows, fix runtime issues (GL context/threading, resource loading, `Skin` path separators, plugin native lookup for Silk/Skia).
+2. Look at the remaining runtime issues (CloseTopmostDialog parameter conversion, "Cannot open texture", path separators), check other skins, fullscreen/window modes, input.
 3. Win32 message hook for Windows-only features (`WM_INPUT`/HID, `WM_APPCOMMAND`, single-instance message, touch), kerning (HarfBuzz) and skin sounds on other platforms.
 4. `IVideoFrameSource` implementation: libmpv player plugin (Phase 3.1), port `ImagePlayer` details, TV client + Bluray/Cinema/UPnP renderer on top of it.
 

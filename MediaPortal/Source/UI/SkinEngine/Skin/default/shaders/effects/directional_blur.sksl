@@ -1,0 +1,17 @@
+const float Angle = 45.0;
+const float BlurAmount = 0.005;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float4 c = float4(0.0);
+  float rad = Angle * 0.0174533;
+  float xOffset = cos(rad);
+  float yOffset = sin(rad);
+  for (int i = 0; i < 16; i++)
+  {
+    texcoord.x = texcoord.x - BlurAmount * xOffset;
+    texcoord.y = texcoord.y - BlurAmount * yOffset;
+    c += SampleWhich(which, texcoord);
+  }
+  return c / 16.0;
+}

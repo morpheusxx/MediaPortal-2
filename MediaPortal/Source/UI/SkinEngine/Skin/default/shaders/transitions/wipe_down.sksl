@@ -1,0 +1,8 @@
+/*
+** Linear wipe from top to bottom.
+*/
+float4 Transition(float mixAB, float2 relativePos, float4 colorA, float4 colorB)
+{
+  float v = step(relativePos.y, mixAB);
+  return colorA * (1.0 - v) + colorB * v;
+}

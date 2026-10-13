@@ -1,0 +1,28 @@
+/*
+** Used by Controls.Brushes.VideoBrush
+** This a partial shader used for rendering video frames with various effects. In order for it to work it must be assembled
+** with other files containing definitions for:
+**   float2 PixelTransform(float2 texcoord);
+**   float4 PixelEffect(float2 texcoord, int which, float4 framedata);   // which: 0 = g_texture
+*/
+
+uniform float4x4 g_transform;
+uniform float g_opacity;
+uniform float4x4 g_relativetransform;
+uniform float4 g_imagetransform;
+uniform float4 g_framedata; // xy = width, height in pixels. z = time since rendering start in seconds. Max value 5 hours.
+
+half4 main(float2 uv)
+{
+  // Apply relative transform
+  float2 pos = (g_relativetransform * float4(uv.x, uv.y, 0.0, 1.0)).xy;
+  // Transform vertex coords to place brush texture
+  pos = pos * g_imagetransform.zw - g_imagetransform.xy;
+  // Apply other transformation
+  float2 texcoord = PixelTransform((g_transform * float4(pos.x, pos.y, 0.0, 1.0)).xy);
+
+  float4 color = PixelEffect(texcoord, 0, g_framedata);
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

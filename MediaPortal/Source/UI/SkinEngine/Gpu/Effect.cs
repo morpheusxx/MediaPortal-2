@@ -42,6 +42,7 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     protected readonly HashSet<string> _uniformNames = new HashSet<string>();
     protected readonly HashSet<string> _childNames = new HashSet<string>();
     protected readonly List<SKShader> _ownedShaders = new List<SKShader>();
+    protected readonly Dictionary<string, SKShader> _defaultShaders = new Dictionary<string, SKShader>();
 
     protected Effect(SKRuntimeEffect effect)
     {
@@ -51,7 +52,13 @@ namespace MediaPortal.UI.SkinEngine.Gpu
       foreach (string name in effect.Uniforms)
         _uniformNames.Add(name);
       foreach (string name in effect.Children)
+      {
         _childNames.Add(name);
+        // Textures which are not set are transparent
+        SKShader empty = SKShader.CreateColor(SKColors.Transparent);
+        _defaultShaders[name] = empty;
+        _children[name] = empty;
+      }
     }
 
     /// <summary>
@@ -59,7 +66,7 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     /// </summary>
     public static Effect FromSource(string sksl, out string errors)
     {
-      SKRuntimeEffect effect = SKRuntimeEffect.Create(sksl, out errors);
+      SKRuntimeEffect effect = SKRuntimeEffect.CreateShader(sksl, out errors);
       return effect == null ? null : new Effect(effect);
     }
 
@@ -160,9 +167,13 @@ namespace MediaPortal.UI.SkinEngine.Gpu
       if (!HasTexture(name))
         return;
       SKShader shader = texture == null ? null : texture.CreateShaderInPixels(addressU, addressV);
-      _children[name] = shader ?? SKShader.CreateColor(SKColors.Transparent);
       if (shader != null)
+      {
+        _children[name] = shader;
         _ownedShaders.Add(shader);
+      }
+      else
+        _children[name] = _defaultShaders[name];
       if (texture != null)
         SetValue(name + "_size", new Vector2(texture.Width, texture.Height));
     }
@@ -172,7 +183,7 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     /// </summary>
     public SKShader CreateShader()
     {
-      return _effect.ToShader(false, _uniforms, _children);
+      return _effect.ToShader(_uniforms, _children);
     }
 
     /// <summary>
@@ -180,6 +191,8 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     /// </summary>
     public void ReleaseTemporaries()
     {
+      foreach (KeyValuePair<string, SKShader> child in _defaultShaders)
+        _children[child.Key] = child.Value;
       foreach (SKShader shader in _ownedShaders)
         shader.Dispose();
       _ownedShaders.Clear();
@@ -188,6 +201,9 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     public void Dispose()
     {
       ReleaseTemporaries();
+      foreach (SKShader shader in _defaultShaders.Values)
+        shader.Dispose();
+      _defaultShaders.Clear();
       _effect.Dispose();
     }
   }

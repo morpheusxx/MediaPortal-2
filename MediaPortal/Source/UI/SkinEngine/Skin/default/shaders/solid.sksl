@@ -1,0 +1,12 @@
+/*
+** Used by Controls.Brushes.SolidColorBrush
+** Renders a primitive with a single color.
+*/
+
+uniform half4 g_solidcolor; // Straight (not premultiplied) color
+
+half4 main(float2 uv)
+{
+  // Remember to pre-multiply alpha
+  return half4(g_solidcolor.rgb * g_solidcolor.a, g_solidcolor.a);
+}

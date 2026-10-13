@@ -47,6 +47,8 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     #region Consts
 
     protected const string PARAM_TEXTURE = "g_texture";
+    protected const string PARAM_BORDER_COLOR = "g_bordercolor";
+    protected const string PARAM_BORDER_COLOR_A = "g_bordercolorA";
     protected const string SHADER_EXTENSION = ".sksl";
 
     #endregion
@@ -106,7 +108,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 
         try
         {
-          string source = effectShader.ToString();
+          string source = EffectPrelude.Source + effectShader;
           string errors;
           _effect = Effect.FromSource(source, out errors);
           if (_effect == null)
@@ -185,6 +187,8 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 
       SamplerState sampler = GraphicsDevice.GetSamplerState(0);
       _effect.SetTexture(PARAM_TEXTURE, texture ?? GraphicsDevice.GetTexture(0), sampler.AddressU, sampler.AddressV);
+      _effect.SetValue(PARAM_BORDER_COLOR, ToStraightColor(sampler.BorderColor));
+      _effect.SetValue(PARAM_BORDER_COLOR_A, ToStraightColor(GraphicsDevice.GetSamplerState(1).BorderColor));
       SetEffectParameters();
       GraphicsDevice.SetDrawState(_effect.CreateShader(), finalTransform, _usesVertexColors);
       _renderActive = true;
@@ -207,6 +211,15 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         shader.Dispose();
       if (_effect != null)
         _effect.ReleaseTemporaries();
+    }
+
+    /// <summary>
+    /// Converts a color in BGRA integer layout (ARGB, as used for the sampler border color) to a straight RGBA color.
+    /// </summary>
+    protected static Color4 ToStraightColor(int bgra)
+    {
+      uint value = (uint) bgra;
+      return new Color4(((value >> 16) & 0xFF) / 255f, ((value >> 8) & 0xFF) / 255f, (value & 0xFF) / 255f, ((value >> 24) & 0xFF) / 255f);
     }
 
     public void SetEffectParameters()

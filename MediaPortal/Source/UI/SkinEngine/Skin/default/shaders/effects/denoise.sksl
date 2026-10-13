@@ -1,0 +1,29 @@
+/*
+ * Reduces 'noise' in the final image.
+ *
+ * Original shader source: MPC-HC (http://mpc-hc.sourceforge.net/)
+*/
+const float CenterBias = 1.0;
+const float SampleBias = 0.125;
+const float effect_width = 0.1;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float fTap = effect_width;
+  float4 cAccum = SampleWhich(which, texcoord) * CenterBias;
+  for (int iDx = 0; iDx < 16; ++iDx)
+  {
+    float dx = fTap / framedata.x; // framedata.x = texture width
+    float dy = fTap / framedata.y; // framedata.y = texture height
+    cAccum += SampleWhich(which, texcoord + float2(-dx, -dy)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(0.0, -dy)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(-dx, 0.0)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(dx, 0.0)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(0.0, dy)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(dx, dy)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(-dx, dy)) * SampleBias;
+    cAccum += SampleWhich(which, texcoord + float2(dx, -dy)) * SampleBias;
+    fTap += 0.1;
+  }
+  return cAccum / 16.0;
+}

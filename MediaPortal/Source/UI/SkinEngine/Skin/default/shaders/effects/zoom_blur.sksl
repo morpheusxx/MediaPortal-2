@@ -1,0 +1,16 @@
+uniform float g_centerX;
+uniform float g_centerY;
+uniform float g_blurAmount;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float4 c = float4(0.0);
+  float2 center = float2(g_centerX, g_centerY);
+  texcoord -= center;
+  for (int i = 0; i < 15; i++)
+  {
+    float scale = 1.0 + g_blurAmount * (float(i) / 14.0);
+    c += SampleWhich(which, texcoord * scale + center);
+  }
+  return c / 15.0;
+}

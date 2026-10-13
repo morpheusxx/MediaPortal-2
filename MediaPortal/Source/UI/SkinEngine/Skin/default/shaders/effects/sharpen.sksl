@@ -1,0 +1,26 @@
+/*
+ * An image sharpening effect.
+ *
+ * Original shader source: MPC-HC (http://mpc-hc.sourceforge.net/)
+*/
+const float effect_width = 1.6;
+const float CenterBias = 2.0;
+const float SampleBias = -0.125;
+
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  float dx = effect_width / framedata.x; // framedata.x = texture width
+  float dy = effect_width / framedata.y; // framedata.y = texture height
+
+  float4 c1 = SampleWhich(which, texcoord + float2(-dx, -dy)) * SampleBias;
+  float4 c2 = SampleWhich(which, texcoord + float2(0.0, -dy)) * SampleBias;
+  float4 c3 = SampleWhich(which, texcoord + float2(-dx, 0.0)) * SampleBias;
+  float4 c4 = SampleWhich(which, texcoord + float2(dx, 0.0)) * SampleBias;
+  float4 c5 = SampleWhich(which, texcoord + float2(0.0, dy)) * SampleBias;
+  float4 c6 = SampleWhich(which, texcoord + float2(dx, dy)) * SampleBias;
+  float4 c7 = SampleWhich(which, texcoord + float2(-dx, dy)) * SampleBias;
+  float4 c8 = SampleWhich(which, texcoord + float2(dx, -dy)) * SampleBias;
+  float4 c9 = SampleWhich(which, texcoord) * CenterBias;
+
+  return c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 + c9;
+}

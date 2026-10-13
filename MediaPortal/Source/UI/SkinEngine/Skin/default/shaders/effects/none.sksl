@@ -1,0 +1,7 @@
+/*
+ * Default. Just sample the texture.
+*/
+float4 PixelEffect(float2 texcoord, int which, float4 framedata)
+{
+  return SampleWhich(which, texcoord);
+}

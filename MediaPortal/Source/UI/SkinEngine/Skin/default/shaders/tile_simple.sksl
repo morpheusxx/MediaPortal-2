@@ -1,0 +1,27 @@
+/*
+** Used by Control.Brushes.TileBrush (also ImageBrush, VisualBrush)
+** A simpler, more optimised version of tile.sksl that doesn't allow cropping or wrapping.
+*/
+
+uniform float4x4 g_transform;
+uniform float g_opacity;
+uniform float4x4 g_relativetransform;
+uniform float4 g_textureviewport;
+uniform float4 g_brushtransform;
+
+half4 main(float2 uv)
+{
+  // Apply relative transform
+  float2 pos = (g_relativetransform * float4(uv.x, uv.y, 0.0, 1.0)).xy;
+  // Transform vertex coords to place brush texture
+  pos = pos * g_brushtransform.zw - g_brushtransform.xy;
+  // Apply other transformation
+  pos = (pos - g_textureviewport.xy) / g_textureviewport.zw;
+  pos = (g_transform * float4(pos.x, pos.y, 0.0, 1.0)).xy;
+  float2 texcoord = pos * g_textureviewport.zw + g_textureviewport.xy;
+
+  float4 color = SampleDecal(texcoord);
+  color.a *= g_opacity;
+  // Remember to pre-multiply alpha
+  return half4(Premul(color));
+}

@@ -20,7 +20,24 @@ Make MP2 a real cross-platform solution (Windows, Linux; macOS optional later).
 - Client: Windows-only. SkinEngine = custom XAML parser + MPF control library (platform-neutral C#)
   on top of a SharpDX rendering layer (Direct3D 9Ex + Direct2D/DirectWrite, HLSL effects).
   Video via DirectShow + native C++ EVR presenter. Music via BASS (BassPlayer).
-- **These points are assumptions from documentation, not yet verified against the code.** Verify first.
+- **The points above were assumptions; the first code review found (before Phase 0 changes):**
+  - 133 of ~138 projects multi-targeted `net48;net6.0-windows` (not a plain .NET 6 port); no `Directory.Build.props`,
+    `global.json` or central package management; `UseWindowsForms` on 78 projects (incl. `MediaPortal.Common`/`Utilities`),
+    `UseWPF` on 16; 23 projects pinned to `PlatformTarget=x86`.
+  - Server (`Main/MediaPortal.Server`) is a WinForms `WinExe` + `ServiceBase` Windows service.
+  - Win32 P/Invoke is concentrated in `MediaPortal.Utilities` (DriveUtils, NativeMethods, WindowsAPI, Impersonation*,
+    network/share enumerators) and `MediaPortal.Common` (Dokan, LogonHelper, TaskWaitableTimer, registry in ApplicationCore).
+  - `System.Drawing` is used in ~87 files (ImageUtilities, BaseInfo, fanart, EXIF, thumbnailers, TvdbLib, TranscodingService).
+  - `SQLiteDatabase` uses `System.Data.SQLite.Core` (assumed Windows-only native; verify for Linux).
+  - Paths use `CommonApplicationData` + backslash literals in the launchers; build is `.bat`/MSBuild + WiX + AppVeyor.
+
+## Decisions (Phase 0)
+
+- **net48 is dropped. Single target framework: `net10.0`** (`net10.0-windows` for Windows-only projects).
+- `global.json` pins SDK 10; `MediaPortal/Directory.Build.props` sets `EnableWindowsTargeting` + analyzers;
+  `Directory.Build.targets` suppresses WFO1000 (WinForms designer analyzer) for legacy forms.
+- TV is out of scope: `SlimTv.Service3` (TvEngine3 .NET Framework binaries) was removed from `MP2-Server.sln`.
+- `Setup/*` (WiX, bootstrapper, `CustomActions`) still targets net48/net6 and is **not** migrated yet.
 
 ## Architecture decisions
 
@@ -96,4 +113,11 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
 
 - [x] Architecture evaluation
 - [x] PoC: libmpv + SkiaSharp + Silk.NET compositing validated on Windows 11
-- [ ] Phase 0: assumptions verified, dependency inventory
+- [x] Phase 0a (branch `phase0-net10`): all projects retargeted to `net10.0-windows`/`net10.0`; `MP2-Server.sln`,
+      `MP2-Client.sln`, `MP2-ServiceMonitor.sln` build with 0 errors on Windows (SDK 10.0.400). Fixes needed beyond the TFM:
+      RID `win7-*` → `win-*` (Client), `BinaryFormatter` removed (unused `BinaryCacheProvider` deleted,
+      `DiskCachedDictionary` → System.Text.Json), `#if NET6_0` → `NET6_0_OR_GREATER`, BASS.NET NU1107 (direct reference).
+      Not yet run: tests, the client/server themselves.
+- [ ] Phase 0b: split portable (`net10.0`) vs Windows-only (`net10.0-windows`); CA1416 inventory; Linux server solution filter + CI
+- [ ] Phase 0c: Setup/WiX/AppVeyor/.bat migration; remove dead `.NETFramework`-conditional ItemGroups/build.targets branches;
+      Tests retargeted but not run

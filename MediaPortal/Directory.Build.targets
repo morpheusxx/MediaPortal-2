@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- WinForms designer-serialization analyzer (new in .NET 9+); noise for legacy forms.
+         Lives in .targets so it is appended after project-level NoWarn overrides. -->
+    <NoWarn>$(NoWarn);WFO1000</NoWarn>
+  </PropertyGroup>
+</Project>

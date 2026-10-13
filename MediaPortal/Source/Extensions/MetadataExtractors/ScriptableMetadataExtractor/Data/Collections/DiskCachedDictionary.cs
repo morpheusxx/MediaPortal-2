@@ -25,13 +25,12 @@
 using MediaPortal.Common;
 using MediaPortal.Common.PathManager;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.Json;
 
 namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.Data.Collections
 {
   public class DiskCachedDictionary<TKey, TValue> : CachedDictionary<TKey, int>
   {
-    private BinaryFormatter _serializer = new BinaryFormatter();
     private bool _initialized = false;
     private string _cacheLocation = null;
 
@@ -65,10 +64,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
       Init();
 
       int lookup = key.GetHashCode();
-      FileStream stream = File.Create(_cacheLocation + lookup);
-
-      _serializer.Serialize(stream, value);
-      stream.Close();
+      using (FileStream stream = File.Create(_cacheLocation + lookup))
+        JsonSerializer.Serialize(stream, value);
 
       return lookup;
     }
@@ -77,8 +74,8 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
     {
       Init();
 
-      FileStream stream = File.OpenRead(_cacheLocation + lookup);
-      return (TValue)_serializer.Deserialize(stream);
+      using (FileStream stream = File.OpenRead(_cacheLocation + lookup))
+        return JsonSerializer.Deserialize<TValue>(stream);
     }
 
     public void Add(TKey key, TValue value)

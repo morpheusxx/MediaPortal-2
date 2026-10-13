@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 //-----------------------------------------------------------------------------
-#if NET6_0
+#if NET6_0_OR_GREATER
 namespace System.Collections.Generic
 {
   using System;

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net48;net6.0-windows</TargetFrameworks>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.UiComponents.Utilities</RootNamespace>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -17,6 +17,7 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="BASS.NET" Version="2.4.14.1" />
     <ProjectReference Include="..\..\..\Extensions\BassLibraries\BassLibraries.csproj" />
     <ProjectReference Include="..\..\..\Extensions\ResourceProviders\AudioCDResourceProvider\AudioCDResourceProvider.csproj" />
     <ProjectReference Include="..\..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MediaPortal.Server.Host</RootNamespace>
+    <AssemblyName>MP2-Server-Host</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <!-- required for assemblies from nuget packages to be copied to the output folder -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>CS3001,CS3003,CS3008</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <OutputPath>..\..\..\Bin\MP2-Server\bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\..\Bin\MP2-Server\bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs" Link="Properties\VersionInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
+    <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+    <ProjectReference Include="..\MediaPortal.Server.Hosting\MediaPortal.Server.Hosting.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Systemd" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+  </ItemGroup>
+</Project>

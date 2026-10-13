@@ -72,6 +72,7 @@
     <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj" />
+    <ProjectReference Include="..\MediaPortal.Server.Hosting\MediaPortal.Server.Hosting.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="SkiaSharp" Version="2.88.8" />

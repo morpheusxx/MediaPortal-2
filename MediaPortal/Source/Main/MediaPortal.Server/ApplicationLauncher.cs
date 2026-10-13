@@ -28,22 +28,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CommandLine;
-using MediaPortal.Backend;
-using MediaPortal.Common.Exceptions;
-using MediaPortal.Common.MediaManagement;
-using MediaPortal.Common.PluginManager;
-using MediaPortal.Common.ResourceAccess;
-#if !DEBUG
-using MediaPortal.Common.PathManager;
-using System.IO;
-#endif
-using MediaPortal.Common.Services.Logging;
-using MediaPortal.Common.Services.Runtime;
 using MediaPortal.Common;
-using MediaPortal.Common.Runtime;
+using MediaPortal.Common.Exceptions;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.UI;
-using MediaPortal.Utilities.Process;
+using MediaPortal.Common.Runtime;
 
 [assembly: CLSCompliant(true)]
 namespace MediaPortal.Server
@@ -51,13 +40,11 @@ namespace MediaPortal.Server
   public class ApplicationLauncher
   {
     protected static WindowsService _windowsService;
-    protected SystemStateService _systemStateService = null;
-    protected string _dataDirectory = null;
-    protected IpcServer _ipcServer;
+    protected ServerRuntime _runtime;
 
     public ApplicationLauncher(string dataDirectory)
     {
-      _dataDirectory = dataDirectory;
+      _runtime = new ServerRuntime(dataDirectory, _windowsService == null ? "ServerConsole" : "ServerService", OnShutdownRequested);
     }
 
     /// <summary>
@@ -83,132 +70,49 @@ namespace MediaPortal.Server
       }
     }
 
-    public void Start()
+    /// <summary>
+    /// Gets the suspend level requested by the server (see <see cref="ServerRuntime.SuspendLevel"/>).
+    /// </summary>
+    public SuspendLevel SuspendLevel
     {
-      Thread.CurrentThread.Name = "Main";
-
-#if !DEBUG
-      string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Team MediaPortal\MP2-Server\Log");
-#endif
-
-      _systemStateService = new SystemStateService();
-      ServiceRegistration.Set<ISystemStateService>(_systemStateService);
-      _systemStateService.SwitchSystemState(SystemState.Initializing, false);
-
-      try
-      {
-        ILogger logger = null;
-        try
-        {
-          // Check if user wants to override the default Application Data location.
-          ApplicationCore.RegisterVitalCoreServices(true, _dataDirectory);
-          ApplicationCore.RegisterCoreServices();
-          logger = ServiceRegistration.Get<ILogger>();
-
-#if !DEBUG
-          IPathManager pathManager = ServiceRegistration.Get<IPathManager>();
-          logPath = pathManager.GetPath("<LOG>");
-#endif
-
-          BackendExtension.RegisterBackendServices();
-        }
-        catch (Exception e)
-        {
-          if (logger != null)
-            logger.Critical("Error starting application", e);
-          _systemStateService.SwitchSystemState(SystemState.ShuttingDown, true);
-          ServiceRegistration.IsShuttingDown = true;
-
-          BackendExtension.DisposeBackendServices();
-          ApplicationCore.DisposeCoreServices();
-
-          throw;
-        }
-
-        // Start the core
-        logger.Debug("ApplicationLauncher: Starting core");
-
-        try
-        {
-          var mediaAccessor = ServiceRegistration.Get<IMediaAccessor>();
-          var pluginManager = ServiceRegistration.Get<IPluginManager>();
-          pluginManager.Initialize();
-          pluginManager.Startup(false);
-          ApplicationCore.StartCoreServices();
-          InitIpc();
-          BackendExtension.StartupBackendServices();
-
-          mediaAccessor.Initialize();
-
-          logger.Info("Switching to running state");
-          _systemStateService.SwitchSystemState(SystemState.Running, true);
-          // Do before importers are activated and after server is running so it is possible to use other parts of the client
-          BackendExtension.MigrateDatabaseData();
-          // To be done after default media item aspect types are present and when the system is running (other plugins might also install media item aspect types)
-          BackendExtension.ActivateImporterWorker();
-        }
-        catch (Exception e)
-        {
-          logger.Critical("Error starting application", e);
-          _systemStateService.SwitchSystemState(SystemState.ShuttingDown, true);
-          ServiceRegistration.IsShuttingDown = true;
-          BackendExtension.DisposeBackendServices();
-          ApplicationCore.DisposeCoreServices();
-          _systemStateService.SwitchSystemState(SystemState.Ending, false);
-          throw; // needed to cancel OnStart of the Service
-        }
-      }
-      catch (Exception ex)
-      {
-#if DEBUG
-        ConsoleLogger log = new ConsoleLogger(LogLevel.All, false);
-        log.Error(ex);
-#else
-        ServerCrashLogger crash = new ServerCrashLogger(logPath);
-        crash.CreateLog(ex);
-#endif
-        _systemStateService.SwitchSystemState(SystemState.Ending, false);
-        throw; // needed to cancel OnStart of the Service
-      }
+      get { return _runtime.SuspendLevel; }
     }
 
+    public void Start()
+    {
+      _runtime.Start();
+    }
 
     public void Stop()
     {
-      try
-      {
-        _systemStateService.SwitchSystemState(SystemState.ShuttingDown, true);
-        ServiceRegistration.IsShuttingDown = true; // Block ServiceRegistration from trying to load new services in shutdown phase
+      _runtime.Stop();
+    }
 
-        ServiceRegistration.Get<IImporterWorker>().Shutdown(); // needs to be shut down before MediaAccessor and plugins
-        ServiceRegistration.Get<IMediaAccessor>().Shutdown();
-        ServiceRegistration.Get<IPluginManager>().Shutdown();
-        BackendExtension.ShutdownBackendServices();
-        CloseIpc();
-        ApplicationCore.StopCoreServices();
-      }
-      catch (Exception ex)
+    /// <summary>
+    /// Called when a shutdown was requested via IPC.
+    /// </summary>
+    private bool OnShutdownRequested()
+    {
+      if (_windowsService == null)
       {
-        //ServiceRegistration.Get<ILogger.Critical("Error stopping application", e);
-#if DEBUG
-        ConsoleLogger log = new ConsoleLogger(LogLevel.All, false);
-        log.Error(ex);
-#else
-        var pathManager = ServiceRegistration.Get<IPathManager>();
-        var logPath = pathManager.GetPath("<LOG>");
-        ServerCrashLogger crash = new ServerCrashLogger(logPath);
-        crash.CreateLog(ex);
-#endif
-        _systemStateService.SwitchSystemState(SystemState.ShuttingDown, true);
-        ServiceRegistration.IsShuttingDown = true;
+        Application.Exit();
+        return true;
       }
-      finally
+
+      // invoke service shutdown asynchronous with a little delay
+      ThreadPool.QueueUserWorkItem(_ =>
       {
-        BackendExtension.DisposeBackendServices();
-        ApplicationCore.DisposeCoreServices();
-        _systemStateService.SwitchSystemState(SystemState.Ending, false);
-        _systemStateService.Dispose();
-      }
+        Thread.Sleep(500);
+        try
+        {
+          _windowsService.Stop();
+        }
+        catch
+        {
+          // ignored
+        }
+      });
+      return true;
     }
 
     protected void RunAsConsole()
@@ -234,66 +138,6 @@ namespace MediaPortal.Server
       Application.ThreadException -= LauncherExceptionHandling.Application_ThreadException;
       AppDomain.CurrentDomain.UnhandledException -= LauncherExceptionHandling.CurrentDomain_UnhandledException;
       TaskScheduler.UnobservedTaskException -= LauncherExceptionHandling.TaskScheduler_UnobservedTaskException;
-    }
-
-    private void InitIpc()
-    {
-      if (_ipcServer != null)
-        return;
-      ServiceRegistration.Get<ILogger>().Debug("Initializing IPC");
-      try
-      {
-        if (_windowsService == null)
-        {
-          _ipcServer = new IpcServer("ServerConsole");
-          _ipcServer.CustomShutdownCallback = () =>
-          {
-            Application.Exit();
-            return true;
-          };
-        }
-        else
-        {
-          _ipcServer = new IpcServer("ServerService");
-          _ipcServer.CustomShutdownCallback = () =>
-          {
-            // invoke service shutdown asynchronous with a little delay
-            ThreadPool.QueueUserWorkItem(_ =>
-            {
-              Thread.Sleep(500);
-              try
-              {
-                _windowsService.Stop();
-              }
-              catch
-              {
-                // ignored
-              }
-            });
-            return true;
-          };
-        }
-        _ipcServer.Open();
-      }
-      catch (Exception ex)
-      {
-        ServiceRegistration.Get<ILogger>().Error(ex);
-      }
-    }
-
-    private void CloseIpc()
-    {
-      if (_ipcServer == null)
-        return;
-      try
-      {
-        _ipcServer.Close();
-      }
-      catch (Exception ex)
-      {
-        ServiceRegistration.Get<ILogger>().Error(ex);
-      }
-      _ipcServer = null;
     }
   }
 }

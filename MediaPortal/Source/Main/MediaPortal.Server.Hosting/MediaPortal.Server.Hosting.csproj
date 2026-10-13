@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>MediaPortal.Server</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs" Link="Properties\VersionInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\MediaPortal.Backend\MediaPortal.Backend.csproj" />
+    <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
+    <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+  </ItemGroup>
+</Project>

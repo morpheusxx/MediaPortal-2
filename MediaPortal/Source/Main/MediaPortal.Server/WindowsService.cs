@@ -22,22 +22,15 @@
 
 #endregion
 
-using System.Linq;
 using System.ServiceProcess;
-using MediaPortal.Backend.ClientCommunication;
-using MediaPortal.Common;
-using MediaPortal.Common.Logging;
-using MediaPortal.Common.Messaging;
 using MediaPortal.Common.Runtime;
-using MediaPortal.Common.SystemResolver;
 
 namespace MediaPortal.Server
 {
   public partial class WindowsService : ServiceBase
   {
     protected ApplicationLauncher _launcher = null;
-    protected AsynchronousMessageQueue _messageQueue = null;
-    protected SuspendLevel _suspendLevel = SuspendLevel.None;
+
     public WindowsService()
     {
       InitializeComponent();
@@ -54,13 +47,10 @@ namespace MediaPortal.Server
         return;
       _launcher = new ApplicationLauncher(null);
       _launcher.Start();
-      SubscribeToMessages();
-      UpdatePowerState();
     }
 
     protected override void OnStop()
     {
-      UnsubscribeFromMessages();
       if (_launcher == null)
         return;
       _launcher.Stop();
@@ -70,62 +60,11 @@ namespace MediaPortal.Server
     {
       if (powerStatus == PowerBroadcastStatus.QuerySuspend)
       {
-        // Deny suspend if required.
-        if (_suspendLevel > SuspendLevel.None)
+        // Deny suspend if required (e.g. remote clients are connected, see ServerRuntime).
+        if (_launcher != null && _launcher.SuspendLevel > SuspendLevel.None)
           return false;
       }
       return base.OnPowerEvent(powerStatus);
     }
-
-    #region Message and power state handling
-
-    protected void SubscribeToMessages()
-    {
-      _messageQueue = new AsynchronousMessageQueue("WindowsService", new[] { ClientManagerMessaging.CHANNEL });
-      _messageQueue.MessageReceived += OnMessageReceived;
-      _messageQueue.Start();
-    }
-
-    protected void UnsubscribeFromMessages()
-    {
-      if (_messageQueue == null)
-        return;
-      _messageQueue.Shutdown();
-      _messageQueue = null;
-    }
-
-    protected void OnMessageReceived(AsynchronousMessageQueue queue, SystemMessage message)
-    {
-      if (message.ChannelName != ClientManagerMessaging.CHANNEL)
-        return;
-
-      ClientManagerMessaging.MessageType messageType = (ClientManagerMessaging.MessageType) message.MessageType;
-      switch (messageType)
-      {
-        case ClientManagerMessaging.MessageType.ClientOnline:
-        case ClientManagerMessaging.MessageType.ClientOffline:
-          UpdatePowerState();
-          break;
-      }
-    }
-
-    protected void UpdatePowerState()
-    {
-      IClientManager clientManager = ServiceRegistration.Get<IClientManager>(false);
-      if (clientManager == null)
-        return;
-
-      int countRemoteSystems = clientManager.ConnectedClients.
-        Select(clientConnection => clientConnection.Descriptor.MPFrontendServerUUID).
-        Count(mpFrontendServerUUID => !ServiceRegistration.Get<ISystemResolver>().GetSystemNameForSystemId(mpFrontendServerUUID).IsLocalSystem());
-
-      // Avoid suspend as long as remote clients are connected. A local client prevents suspend using its own logic.
-      // Set a continous state for current thread (which is the AMQ thread, not the "MainThread").
-      _suspendLevel = countRemoteSystems > 0 ? SuspendLevel.AvoidSuspend : SuspendLevel.None;
-      ServiceRegistration.Get<ILogger>().Debug("UpdatePowerState: Setting continuous suspend level to {0}", _suspendLevel);
-      ServiceRegistration.Get<ISystemStateService>().SetCurrentSuspendLevel(_suspendLevel, true);
-    }
-
-    #endregion
   }
 }

@@ -92,10 +92,15 @@ namespace MediaPortal.Common.Services.PathManager
     /// <returns>Dictionary of labels mapped to paths, the labels are not enclosed by <c>'&lt;'</c> and <c>'&gt;'</c> characters.</returns>
     public static IDictionary<string, string> GetStandardSpecialFolderMappings()
     {
+      string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+      // On Windows this is %ProgramData%. On other platforms CommonApplicationData is /usr/share (read-only for services and
+      // regular users), so use the per-user data folder; services/containers should set the data directory explicitly (DATA path).
+      string commonApplicationData = OperatingSystem.IsWindows() ?
+          Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) : localApplicationData;
       return new Dictionary<string, string>
         {
-            {"LOCAL_APPLICATION_DATA", Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)},
-            {"COMMON_APPLICATION_DATA", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData)},
+            {"LOCAL_APPLICATION_DATA", localApplicationData},
+            {"COMMON_APPLICATION_DATA", commonApplicationData},
             {"MY_DOCUMENTS", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)}
         };
     }
@@ -115,6 +120,8 @@ namespace MediaPortal.Common.Services.PathManager
     {
       label = CheckFormat(label);
       pathPattern = StringUtils.RemoveSuffixIfPresent(pathPattern, "\\");
+      if (!OperatingSystem.IsWindows() && pathPattern.Length > 1)
+        pathPattern = StringUtils.RemoveSuffixIfPresent(pathPattern, "/");
       lock (_syncObj)
         _paths[label] = pathPattern;
     }
@@ -138,6 +145,10 @@ namespace MediaPortal.Common.Services.PathManager
 
           pathLabels = label.Matches(pathPattern);
         }
+
+      // Path patterns are written with Windows separators (<DATA>\Config); adapt them to the current platform
+      if (Path.DirectorySeparatorChar != '\\')
+        pathPattern = pathPattern.Replace('\\', Path.DirectorySeparatorChar);
 
       return pathPattern;
     }

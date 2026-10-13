@@ -21,9 +21,9 @@
     <Assembly FileName="..\..\MediaPortal.Common.dll"/>
   </Runtime>
 
-  <Builder Name="ThumbnailProviderBuilder" ClassName="MediaPortal.Common.Services.ThumbnailGenerator.ThumbnailProviderBuilder"/>
+  <Builder Name="SkiaThumbnailProviderBuilder" ClassName="MediaPortal.Common.Services.ThumbnailGenerator.ThumbnailProviderBuilder"/>
   <Register Location="/Thumbnails/Providers">
-    <ThumbnailProviderBuilder
+    <SkiaThumbnailProviderBuilder
       Id="{C17511AC-D430-4895-B27E-A98D472E937F}"
       ClassName="MediaPortal.Extensions.MetadataExtractors.SkiaThumbnailProvider.SkiaThumbnailProvider"
       ProviderName="SkiaThumbnailProvider"

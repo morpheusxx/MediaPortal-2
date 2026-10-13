@@ -16,23 +16,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <References Include="$(TargetDir)System.Data.SQLite.dll" />
+      <References Include="$(TargetDir)Microsoft.Data.Sqlite.dll" />
+      <References Include="$(TargetDir)SQLitePCLRaw.*.dll" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' != '.NETFramework'">
-      <SQLiteInterop64 Include="$(TargetDir)\runtimes\win-x64\native\SQLite.Interop.dll" />
-      <SQLiteInterop86 Include="$(TargetDir)\runtimes\win-x86\native\SQLite.Interop.dll" />
-    </ItemGroup>
-    <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
-      <SQLiteInterop64 Include="$(TargetDir)\x64\SQLite.Interop.dll" />
-      <SQLiteInterop86 Include="$(TargetDir)\x86\SQLite.Interop.dll" />
-      <References Include="$(TargetDir)System.Data.SQLite.Linq.dll" />
+    <!-- Native SQLite builds for all platforms. SQLiteDatabase resolves the one matching the current runtime from runtimes\<rid>\native. -->
+    <ItemGroup>
+      <SQLiteNative Include="$(TargetDir)runtimes\**\native\*.*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
     <Copy SourceFiles="@(References)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(SQLiteInterop64)" DestinationFolder="$(PluginDestination)x64\" />
-    <Copy SourceFiles="@(SQLiteInterop86)" DestinationFolder="$(PluginDestination)x86\" />
+    <Copy SourceFiles="@(SQLiteNative)" DestinationFiles="@(SQLiteNative->'$(PluginDestination)runtimes\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
 </Project>

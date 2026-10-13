@@ -51,6 +51,8 @@
       "Extensions\\ResourceProviders\\AudioCDResourceProvider\\AudioCDResourceProvider.csproj",
       "Extensions\\ResourceProviders\\IsoResourceProvider\\IsoResourceProvider.csproj",
       "Extensions\\ResourceProviders\\ZipResourceProvider\\ZipResourceProvider.csproj",
+      "Main\\MediaPortal.Server.Host\\MediaPortal.Server.Host.csproj",
+      "Main\\MediaPortal.Server.Hosting\\MediaPortal.Server.Hosting.csproj",
       "UI\\FanArt\\FanArtService.Interfaces\\FanArtService.Interfaces.csproj",
       "UI\\FanArt\\FanArtService.Local\\FanArtService.Local.csproj",
       "UI\\FanArt\\FanArtService.Online\\FanArtService.Online.csproj",

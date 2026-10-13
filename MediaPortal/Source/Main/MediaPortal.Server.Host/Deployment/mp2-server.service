@@ -1,0 +1,22 @@
+# systemd unit for the MediaPortal 2 server (experimental).
+# Install: copy the build output to /opt/mp2-server, copy this file to /etc/systemd/system/mp2-server.service,
+#          then: systemctl daemon-reload && systemctl enable --now mp2-server
+[Unit]
+Description=MediaPortal 2 Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# MP2-Server-Host uses Microsoft.Extensions.Hosting.Systemd: start-up completion is reported to systemd
+Type=notify
+WorkingDirectory=/opt/mp2-server
+ExecStart=/usr/bin/dotnet /opt/mp2-server/MP2-Server-Host.dll --data /var/lib/mp2-server
+User=mp2
+Group=mp2
+StateDirectory=mp2-server
+Restart=on-failure
+# The host waits for the server to shut down cleanly (database, importers)
+TimeoutStopSec=150
+
+[Install]
+WantedBy=multi-user.target

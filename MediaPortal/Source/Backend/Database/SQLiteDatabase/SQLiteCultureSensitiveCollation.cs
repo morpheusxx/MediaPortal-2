@@ -22,7 +22,8 @@
 
 #endregion
 
-using System.Data.SQLite;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace MediaPortal.Database.SQLite
@@ -35,21 +36,39 @@ namespace MediaPortal.Database.SQLite
   /// party database tools that do not register this collation sequence is that the
   /// sort order within these tools is different from the sort order in MP2.
   /// </summary>
-  [SQLiteFunction(FuncType = FunctionType.Collation, Name = "NOCASE")]
-  public class SQLiteCultureSensitiveCollation : SQLiteFunction
+  /// <remarks>
+  /// On Windows the native CompareStringEx based <see cref="LexicographicComparer"/> is used, so that existing databases keep their
+  /// index order. On other platforms the managed comparer with the same options (ignore case, digits as numbers) is used.
+  /// Database files should therefore not be moved between operating systems without rebuilding their indexes (REINDEX).
+  /// </remarks>
+  public static class SQLiteCultureSensitiveCollation
   {
+    private static readonly IComparer<string> COMPARER = CreateComparer();
 
-    protected static readonly LexicographicComparer COMPARER = new LexicographicComparer
-    (
-      CultureInfo.InvariantCulture,
-      LexicographicComparer.CmpFlags.LinguisticIgnorecase |
-      LexicographicComparer.CmpFlags.NormLinguisticCasing |
-      LexicographicComparer.CmpFlags.SortDigitsasnumbers
-    );
-    
-    public override int Compare(string x, string y)
+    private static IComparer<string> CreateComparer()
+    {
+      if (OperatingSystem.IsWindows())
+        return new LexicographicComparer
+        (
+          CultureInfo.InvariantCulture,
+          LexicographicComparer.CmpFlags.LinguisticIgnorecase |
+          LexicographicComparer.CmpFlags.NormLinguisticCasing |
+          LexicographicComparer.CmpFlags.SortDigitsasnumbers
+        );
+      return new ManagedComparer();
+    }
+
+    public static int Compare(string x, string y)
     {
       return COMPARER.Compare(x, y);
+    }
+
+    private class ManagedComparer : IComparer<string>
+    {
+      public int Compare(string x, string y)
+      {
+        return CultureInfo.InvariantCulture.CompareInfo.Compare(x, y, CompareOptions.IgnoreCase | CompareOptions.NumericOrdering);
+      }
     }
   }
 }

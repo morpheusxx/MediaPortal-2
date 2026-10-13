@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using System.Runtime.InteropServices;
 using System.Text;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
@@ -192,52 +191,21 @@ namespace MediaPortal.Database.SQLite
     /// <summary>
     /// This class is only used as parameter to pInvoke <see cref="GlobalMemoryStatusEx"/>
     /// </summary>
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-    private class MemoryStatusEx
-    {
-      public uint dwLength;
-      public uint dwMemoryLoad;
-      public ulong ullTotalPhys;
-      public ulong ullAvailPhys;
-      public ulong ullTotalPageFile;
-      public ulong ullAvailPageFile;
-      public ulong ullTotalVirtual;
-      public ulong ullAvailVirtual;
-      public ulong ullAvailExtendedVirtual;
-      public MemoryStatusEx()
-      {
-        dwLength = (uint)Marshal.SizeOf(typeof(MemoryStatusEx));
-      }
-    }
-
-    /// <summary>
-    /// Native method used to detect the available RAM in <see cref="GetRamInMegaBytes"/>
-    /// </summary>
-    /// <param name="lpBuffer">Object of type <see cref="MemoryStatusEx"/></param>
-    /// <returns><c>true</c> if the call was successful and <see cref="lpBuffer"/> was filled correctly, otherwise false</returns>
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern bool GlobalMemoryStatusEx([In, Out] MemoryStatusEx lpBuffer);
-
-    /// <summary>
-    /// Determines the amount of RAM available to the operating system in total.
-    /// </summary>
-    /// <returns>Total RAM in MegaBytes</returns>
     private int GetRamInMegaBytes()
     {
-      int result = 0;
-      var mem = new MemoryStatusEx();
       try
       {
-        if (GlobalMemoryStatusEx(mem))
-          result = Convert.ToInt32(mem.ullTotalPhys / 1048576);
-        else
-          ServiceRegistration.Get<ILogger>().Warn("SQLiteDatabase: Error when trying to detect the total available RAM. Using minimum cache size for SQLiteDatabase.");
+        // Total memory available to the process (respects container limits)
+        long bytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+        if (bytes > 0)
+          return (int) Math.Min(int.MaxValue, bytes / 1048576);
+        ServiceRegistration.Get<ILogger>().Warn("SQLiteDatabase: Error when trying to detect the total available RAM. Using minimum cache size for SQLiteDatabase.");
       }
       catch (Exception)
       {
         ServiceRegistration.Get<ILogger>().Warn("SQLiteDatabase: Exception when trying to detect the total available RAM. Using minimum cache size for SQLiteDatabase.");
       }
-      return result;
+      return 0;
     }
 
     #endregion

@@ -59,12 +59,16 @@ namespace MediaPortal.Utilities.Process
       // Allow only one instance
       mutex = new Mutex(false, MUTEX_ID);
 
-      var allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null),
-                                                  MutexRights.FullControl, AccessControlType.Allow);
-      var securitySettings = new MutexSecurity();
-      securitySettings.AddAccessRule(allowEveryoneRule);
-      mutex.SetAccessControl(securitySettings);
-      
+      // Mutex ACLs are Windows only; named mutexes on other platforms are accessible per user/process group by default
+      if (OperatingSystem.IsWindows())
+      {
+        var allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                                                    MutexRights.FullControl, AccessControlType.Allow);
+        var securitySettings = new MutexSecurity();
+        securitySettings.AddAccessRule(allowEveryoneRule);
+        mutex.SetAccessControl(securitySettings);
+      }
+
       bool hasHandle = false;
       try
       {

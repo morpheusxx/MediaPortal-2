@@ -32,9 +32,11 @@ using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Utilities;
 using System.Security.AccessControl;
 using MediaPortal.Common.Services.Dokan.Native;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.Dokan
 {
+  [SupportedOSPlatform("windows")]
   public class Dokan : IDokanOperations, IDisposable
   {
     #region Consts

@@ -32,12 +32,14 @@ using System.Threading.Tasks;
 using Dokan;
 using MediaPortal.Utilities.SystemAPI;
 using MediaPortal.Common.Services.Dokan.Native;
+using System.Runtime.Versioning;
 
 #pragma warning disable 649,169
 
 namespace MediaPortal.Common.Services.Dokan
 {
   [StructLayout(LayoutKind.Sequential, Pack = 4)]
+  [SupportedOSPlatform("windows")]
   public sealed class DokanFileInfo
   {
     private ulong _context;

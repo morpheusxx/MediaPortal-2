@@ -25,6 +25,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Management;
 using Microsoft.Win32;
 
@@ -105,6 +107,23 @@ namespace MediaPortal.Common.Services.Logging
     protected static string DriveInfo()
     {
       StringBuilder driveInfo = new StringBuilder();
+      if (!OperatingSystem.IsWindows())
+      {
+        foreach (System.IO.DriveInfo drive in System.IO.DriveInfo.GetDrives())
+        {
+          try
+          {
+            if (!drive.IsReady)
+              continue;
+            driveInfo.AppendLine(String.Format("  Volume: {0} - {1}({2})\tSize: {3} Free: {4}", drive.Name, drive.DriveType, drive.DriveFormat,
+              GetSizeString((UInt64)drive.TotalSize), GetSizeString((UInt64)drive.AvailableFreeSpace)));
+          }
+          catch (IOException) { }
+          catch (UnauthorizedAccessException) { }
+        }
+        return driveInfo.ToString();
+      }
+
       ManagementClass mc = new ManagementClass("Win32_LogicalDisk");
       ManagementObjectCollection moc = mc.GetInstances();
 
@@ -182,6 +201,19 @@ namespace MediaPortal.Common.Services.Logging
 
     protected static string GetCPUInfos()
     {
+      if (!OperatingSystem.IsWindows())
+      {
+        string model = null;
+        try
+        {
+          const string CPU_INFO = "/proc/cpuinfo";
+          if (File.Exists(CPU_INFO))
+            model = File.ReadLines(CPU_INFO).Where(l => l.StartsWith("model name")).Select(l => l.Substring(l.IndexOf(':') + 1).Trim()).FirstOrDefault();
+        }
+        catch (IOException) { }
+        return string.Format("{0} ({1} logical processors, {2})", model ?? "<unknown>", Environment.ProcessorCount, RuntimeInformation.ProcessArchitecture);
+      }
+
       RegistryKey mainKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey("HARDWARE\\DESCRIPTION\\System\\CentralProcessor");
       if (mainKey == null)
         return string.Empty;

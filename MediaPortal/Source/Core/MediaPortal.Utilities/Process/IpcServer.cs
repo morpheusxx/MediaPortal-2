@@ -138,8 +138,17 @@ namespace MediaPortal.Utilities.Process
 
     #region private methods
 
-    private void OpenNewPipe()
+    private NamedPipeServerStream CreatePipe()
     {
+      if (!OperatingSystem.IsWindows())
+      {
+        // Pipe ACLs and message transmission mode are Windows only. The protocol is length-prefixed, so byte mode works as well.
+        // CurrentUserOnly restricts the underlying unix domain socket to the current user.
+        return new NamedPipeServerStream(PipeName,
+          PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
+          PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly, 1024, 1024);
+      }
+
       // start a new server pipe with read and write access for any authenticated user of this system.
       // it is important to have PipeAccessRights.CreateNewInstance allowed, or else it would not be possible to create anew pipe for the next client.
       var pipeSecurity = new PipeSecurity();
@@ -148,15 +157,14 @@ namespace MediaPortal.Utilities.Process
           new SecurityIdentifier(WellKnownSidType.AuthenticatedUserSid, null),
           PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance, AccessControlType.Allow));
 
-#if NET5_0_OR_GREATER
-      var pipe = NamedPipeServerStreamConstructors.New(PipeName,
+      return NamedPipeServerStreamConstructors.New(PipeName,
         PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
         PipeTransmissionMode.Message, PipeOptions.Asynchronous, 1024, 1024, pipeSecurity);
-#else
-      var pipe = new NamedPipeServerStream(PipeName,
-        PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
-        PipeTransmissionMode.Message, PipeOptions.Asynchronous, 1024, 1024, pipeSecurity);
-#endif
+    }
+
+    private void OpenNewPipe()
+    {
+      var pipe = CreatePipe();
 
       lock (_serverPipes)
       {

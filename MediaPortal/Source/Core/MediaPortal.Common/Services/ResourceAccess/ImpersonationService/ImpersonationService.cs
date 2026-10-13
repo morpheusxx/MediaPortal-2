@@ -33,12 +33,14 @@ using MediaPortal.Common.PathManager;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Services.Logging;
 using MediaPortal.Utilities.Process;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
 {
   /// <summary>
   /// Standard implementation of <see cref="IImpersonationService"/>
   /// </summary>
+  [SupportedOSPlatform("windows")]
   internal sealed class ImpersonationService : IImpersonationService
   {
     #region Private fields

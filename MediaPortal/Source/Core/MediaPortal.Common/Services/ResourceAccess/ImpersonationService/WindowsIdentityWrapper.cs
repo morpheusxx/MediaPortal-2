@@ -26,6 +26,7 @@ using System;
 using System.Net;
 using System.Security.Principal;
 using System.Threading;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
 {
@@ -34,6 +35,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
   /// object. It ensures that the <see cref="WindowsIdentity"/> can be impersonated safely multiple times in a
   /// multithreaded environment. Same goes for using the underlying user token for starting impersonated external processes.
   /// </summary>
+  [SupportedOSPlatform("windows")]
   internal sealed class WindowsIdentityWrapper : IDisposable
   {
     #region Consts

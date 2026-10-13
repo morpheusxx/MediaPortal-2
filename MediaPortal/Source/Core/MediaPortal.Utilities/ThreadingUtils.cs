@@ -54,7 +54,9 @@ namespace MediaPortal.Utilities
     public static Thread RunSTAThreaded(ThreadStart threadStart)
     {
       Thread newThread = new Thread(threadStart);
-      newThread.SetApartmentState(ApartmentState.STA);
+      // Apartment states are a COM/Windows concept; setting STA throws on other platforms.
+      if (OperatingSystem.IsWindows())
+        newThread.SetApartmentState(ApartmentState.STA);
       newThread.Start();
       return newThread;
     }

@@ -103,15 +103,20 @@ namespace MediaPortal.Common
       logger.Info("ApplicationCore: Architecture:     {0}", IntPtr.Size > 4 ? "x64" : "x86");
       // Operating system info
       logger.Info("ApplicationCore: OS version:       {0}", Environment.OSVersion);
-      foreach (string key in new[] { "ProductName", "ReleaseId", "BuildLab", "InstallationType", "EditionID" })
+      if (OperatingSystem.IsWindows())
       {
-        try
+        foreach (string key in new[] { "ProductName", "ReleaseId", "BuildLab", "InstallationType", "EditionID" })
         {
-          var value = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", key, string.Empty).ToString();
-          logger.Info("ApplicationCore: {0,-18}{1}", key + ":", value);
+          try
+          {
+            var value = Microsoft.Win32.Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion", key, string.Empty).ToString();
+            logger.Info("ApplicationCore: {0,-18}{1}", key + ":", value);
+          }
+          catch { break; }
         }
-        catch { break; }
       }
+      else
+        logger.Info("ApplicationCore: OS description:   {0}", System.Runtime.InteropServices.RuntimeInformation.OSDescription);
       logger.Info("ApplicationCore: ----------------------------------------------------------");
 
       logger.Debug("ApplicationCore: Registering ILogger service");
@@ -128,7 +133,10 @@ namespace MediaPortal.Common
       ILogger logger = ServiceRegistration.Get<ILogger>();
 
       logger.Debug("ApplicationCore: Registering IImpersonationService");
-      ServiceRegistration.Set<IImpersonationService>(new ImpersonationService());
+      if (OperatingSystem.IsWindows())
+        ServiceRegistration.Set<IImpersonationService>(new ImpersonationService());
+      else
+        ServiceRegistration.Set<IImpersonationService>(new NoImpersonationService());
 
       logger.Debug("ApplicationCore: Registering IRegistry service");
       ServiceRegistration.Set<IRegistry>(new Services.Registry.Registry());
@@ -174,7 +182,10 @@ namespace MediaPortal.Common
       ServiceRegistration.Set<IResourceServer>(new ResourceServer());
 
       logger.Debug("ApplicationCore: Registering IResourceMountingService");
-      ServiceRegistration.Set<IResourceMountingService>(new ResourceMountingService());
+      if (OperatingSystem.IsWindows())
+        ServiceRegistration.Set<IResourceMountingService>(new ResourceMountingService());
+      else
+        ServiceRegistration.Set<IResourceMountingService>(new NullResourceMountingService());
 
       logger.Debug("ApplicationCore: Registering IRemoteResourceInformationService");
       ServiceRegistration.Set<IRemoteResourceInformationService>(new RemoteResourceInformationService());

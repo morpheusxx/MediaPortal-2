@@ -34,9 +34,11 @@ using MediaPortal.Common.Services.Dokan;
 using MediaPortal.Common.Services.Dokan.Native;
 using FileAccess = MediaPortal.Common.Services.Dokan.FileAccess;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
+using System.Runtime.Versioning;
 
 namespace Dokan
 {
+  [SupportedOSPlatform("windows")]
   internal class Proxy
   {
     #region Delegates

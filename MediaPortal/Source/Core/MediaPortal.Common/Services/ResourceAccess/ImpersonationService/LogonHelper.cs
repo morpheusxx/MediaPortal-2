@@ -29,12 +29,14 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using MediaPortal.Common.Logging;
 using MediaPortal.Utilities.Security;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
 {
   /// <summary>
   /// Helper class to encapsulate the native LogonUser API function
   /// </summary>
+  [SupportedOSPlatform("windows")]
   public class LogonHelper
   {
     #region Enums

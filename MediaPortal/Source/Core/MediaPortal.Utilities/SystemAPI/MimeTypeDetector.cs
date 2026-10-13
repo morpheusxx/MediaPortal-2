@@ -1107,6 +1107,8 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <returns>Mime type or <c>null</c>, if the mime type could not be examined.</returns>
     public static string GetMimeTypeFromRegistry(string filename)
     {
+      if (!OperatingSystem.IsWindows())
+        return null;
       try
       {
         string ext = Path.GetExtension(filename);
@@ -1157,6 +1159,9 @@ namespace MediaPortal.Utilities.SystemAPI
 
     private static string GetMimeFromStream(Stream fs)
     {
+      // Content sniffing uses urlmon.dll, which only exists on Windows. Callers fall back to the extension table.
+      if (!OperatingSystem.IsWindows())
+        return null;
       byte[] buffer = new byte[256];
       try
       {

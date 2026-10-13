@@ -220,6 +220,8 @@ namespace MediaPortal.Utilities.Network
     public static bool GetUNCPath(string localMountPath, out string uncPath)
     {
       uncPath = null;
+      if (!OperatingSystem.IsWindows())
+        return false;
       StringBuilder sb = new StringBuilder(512);
       int size = sb.Capacity;
 
@@ -332,6 +334,9 @@ namespace MediaPortal.Utilities.Network
     /// <returns>Collection of shares of the given <paramref name="server"/>.</returns>
     public static ICollection<Share> EnumerateShares(string server)
     {
+      if (!OperatingSystem.IsWindows())
+        return new List<Share>();
+
       // Works for Win2k and up
       server = server.ToUpper();
       if (!server.StartsWith(@"\\"))

@@ -24,6 +24,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.ServiceProcess;
 using System.Threading;
 using MediaPortal.Common.Logging;
@@ -31,6 +32,10 @@ using MediaPortal.Utilities.SystemAPI;
 
 namespace MediaPortal.Common.Services.Runtime
 {
+  /// <summary>
+  /// Receives Windows power broadcast messages (suspend/resume) via a hidden message window.
+  /// </summary>
+  [SupportedOSPlatform("windows")]
   public class PowerEventHandler : IDisposable
   {
     #region Fields

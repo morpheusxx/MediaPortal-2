@@ -24,6 +24,7 @@
 
 using System;
 using System.Threading;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
 {
@@ -38,6 +39,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
   /// Make sure that objects of this class are properly disposed after usage so that the underlying
   /// <see cref="WindowsIdentityWrapper"/> is actually disposed.
   /// </remarks>
+  [SupportedOSPlatform("windows")]
   internal sealed class TokenWrapper : IDisposable
   {
     #region Consts

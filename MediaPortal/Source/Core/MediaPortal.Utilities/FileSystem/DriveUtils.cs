@@ -24,7 +24,6 @@
 
 using System;
 using System.IO;
-using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -224,12 +223,9 @@ namespace MediaPortal.Utilities.FileSystem
     {
       try
       {
-        string cmd = String.Format("win32_logicaldisk.deviceid=\"{0}:\"", drive[0]);
-        using (ManagementObject disk = new ManagementObject(cmd))
-        {
-          disk.Get();
-          return Int64.Parse(disk["Size"].ToString());
-        }
+        // Drives are identified by drive letter on Windows and by path (mount point) on other platforms
+        DriveInfo nfo = OperatingSystem.IsWindows() ? new DriveInfo(drive[0] + @":\") : new DriveInfo(drive);
+        return nfo.TotalSize;
       }
       catch (Exception)
       {

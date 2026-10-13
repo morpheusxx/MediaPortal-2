@@ -57,11 +57,11 @@ namespace MediaPortal.Utilities.SystemAPI
     /// </summary>
     public const int HWND_BROADCAST = 0xffff;
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    public static extern EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags);
+    [DllImport("kernel32.dll", SetLastError = true, EntryPoint = "SetThreadExecutionState")]
+    private static extern EXECUTION_STATE SetThreadExecutionStateNative(EXECUTION_STATE esFlags);
 
-    [DllImport("powrprof.dll", SetLastError = true)]
-    public static extern bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent);
+    [DllImport("powrprof.dll", SetLastError = true, EntryPoint = "SetSuspendState")]
+    private static extern bool SetSuspendStateNative(bool hibernate, bool forceCritical, bool disableWakeEvent);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SystemParametersInfo(uint uiAction, bool uiParam, IntPtr pvParam, uint fWinIni);
@@ -69,11 +69,30 @@ namespace MediaPortal.Utilities.SystemAPI
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, ref bool result, uint fWinIni);
 
+    /// <summary>
+    /// Informs the system about the required execution state (keep awake). On non-Windows platforms this does nothing
+    /// and returns <c>0</c>.
+    /// </summary>
+    public static EXECUTION_STATE SetThreadExecutionState(EXECUTION_STATE esFlags)
+    {
+      return OperatingSystem.IsWindows() ? SetThreadExecutionStateNative(esFlags) : 0;
+    }
+
+    /// <summary>
+    /// Suspends the system. On non-Windows platforms this is not supported and returns <c>false</c>.
+    /// </summary>
+    public static bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent)
+    {
+      return OperatingSystem.IsWindows() && SetSuspendStateNative(hibernate, forceCritical, disableWakeEvent);
+    }
+
     #region ExitWindowsEx
 
     // Source: http://ithoughthecamewithyou.com/post/Reboot-computer-in-C-NET.aspx
     public static void ExitWindowsEx(EXIT_WINDOWS exitMode)
     {
+      if (!OperatingSystem.IsWindows())
+        throw new PlatformNotSupportedException("ExitWindowsEx is only supported on Windows");
       IntPtr tokenHandle = IntPtr.Zero;
 
       try
@@ -283,11 +302,21 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <param name="wparam">Additional message-specific information.</param>
     /// <param name="lparam">Additional message-specific information.</param>
     /// <returns><c>true</c>, if the function succeeds, else <c>false</c>.</returns>
-    [DllImport("user32.dll")]
-    public static extern bool PostMessage(IntPtr hwnd, uint msg, IntPtr wparam, IntPtr lparam);
+    public static bool PostMessage(IntPtr hwnd, uint msg, IntPtr wparam, IntPtr lparam)
+    {
+      return OperatingSystem.IsWindows() && PostMessageNative(hwnd, msg, wparam, lparam);
+    }
 
-    [DllImport("user32.dll", SetLastError = true)]
-    public static extern bool DestroyWindow(IntPtr hWnd);
+    [DllImport("user32.dll", EntryPoint = "PostMessage")]
+    private static extern bool PostMessageNative(IntPtr hwnd, uint msg, IntPtr wparam, IntPtr lparam);
+
+    public static bool DestroyWindow(IntPtr hWnd)
+    {
+      return OperatingSystem.IsWindows() && DestroyWindowNative(hWnd);
+    }
+
+    [DllImport("user32.dll", SetLastError = true, EntryPoint = "DestroyWindow")]
+    private static extern bool DestroyWindowNative(IntPtr hWnd);
 
     /// <summary>
     /// Registers a window message.
@@ -295,11 +324,24 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <param name="lpString">Name of the message to be registered.</param>
     /// <returns>If the message is successfully registered, the return value is a message identifier in the range 0xC000 through 0xFFFF.
     /// If the function fails, the return value is zero. To get extended error information, call <see cref="Marshal.GetLastWin32Error"/>.</returns>
+    public static uint RegisterWindowMessage(string lpString)
+    {
+      return OperatingSystem.IsWindows() ? RegisterWindowMessageNative(lpString) : 0;
+    }
+
     [DllImport("user32.dll", EntryPoint = "RegisterWindowMessageW")]
-    public static extern uint RegisterWindowMessage([MarshalAs(UnmanagedType.LPWStr)] string lpString);
+    private static extern uint RegisterWindowMessageNative([MarshalAs(UnmanagedType.LPWStr)] string lpString);
+
+    public static IntPtr CreateWindowEx(int dwExStyle, string lpClassName, string lpWindowName, int dwStyle, int x, int y,
+                           int nWidth, int nHeight, uint hWndParent, int hMenu, int hInstance, int lpParam)
+    {
+      return OperatingSystem.IsWindows() ?
+          CreateWindowExNative(dwExStyle, lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam) :
+          IntPtr.Zero;
+    }
 
     [DllImport("user32.dll", EntryPoint = "CreateWindowExW", SetLastError = true)]
-    public static extern IntPtr CreateWindowEx(int dwExStyle, [MarshalAs(UnmanagedType.LPWStr)] string lpClassName,
+    private static extern IntPtr CreateWindowExNative(int dwExStyle, [MarshalAs(UnmanagedType.LPWStr)] string lpClassName,
                            [MarshalAs(UnmanagedType.LPWStr)] string lpWindowName, int dwStyle, int x, int y,
                            int nWidth, int nHeight, uint hWndParent, int hMenu, int hInstance,
                            int lpParam);
@@ -321,10 +363,15 @@ namespace MediaPortal.Utilities.SystemAPI
       get
       {
         bool result = false;
-        SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, ref result, 0);
+        if (OperatingSystem.IsWindows())
+          SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, ref result, 0);
         return result;
       }
-      set { SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, value, IntPtr.Zero, 0); }
+      set
+      {
+        if (OperatingSystem.IsWindows())
+          SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, value, IntPtr.Zero, 0);
+      }
     }
 
     /// <summary>
@@ -371,8 +418,11 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <param name="user">If set to <c>true</c>, the autostart application will be added to the HCKU
     /// registry hive, else it will be added to the HKLM hive.</param>
     /// <exception cref="EnvironmentException">If the appropriate registry key cannot accessed.</exception>
+    /// <exception cref="PlatformNotSupportedException">On non-Windows platforms.</exception>
     public static void AddAutostartApplication(string applicationPath, string registerName, bool user)
     {
+      if (!OperatingSystem.IsWindows())
+        throw new PlatformNotSupportedException("Autostart registration via the registry is only supported on Windows");
       RegistryKey root = user ? Registry.CurrentUser : Registry.LocalMachine;
       // open RegisteryKey with write access
       using (RegistryKey key = root.OpenSubKey(AUTOSTART_REGISTRY_KEY, true))
@@ -391,8 +441,11 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <param name="user">If set to <c>true</c>, the autostart application will be removed from the HCKU
     /// registry hive, else it will be removed from the HKLM hive.</param>
     /// <exception cref="EnvironmentException">If the appropriate registry key cannot accessed.</exception>
+    /// <exception cref="PlatformNotSupportedException">On non-Windows platforms.</exception>
     public static void RemoveAutostartApplication(string registerName, bool user)
     {
+      if (!OperatingSystem.IsWindows())
+        throw new PlatformNotSupportedException("Autostart registration via the registry is only supported on Windows");
       RegistryKey root = user ? Registry.CurrentUser : Registry.LocalMachine;
       // open RegisteryKey with write access
       using (RegistryKey key = root.OpenSubKey(AUTOSTART_REGISTRY_KEY, true))
@@ -415,6 +468,8 @@ namespace MediaPortal.Utilities.SystemAPI
     /// <paramref name="registerName"/>.</returns>
     public static string GetAutostartApplicationPath(string registerName, bool user)
     {
+      if (!OperatingSystem.IsWindows())
+        return null;
       RegistryKey root = user ? Registry.CurrentUser : Registry.LocalMachine;
       using (RegistryKey key = root.OpenSubKey(AUTOSTART_REGISTRY_KEY))
         return key == null ? null : key.GetValue(registerName) as string;

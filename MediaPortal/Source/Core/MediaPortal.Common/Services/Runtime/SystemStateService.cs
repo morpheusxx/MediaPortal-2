@@ -23,6 +23,8 @@
 #endregion
 
 using System;
+using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.ServiceProcess;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.Runtime;
@@ -33,14 +35,38 @@ namespace MediaPortal.Common.Services.Runtime
   public class SystemStateService : ISystemStateService, IDisposable
   {
     protected SystemState _state = SystemState.Starting;
-    protected PowerEventHandler _powerEventHandler;
+    protected IDisposable _powerEventHandler;
     protected SuspendLevel _lastContinuousSuspendLevel = SuspendLevel.None;
 
     public SystemStateService()
     {
-      _powerEventHandler = new PowerEventHandler();
-      _powerEventHandler.OnPowerEvent += SendSystemStatePowerMessage;
-      _powerEventHandler.OnQuerySuspend += OnQuerySuspend;
+      // Power events (suspend/resume notifications) are currently only available on Windows
+      if (OperatingSystem.IsWindows())
+        _powerEventHandler = CreatePowerEventHandler();
+    }
+
+    [SupportedOSPlatform("windows")]
+    private PowerEventHandler CreatePowerEventHandler()
+    {
+      PowerEventHandler handler = new PowerEventHandler();
+      handler.OnPowerEvent += SendSystemStatePowerMessage;
+      handler.OnQuerySuspend += OnQuerySuspend;
+      return handler;
+    }
+
+    /// <summary>
+    /// Runs <c>systemctl</c> with the given <paramref name="command"/> on non-Windows systems.
+    /// </summary>
+    protected static void SystemCtl(string command)
+    {
+      try
+      {
+        Process.Start(new ProcessStartInfo("systemctl", command) { UseShellExecute = false });
+      }
+      catch (Exception ex)
+      {
+        ServiceRegistration.Get<ILogger>().Error("SystemStateService: Failed to execute 'systemctl {0}'", ex, command);
+      }
     }
 
     public void SwitchSystemState(SystemState newState, bool sendMessage)
@@ -62,6 +88,12 @@ namespace MediaPortal.Common.Services.Runtime
       ServiceRegistration.Get<ILogger>().Info("SystemStateService: Shutting down");
       SystemMessaging.SendSystemStateChangeMessage(SystemState.ShuttingDown);
 
+      if (!OperatingSystem.IsWindows())
+      {
+        SystemCtl("poweroff");
+        return;
+      }
+
       WindowsAPI.EXIT_WINDOWS flags = WindowsAPI.EXIT_WINDOWS.EWX_POWEROFF;
       if (force)
         flags |= WindowsAPI.EXIT_WINDOWS.EWX_FORCE;
@@ -76,6 +108,12 @@ namespace MediaPortal.Common.Services.Runtime
       ServiceRegistration.Get<ILogger>().Info("SystemStateService: Restarting");
       SystemMessaging.SendSystemStateChangeMessage(SystemState.ShuttingDown);
 
+      if (!OperatingSystem.IsWindows())
+      {
+        SystemCtl("reboot");
+        return;
+      }
+
       WindowsAPI.EXIT_WINDOWS flags = WindowsAPI.EXIT_WINDOWS.EWX_REBOOT;
       if (force)
         flags |= WindowsAPI.EXIT_WINDOWS.EWX_FORCE;
@@ -88,6 +126,12 @@ namespace MediaPortal.Common.Services.Runtime
       ServiceRegistration.Get<ILogger>().Info("SystemStateService: Suspending");
       SystemMessaging.SendSystemStateChangeMessage(SystemState.Suspending);
 
+      if (!OperatingSystem.IsWindows())
+      {
+        SystemCtl("suspend");
+        return;
+      }
+
       WindowsAPI.SetSuspendState(false, false, false);
     }
 
@@ -95,6 +139,12 @@ namespace MediaPortal.Common.Services.Runtime
     {
       ServiceRegistration.Get<ILogger>().Info("SystemStateService: Hibernating");
       SystemMessaging.SendSystemStateChangeMessage(SystemState.Hibernating);
+
+      if (!OperatingSystem.IsWindows())
+      {
+        SystemCtl("hibernate");
+        return;
+      }
 
       WindowsAPI.SetSuspendState(true, false, false);
     }
@@ -104,6 +154,12 @@ namespace MediaPortal.Common.Services.Runtime
       ServiceRegistration.Get<ILogger>().Info("SystemStateService: Logging off");
       SystemMessaging.SendSystemStateChangeMessage(SystemState.ShuttingDown);
 
+      if (!OperatingSystem.IsWindows())
+      {
+        ServiceRegistration.Get<ILogger>().Warn("SystemStateService: Logoff is not supported on this platform");
+        return;
+      }
+
       WindowsAPI.EXIT_WINDOWS flags = WindowsAPI.EXIT_WINDOWS.EWX_LOGOFF;
       if (force)
         flags |= WindowsAPI.EXIT_WINDOWS.EWX_FORCE;
@@ -111,6 +167,7 @@ namespace MediaPortal.Common.Services.Runtime
       WindowsAPI.ExitWindowsEx(flags);
     }
 
+    [SupportedOSPlatform("windows")]
     protected void SendSystemStatePowerMessage(PowerBroadcastStatus status)
     {
       switch (status)
@@ -159,7 +216,7 @@ namespace MediaPortal.Common.Services.Runtime
 
     public void Dispose()
     {
-      _powerEventHandler.Dispose();
+      _powerEventHandler?.Dispose();
     }
   }
 }

@@ -1,75 +1,62 @@
 # Phase 0 dependency inventory (portable core: `MediaPortal.Utilities`, `MediaPortal.Common`, `UPnP`)
 
-Generated from the CA1416 warnings of a Windows build with `Utilities`, `Common` and `UPnP` targeting plain `net10.0`
-(2026-10-13), plus a grep for P/Invoke. **CA1416 does not see P/Invoke into kernel32/advapi32 etc.**: those compile fine
-and only fail at runtime on Linux, so both lists matter.
+Status 2026-10-13: the portable core builds as plain `net10.0` with **zero CA1416 warnings**, and CA1416 is an **error** for every
+non-`-windows` project (`Directory.Build.targets`). New Windows-only calls in portable projects therefore fail the build.
 
-Note: `VersionInfo.cs` used to stamp `[assembly: SupportedOSPlatform("windows")]` on every project, which hid all of this.
+Note: `VersionInfo.cs` used to stamp `[assembly: SupportedOSPlatform("windows")]` on every project, which hid all CA1416 warnings.
 It is now only emitted for projects with a `*-windows` TFM (`MP2_WINDOWS_TFM`, set in `Directory.Build.targets`).
 
-## CA1416 hits in portable projects (file: count)
+CA1416 does not see P/Invoke (kernel32, user32, ...): those compile fine and only fail at runtime on Linux. They are tracked separately below.
 
-- `Source/Core/MediaPortal.Common/Services/Logging/CrashLoggerBase.cs`: 13
-- `Source/Core/MediaPortal.Common/Services/Dokan/Proxy.cs`: 13
-- `Source/Core/MediaPortal.Utilities/SystemAPI/WindowsAPI.cs`: 9
-- `Source/Core/MediaPortal.Utilities/Process/IpcServer.cs`: 7
-- `Source/Core/MediaPortal.Utilities/Process/SingleInstanceHelper.cs`: 5
-- `Source/Core/MediaPortal.Common/Services/ResourceAccess/ImpersonationService/WindowsIdentityWrapper.cs`: 5
-- `Source/Core/MediaPortal.Common/Services/Runtime/SystemStateService.cs`: 4
-- `Source/Core/MediaPortal.Utilities/FileSystem/DriveUtils.cs`: 3
-- `Source/Core/MediaPortal.Utilities/SystemAPI/MimeTypeDetector.cs`: 2
-- `Source/Core/MediaPortal.Utilities/ThreadingUtils.cs`: 1
-- `Source/Core/MediaPortal.Common/Services/Runtime/PowerEventHandler.cs`: 1
-- `Source/Core/MediaPortal.Common/Services/ResourceAccess/ImpersonationService/LogonHelper.cs`: 1
-- `Source/Core/MediaPortal.Common/Services/Dokan/DokanFileInfo.cs`: 1
-- `Source/Core/MediaPortal.Common/ApplicationCore.cs`: 1
+## How the portable core was made clean
 
-Main flagged APIs (`System.Drawing` in `ImageUtilities`/`BaseInfo`/`BaseFanArtHandler` is done, see below):
-`Registry*` (`WindowsAPI`, `ApplicationCore`, `MimeTypeDetector`, `CrashLoggerBase`),
-`WindowsIdentity`/ACL types (impersonation, `IpcServer`, `SingleInstanceHelper`), `Thread.SetApartmentState`,
-Dokan proxy, `SystemStateService`/`PowerEventHandler`.
+| Area | Approach |
+|---|---|
+| `System.Drawing` (`ImageUtilities`, `BaseInfo`, `BaseFanArtHandler`) | `ImageUtilities` rewritten on SkiaSharp; old API kept as `GdiImageUtilities` in `MediaPortal.Utilities.Windows` |
+| WinForms/GDI helpers (SplashScreen, FormExtensions, ControlAwaiter, LauncherExceptionHandling, FormDpiAwareness, UiCrashLogger) | moved to `MediaPortal.Utilities.Windows` (`net10.0-windows`), namespaces unchanged |
+| `WindowsAPI` (shutdown, suspend, keep-awake, window messages, screensaver, autostart registry) | public methods guarded with `OperatingSystem.IsWindows()`; harmless fallbacks (`0`/`false`/no-op), autostart Add/Remove throw `PlatformNotSupportedException`, `GetAutostartApplicationPath` returns `null` |
+| `SystemStateService` | Windows paths unchanged; elsewhere shutdown/restart/suspend/hibernate run `systemctl`, logoff is logged as unsupported; power events only created on Windows (`PowerEventHandler` is `SupportedOSPlatform("windows")`) |
+| Impersonation (`ImpersonationService`, `WindowsIdentityWrapper`, `TokenWrapper`, `LogonHelper`, `AsyncImpersonationProcess`) | marked Windows-only; new `NoImpersonationService` (runs everything as current user, credential registration returns `false`) is registered on other platforms |
+| Dokan virtual drive (`Dokan`, `DokanFileInfo`, `Proxy`, `ResourceMountingService`) | marked Windows-only; new `NullResourceMountingService` on other platforms (mounting reported unavailable, which callers already handle) |
+| `IpcServer` | Windows keeps ACL + message mode; elsewhere byte-mode pipe with `CurrentUserOnly` (protocol is length-prefixed, the client already uses byte mode) |
+| `SingleInstanceHelper` | mutex ACL only on Windows; `SwitchToCurrentInstance` window broadcast is a no-op elsewhere (needs an IPC based replacement for Linux) |
+| `MimeTypeDetector` | urlmon content sniffing and registry lookup only on Windows; the built-in extension table is the fallback |
+| `ThreadingUtils.RunSTAThreaded` | STA only set on Windows |
+| `CrashLoggerBase`, `ApplicationCore` | WMI/registry system info on Windows; `System.IO.DriveInfo`, `/proc/cpuinfo` and `RuntimeInformation` elsewhere |
+| `DriveUtils.GetDiskSize` | WMI replaced by `DriveInfo.TotalSize` |
+| `TaskScheduler` | wake-from-standby waitable timer only created on Windows |
+| `SharesEnumerator` | UNC/share enumeration guarded (returns `false`/empty off Windows) |
 
-## P/Invoke (not covered by CA1416) in portable projects
+## Remaining P/Invoke in portable projects (not guarded, Windows-only by nature)
 
-- `Source/Core/MediaPortal.Common/Services/Dokan/Native/DokanNativeMethods.cs`
-- `Source/Core/MediaPortal.Common/Services/ResourceAccess/ImpersonationService/AsyncImpersonationProcess.cs`
-- `Source/Core/MediaPortal.Common/Services/ResourceAccess/ImpersonationService/LogonHelper.cs`
-- `Source/Core/MediaPortal.Common/Services/TaskScheduler/TaskWaitableTimer.cs`
-- `Source/Core/MediaPortal.Utilities/FileSystem/DriveUtils.cs`
-- `Source/Core/MediaPortal.Utilities/MimeTypeDetector.cs`
-- `Source/Core/MediaPortal.Utilities/Network/NetworkResourcesEnumerator.cs`
-- `Source/Core/MediaPortal.Utilities/Network/SharesEnumerator.cs`
-- `Source/Core/MediaPortal.Utilities/Security/SafeThreadHandle.cs`
-- `Source/Core/MediaPortal.Utilities/Security/SafeTokenHandle.cs`
-- `Source/Core/MediaPortal.Utilities/SystemAPI/MimeTypeDetector.cs`
-- `Source/Core/MediaPortal.Utilities/SystemAPI/NativeMethods.cs`
-- `Source/Core/MediaPortal.Utilities/SystemAPI/WindowsAPI.cs`
+These compile everywhere but must not be reached on Linux. Reachability today:
 
-## Already split out into `MediaPortal.Utilities.Windows` (net10.0-windows)
+- `Utilities/FileSystem/DriveUtils.cs` (eject/volume P/Invoke, drive-letter assumptions): only used by the client's removable-media UI.
+- `Utilities/Network/NetworkResourcesEnumerator.cs`: only used by `NetworkNeighborhoodResourceProvider` (Windows plugin).
+- `Utilities/Security/SafeTokenHandle.cs`, `SafeThreadHandle.cs`, `Process/ImpersonationHelper.cs`, `ImpersonationProcess.cs`,
+  `SystemAPI/NativeMethods.cs`: used by the Windows-only impersonation/power code, and by the `[Obsolete]` impersonating overloads in `ProcessUtils`.
+- `Common/Services/Dokan/Native/DokanNativeMethods.cs`, `ImpersonationService/*`: only reachable from the Windows-only classes above.
+- Native library wrappers (MediaInfo, FreeImage, OpenCV, BASS, FreeType): need per-RID native packaging, see Phase 1/4.
 
-`Screens/SplashScreen`, `Screens/FormExtensions` (from Utilities); `ControlAwaiter`, `LauncherExceptionHandling`,
-`FormDpiAwareness`, `UiCrashLogger` (from Common). Namespaces were kept so callers did not change.
+Known leftovers that are not CA1416-visible: `Thread.Abort` usage in `ThreadingUtils` (throws on .NET Core), drive-letter/DOS path
+assumptions in `LocalFsResourceProviderBase.ToDosPath` and friends (Phase 1).
 
-## Suggested next work, in order
+## Other System.Drawing users (outside the portable core)
 
-1. (done) `System.Drawing` in the portable core. Next: Skia replacements for the remaining System.Drawing users listed above.
-2. Registry/`WindowsAPI`/`MimeTypeDetector`/`ApplicationCore`: guard with `OperatingSystem.IsWindows()` or move behind an interface.
-3. Impersonation, `IpcServer`/`SingleInstanceHelper`, Dokan, `DriveUtils`, `NetworkResourcesEnumerator`/`SharesEnumerator`,
-   `TaskWaitableTimer`, power/system-state: introduce platform interfaces with Windows implementations (and Linux stubs).
-4. Once warnings are zero, make CA1416 an error on the portable projects so regressions fail the build.
-5. Then continue outward: `UPnP` is already plain `net10.0`; next candidates are `MediaPortal.Backend`, `ServerBase`,
-   `ServerSettings.*`, `SQLiteDatabase`, and the metadata extractors with no Windows dependency.
+`GDIThumbnailProvider` (Windows-only; a Skia-based thumbnail provider is needed for Linux), `ImageMetadataExtractor` (EXIF),
+`TranscodingService`, `MP2Extended`, `OnlineLibraries`/TvdbLib, `BluRayMetadataExtractor` resources, `BassAudioMetadataExtractor`.
+`ShellThumbnailProvider` is a legacy net4.7 project in no solution and was left untouched.
 
-## Done: System.Drawing removed from the portable core
+## Packaging notes
 
-- `MediaPortal.Utilities.Graphics.ImageUtilities` is now SkiaSharp based and portable: `ResizeImage(Stream, ImageOutputFormat, maxW, maxH)`
-  (never upscales, JPEG default quality 75 like GDI+) and `SaveAsJpeg(byte[], path)`. Used by `BaseInfo`, `BaseFanArtHandler`,
-  `BluRayMetadataExtractor` and the Login plugin.
-- The old Image/Bitmap API moved unchanged to `GdiImageUtilities` in `MediaPortal.Utilities.Windows` (SplashScreen, TextureAssetCore,
-  GDIThumbnailProvider use it). `GDIThumbnailProvider` itself is still GDI+ and therefore Windows-only; a Skia-based thumbnail provider
-  is needed for Linux (same for `ImageMetadataExtractor` EXIF, `TranscodingService`, `MP2Extended`, `OnlineLibraries`/TvdbLib).
-- Packaging: `SkiaSharp` is referenced with `PrivateAssets="all"` from `Utilities` and added to the executables (`Server` also gets
-  `SkiaSharp.NativeAssets.Linux.NoDependencies`, `Client` only the Windows/macOS assets). Without this every project's output
-  received ~10 platform copies of libSkiaSharp (filled the disk). Note the future Linux client will want
-  `SkiaSharp.NativeAssets.Linux` (fontconfig) instead of the NoDependencies variant, not both.
-- `ShellThumbnailProvider` is a legacy net4.7 project that is in no solution; it still calls the old API and was left untouched.
+`SkiaSharp` is referenced with `PrivateAssets="all"` from `Utilities` and added to the executables (`Server` also gets
+`SkiaSharp.NativeAssets.Linux.NoDependencies`, `Client` only the Windows/macOS assets). Without this every project's output received
+~10 platform copies of libSkiaSharp (filled the disk). The future Linux client will want `SkiaSharp.NativeAssets.Linux` (fontconfig)
+instead of the NoDependencies variant, not both.
+
+## Next
+
+1. Split further projects to plain `net10.0` (`MediaPortal.Backend`, `ServerBase`, `ServerSettings.*`, `SQLiteDatabase`,
+   metadata extractors without Windows dependencies, resource providers), each guarded by the new CA1416 error.
+2. Linux server solution filter (`MP2-Server-Linux.slnf`) and a Linux CI job.
+3. Server host without WinForms/Windows service (Phase 1).

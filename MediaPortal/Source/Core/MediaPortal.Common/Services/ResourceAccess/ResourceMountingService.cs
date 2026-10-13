@@ -31,9 +31,11 @@ using MediaPortal.Common.PathManager;
 using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Common.Services.Dokan;
 using MediaPortal.Common.SystemResolver;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess
 {
+  [SupportedOSPlatform("windows")]
   public class ResourceMountingService : IResourceMountingService, IDisposable
   {
     protected object _syncObj = new object();

@@ -27,6 +27,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Runtime.Versioning;
 
 namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
 {
@@ -40,6 +41,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
   /// It is therefore not recommended to cast this class to <see cref="Process"/> because then the respective base class
   /// methods are called instead of the new ones.
   /// </remarks>
+  [SupportedOSPlatform("windows")]
   internal class AsyncImpersonationProcess : Process, IProcess
   {
     #region External methods and related consts, structs, classes and enums

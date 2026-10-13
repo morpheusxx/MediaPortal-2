@@ -71,8 +71,12 @@ namespace MediaPortal.Common.Services.TaskScheduler
     {
       _settings = ServiceRegistration.Get<ISettingsManager>().Load<TaskSchedulerSettings>();
       SaveChanges(false);
-      _wakeUpTimer = new TaskWaitableTimer();
-      _wakeUpTimer.OnTimerExpired += OnResume;
+      // Waking up the system from standby for scheduled tasks relies on a Windows waitable timer
+      if (OperatingSystem.IsWindows())
+      {
+        _wakeUpTimer = new TaskWaitableTimer();
+        _wakeUpTimer.OnTimerExpired += OnResume;
+      }
       _messageQueue = new AsynchronousMessageQueue(this, new[] { SystemMessaging.CHANNEL });
       _messageQueue.MessageReceived += OnMessageReceived;
       // Message queue will be started in Startup()
@@ -170,7 +174,8 @@ namespace MediaPortal.Common.Services.TaskScheduler
           double secondsToWait = (nextTaskRun - now).TotalSeconds;
 
           ServiceRegistration.Get<ILogger>().Debug("TaskScheduler: Schedule next wake up: {0} (in {1} minutes)", nextTaskRun, (int) secondsToWait / 60);
-          _wakeUpTimer.SecondsToWait = secondsToWait;
+          if (_wakeUpTimer != null)
+            _wakeUpTimer.SecondsToWait = secondsToWait;
         }
       }
     }
@@ -297,7 +302,7 @@ namespace MediaPortal.Common.Services.TaskScheduler
     public void Shutdown()
     {
       _messageQueue.Shutdown();
-      _wakeUpTimer.Close();
+      _wakeUpTimer?.Close();
       StopWorker();
       ServiceRegistration.Get<ISettingsManager>().Save(_settings);
     }

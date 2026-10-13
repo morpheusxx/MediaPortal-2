@@ -4,6 +4,10 @@
          Lives in .targets so it is appended after project-level NoWarn overrides. -->
     <NoWarn>$(NoWarn);WFO1000</NoWarn>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetPlatformIdentifier)' != 'windows'">
+    <!-- Portable projects must not call Windows-only APIs unguarded (OperatingSystem.IsWindows() / SupportedOSPlatform). -->
+    <WarningsAsErrors>$(WarningsAsErrors);CA1416</WarningsAsErrors>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(TargetPlatformIdentifier)' == 'windows'">
     <!-- Consumed by VersionInfo.cs to emit [assembly: SupportedOSPlatform("windows")] only for Windows-only projects. -->
     <DefineConstants>$(DefineConstants);MP2_WINDOWS_TFM</DefineConstants>

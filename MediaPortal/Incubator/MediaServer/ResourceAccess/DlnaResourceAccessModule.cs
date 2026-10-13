@@ -35,8 +35,7 @@ using MediaPortal.Utilities.FileSystem;
 using MediaPortal.Utilities.SystemAPI;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
+using MediaPortal.Utilities.Graphics;
 using System.Globalization;
 using System.IO;
 using System.Net;
@@ -376,8 +375,8 @@ namespace MediaPortal.Extensions.MediaServer.ResourceAccess
             context.Response.ContentType = "image/" + context.Request.Query["type"];
             using (MemoryStream ms = new MemoryStream())
             {
-              Image img = Image.FromStream(fs);
-              img.Save(ms, ImageFormat.Png);
+              using (Stream png = ImageUtilities.ResizeImage(fs, ImageOutputFormat.Png, int.MaxValue, int.MaxValue))
+                png?.CopyTo(ms);
               await SendResourceFileAsync(context, ms, false);
             }
           }

@@ -53,7 +53,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// <summary>
     /// Image of the thumbnail
     /// </summary>
-    public Image ThumbImage { get; set; }
+    public byte[] ThumbImage { get; set; }
 
 
     /// <summary>
@@ -100,7 +100,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
         {
           try
           {
-            Image img = null;
+            byte[] img = null;
             String cacheName = CreateCacheName(Id, ThumbPath);
 
             if (CacheProvider != null && CacheProvider.Initialised)
@@ -146,7 +146,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// </summary>
     /// <param name="img">the image to be used forthe banner</param>
     /// <returns>true if the loading completed sccessfully, false otherwise</returns>
-    public bool LoadThumb(Image img)
+    public bool LoadThumb(byte[] img)
     {
       if (img != null)
       {

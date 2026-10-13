@@ -80,7 +80,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// <summary>
     /// Vignette Image
     /// </summary>
-    public Image VignetteImage { get; set; }
+    public byte[] VignetteImage { get; set; }
 
     /// <summary>
     /// These are the colors selected by the artist that match the image. The format is 3 colors separated by a pipe "|". This field has leading and trailing pipes. Each color is comma separated RGB, with each color portion being an integer from 1 to 255. So the format looks like |r,g,b|r,g,b|r,g,b|. The first color is the light accent color. The second color is the dark accent color. The third color is the neutral mid-tone color. 
@@ -144,7 +144,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
         VignetteLoading = true;
         try
         {
-          Image img = null;
+          byte[] img = null;
           String cacheName = CreateCacheName(Id, VignettePath);
           if (CacheProvider != null && CacheProvider.Initialised)
           {//try to load the image from cache first
@@ -188,7 +188,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// </summary>
     /// <param name="img">Image object that should be used for this banner</param>
     /// <returns>True if successful, false otherwise</returns>
-    public bool LoadVignette(Image img)
+    public bool LoadVignette(byte[] img)
     {
       if (img != null)
       {

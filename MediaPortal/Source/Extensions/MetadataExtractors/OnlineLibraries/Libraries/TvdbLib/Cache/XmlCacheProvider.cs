@@ -427,9 +427,9 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
               foreach (TvdbEpisode e in series.Episodes.Where(e => e.SeasonNumber == season && e.EpisodeNumber == episode))
               {
                 if (epImageFile.Contains("thumb"))
-                  e.Banner.LoadThumb(Image.FromFile(epImageFile));
+                  e.Banner.LoadThumb(File.ReadAllBytes(epImageFile));
                 else
-                  e.Banner.LoadBanner(Image.FromFile(epImageFile));
+                  e.Banner.LoadBanner(File.ReadAllBytes(epImageFile));
                 break;
               }
             }
@@ -459,11 +459,11 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
               foreach (TvdbBanner banner in bannerList.Where(banner => banner.Id == bannerId))
               {
                 if (b.Contains("thumb") && banner.GetType().BaseType == typeof(TvdbBannerWithThumb))
-                  ((TvdbBannerWithThumb)banner).LoadThumb(Image.FromFile(b));
+                  ((TvdbBannerWithThumb)banner).LoadThumb(File.ReadAllBytes(b));
                 else if (b.Contains("vignette") && banner.GetType() == typeof(TvdbFanartBanner))
-                  ((TvdbFanartBanner)banner).LoadVignette(Image.FromFile(b));
+                  ((TvdbFanartBanner)banner).LoadVignette(File.ReadAllBytes(b));
                 else
-                  banner.LoadBanner(Image.FromFile(b));
+                  banner.LoadBanner(File.ReadAllBytes(b));
               }
             }
             catch (Exception)
@@ -489,7 +489,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
             {
               int actorId = Int32.Parse(b.Remove(b.IndexOf(".")).Remove(0, b.LastIndexOf("_") + 1));
               foreach (TvdbActor actor in actorList.Where(actor => actor.Id == actorId))
-                actor.ActorImage.LoadBanner(Image.FromFile(b));
+                actor.ActorImage.LoadBanner(File.ReadAllBytes(b));
             }
             catch (Exception)
             {
@@ -749,7 +749,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
     /// <param name="image">banner to save</param>
     /// <param name="seriesId">id of series</param>
     /// <param name="fileName">filename (will be the same name used by LoadImageFromCache)</param>
-    public void SaveToCache(Image image, int seriesId, string folderName, string fileName)
+    public void SaveToCache(byte[] image, int seriesId, string folderName, string fileName)
     {
       String imageRoot = _rootFolder + Path.DirectorySeparatorChar + seriesId;
       if (!string.IsNullOrEmpty(folderName))
@@ -764,7 +764,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
         if (Directory.Exists(imageRoot))
         {
           if (image != null)
-            image.Save(imageRoot + Path.DirectorySeparatorChar + fileName);
+            File.WriteAllBytes(imageRoot + Path.DirectorySeparatorChar + fileName, image);
         }
         else
         {
@@ -783,7 +783,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
     /// <param name="seriesId">series id</param>
     /// <param name="fileName">filename of the image (same one as used by SaveToCache)</param>
     /// <returns>The loaded image or null if the image wasn't found</returns>
-    public Image LoadImageFromCache(int seriesId, string folderName, string fileName)
+    public byte[] LoadImageFromCache(int seriesId, string folderName, string fileName)
     {
       String imageRoot = _rootFolder + Path.DirectorySeparatorChar + seriesId;
       if (!string.IsNullOrEmpty(folderName))
@@ -798,7 +798,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
           {
             try
             {
-              return Image.FromFile(fName);
+              return File.ReadAllBytes(fName);
             }
             catch (Exception ex)
             {

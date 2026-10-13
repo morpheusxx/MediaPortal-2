@@ -93,7 +93,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// <summary>
     /// Image data of the banner
     /// </summary>
-    public Image BannerImage { get; set; }
+    public byte[] BannerImage { get; set; }
 
     /// <summary>
     /// True if the image data has been already loaded, false otherwise
@@ -155,7 +155,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
         if (BannerPath.Equals("")) return false;
         try
         {
-          Image img = null;
+          byte[] img = null;
           String cacheName = CreateCacheName(Id, BannerPath);
           if (CacheProvider != null && CacheProvider.Initialised)
           {//try to load the image from cache first
@@ -269,7 +269,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// </summary>
     /// <param name="img">Image object that should be used for this banner</param>
     /// <returns>True if successful, false otherwise</returns>
-    public bool LoadBanner(Image img)
+    public bool LoadBanner(byte[] img)
     {
       if (img != null)
       {
@@ -277,8 +277,6 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
         IsLoaded = true;
         return true;
       }
-      if (BannerImage != null)
-        BannerImage.Dispose();
       BannerImage = null;
       IsLoaded = false;
       return false;
@@ -309,16 +307,12 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     /// </summary>
     /// <param name="path">Path of image that should be used for this banner</param>
     /// <returns>True if successful, false otherwise</returns>
-    protected async Task<Image> LoadImageAsync(String path)
+    protected async Task<byte[]> LoadImageAsync(String path)
     {
       try
       {
         WebClient client = new CompressionWebClient();
-        byte[] imgData = await client.DownloadDataTaskAsync(path).ConfigureAwait(false);
-
-        MemoryStream ms = new MemoryStream(imgData);
-        Image img = Image.FromStream(ms, true, true);
-        return img;
+        return await client.DownloadDataTaskAsync(path).ConfigureAwait(false);
       }
       catch (Exception ex)
       {

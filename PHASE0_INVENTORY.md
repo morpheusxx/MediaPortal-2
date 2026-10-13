@@ -54,9 +54,36 @@ assumptions in `LocalFsResourceProviderBase.ToDosPath` and friends (Phase 1).
 ~10 platform copies of libSkiaSharp (filled the disk). The future Linux client will want `SkiaSharp.NativeAssets.Linux` (fontconfig)
 instead of the NoDependencies variant, not both.
 
+## Server solution: portable vs Windows-only (57 of 68 projects are plain `net10.0`)
+
+Retargeted to `net10.0` (and still building with CA1416 as error): `MediaPortal.Backend`, `ServerBase`, `ServerSettings.*`, `ServerStateService*`,
+`ConfigurationManager`, `SQLiteDatabase`, `OnlineLibraries`, `FanArtService.*`, `MediaInfoLib`, `FFMpegLib`, `FreeImageLib`, `OpenCvLib`, `TagLib`,
+`MatroskaLib`, `BassLibraries`, `BluRay`/`Video`/`Audio`/`BassAudio`/`Movie`/`Series`/`Subtitle`/`Nfo`/`Scriptable`/`Stub`/`TvMosaic` metadata extractors,
+`VideoThumbnailer`, `OCVVideoThumbnailer`, `GenreProvider`, Iso/Zip/AudioCD resource providers, `MediaServer`, `TranscodingService*`, `WakeOnLan.*`,
+SlimTv interface/integration/proxy projects, `codeRR`, `MediaPortal.Mock`, `Tests.MediaServer`.
+
+Still `net10.0-windows`, with the reason:
+
+| Project | Reason |
+|---|---|
+| `MediaPortal.Server` | WinForms `WinExe` + `ServiceBase`; Phase 1 replaces it with a generic host |
+| `ImageMetadataExtractor` | EXIF via `System.Drawing` property items (`ExifMetaInfo`); needs a managed EXIF reader (TagLib#) |
+| `GDIThumbnailProvider`, `WICThumbnailProvider` | GDI+ / WIC (SharpDX); a Skia thumbnail provider replaces them on Linux |
+| `NetworkNeighborhoodResourceProvider` | Win32 network neighborhood (`mpr.dll`) |
+| `MP2Extended` | ~49 `System.Drawing` call sites (`Images.cs`, `BaseGetArtwork`, `OnlineVideosThumbs`); port to `ImageUtilities` |
+| `Tve3RecordingMetadataExtractor`, `SlimTv.Service35` | TV (out of scope), COM / TvEngine |
+| `Tests.Server`, `Test.TranscodingService`, `DevTools` | reference the Windows projects above |
+
+`OnlineLibraries`/TvdbLib: the in-memory `System.Drawing.Image` members of the banner classes (`BannerImage`, `ThumbImage`, `VignetteImage`,
+cache `SaveToCache`/`LoadImageFromCache`) are now `byte[]`. MP2 itself never used the `Image` based API (it uses `LoadImageDataAsync()`).
+`MediaServer` DLNA icon request now converts through `ImageUtilities` (Skia).
+
+Known tooling issue: building/testing a single project outside its solution fails in the repo's `build.targets` copy steps
+(`$(SolutionName)` is `*Undefined*`); build via the solution files (or pass `-p:SolutionName=... -p:SolutionDir=...`). The test projects were
+therefore not run.
+
 ## Next
 
-1. Split further projects to plain `net10.0` (`MediaPortal.Backend`, `ServerBase`, `ServerSettings.*`, `SQLiteDatabase`,
-   metadata extractors without Windows dependencies, resource providers), each guarded by the new CA1416 error.
+1. `ExifMetaInfo` -> managed EXIF reader, `MP2Extended` -> `ImageUtilities`, Skia thumbnail provider (then the remaining Windows image projects can go).
 2. Linux server solution filter (`MP2-Server-Linux.slnf`) and a Linux CI job.
 3. Server host without WinForms/Windows service (Phase 1).

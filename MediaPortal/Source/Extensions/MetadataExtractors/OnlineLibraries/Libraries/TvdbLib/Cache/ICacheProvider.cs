@@ -136,7 +136,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
     /// <param name="seriesId">id of series</param>
     /// <param name="folderName">folder name</param>
     /// <param name="fileName">filename (will be the same name used by LoadImageFromCache)</param>
-    void SaveToCache(Image image, int seriesId, string folderName, string fileName);
+    void SaveToCache(byte[] image, int seriesId, string folderName, string fileName);
 
     /// <summary>
     /// Loads the specified image from the cache
@@ -145,7 +145,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Cache
     /// <param name="folderName">folder name</param>
     /// <param name="fileName">filename of the image (same one as used by SaveToCache)</param>
     /// <returns>The loaded image or null if the image wasn't found</returns>
-    Image LoadImageFromCache(int seriesId, string folderName, String fileName);
+    byte[] LoadImageFromCache(int seriesId, string folderName, String fileName);
 
     /// <summary>
     /// Receives a list of all series that have been cached

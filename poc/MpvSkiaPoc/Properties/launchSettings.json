@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MpvSkiaPoc": {
+      "commandName": "Project",
+      "commandLineArgs": "M:\\Video\\Tron_Trailer_HD.mov"
+    }
+  }
+}

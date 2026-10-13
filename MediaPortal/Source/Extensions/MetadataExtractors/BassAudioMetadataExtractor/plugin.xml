@@ -4,6 +4,7 @@
     PluginId="{85EEF5B4-7648-4747-8990-672E6AC3213A}"
     Author="Morpheus_xx"
     Copyright="GPL"
+    Platforms="Windows"
     Description="Metadata extractor based on BASS.NET for many kinds of audio file formats">
 
   <Version

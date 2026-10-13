@@ -4,6 +4,7 @@
     PluginId="{89F8DD04-1CD5-4F78-8105-6979157E8936}"
     Author = "Morpheus_xx"
     Copyright="GPL"
+    Platforms="Windows"
     Description="Metadata extractor for extracting information from MediaPortal TVEngine3 recordings">
 
   <Version

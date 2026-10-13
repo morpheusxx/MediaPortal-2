@@ -84,6 +84,12 @@ namespace MediaPortal.Common.PluginManager
     bool AutoActivate { get; }
 
     /// <summary>
+    /// Returns the names of the platforms (<c>Windows</c>, <c>Linux</c>, <c>macOS</c>) this plugin can run on, as declared by the
+    /// <c>Platforms</c> attribute of the plugin descriptor. An empty collection means that the plugin is platform independent.
+    /// </summary>
+    ICollection<string> SupportedPlatforms { get; }
+
+    /// <summary>
     /// Returns a collection of names of plugins, this plugin depends on.
     /// </summary>
     IList<PluginDependencyInfo> DependsOn { get; }

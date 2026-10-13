@@ -4,6 +4,7 @@
     PluginId="{65CF3575-AC34-4E46-92C3-84E6EDA9BACD}"
     Author = "Morpheus_xx"
     Copyright="GPL"
+    Platforms="Windows"
     Description="Thumbnail creator based on GDI.">
 
   <Version

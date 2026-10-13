@@ -4,6 +4,7 @@
     PluginId="{87316CE6-904A-48D3-90F0-BBEF3E9D007C}"
     Author="Albert"
     Copyright="GPL"
+    Platforms="Windows"
     Description="Audio CD Resource Provider">
 
   <Version

@@ -122,6 +122,9 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
 - Local file system provider handles POSIX paths: provider paths are `//home/user/Music` (root `//`), the virtual root `/` has the single child `//` off Windows (drives on Windows),
   `ToDosPath` rejects non-rooted results, change tracking compares paths case-sensitively, `FileWatcher` no longer requires NTFS off Windows. `ResourcePath` (de)serialization
   of such paths is verified; the provider itself was not run on Linux. Remaining: `ResourcePath.Equals` is still case-insensitive.
+- Plugin descriptors can declare `Platforms="Windows"` (also `Linux`, `macOS`, comma separated); `PluginManager` does not enable such plugins on other platforms (info log; dependents are
+  rejected via the dependency check). Set for GDI/WIC thumbnails, NetworkNeighborhood, MP2Extended, SlimTv.Service35, Tve3Recording, BassAudioMetadataExtractor, AudioCDResourceProvider.
+  `BassLibraries` stays platform neutral because `AudioMetadataExtractor` (TagLib based) references it. The mechanism is verified (descriptor parsing, check on Windows); the skipping itself was not seen on Linux.
 - Open for Phase 1: native libraries per RID (MediaInfo, FreeImage, OpenCV, FFmpeg), skipping
   Windows-only plugins cleanly in the portable host, verifying an existing System.Data.SQLite database with the new provider, Linux run + Docker image.
 

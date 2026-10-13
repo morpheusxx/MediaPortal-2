@@ -4,6 +4,7 @@
     PluginId="{B1F33F5C-3E2C-4151-9DCE-9F965CA5CDFC}"
     Author="Albert"
     Copyright="GPL"
+    Platforms="Windows"
     Description="Network neighborhood resource provider">
 
   <Version

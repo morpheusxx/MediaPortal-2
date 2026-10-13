@@ -5,6 +5,7 @@
     Author="FreakyJ"
     Copyright="GPL"
     AutoActivate="true"
+    Platforms="Windows"
     Description="This Plugin brings the MPExtended API from MP1 to MP2">
 
   <Version

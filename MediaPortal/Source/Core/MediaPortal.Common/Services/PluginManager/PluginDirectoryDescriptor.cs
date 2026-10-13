@@ -60,6 +60,7 @@ namespace MediaPortal.Common.Services.PluginManager
     protected int _currentAPI = -1;
     protected int _minCompatibleAPI = -1;
     protected bool _autoActivate = false;
+    protected ICollection<string> _supportedPlatforms = new List<string>();
     protected IList<PluginDependencyInfo> _dependsOn = new List<PluginDependencyInfo>();
     protected ICollection<Guid> _conflictsWith = new List<Guid>();
     protected string _stateTrackerClassName = null;
@@ -133,6 +134,10 @@ namespace MediaPortal.Common.Services.PluginManager
                   break;
                 case "AutoActivate":
                   _autoActivate = Boolean.Parse(attrNav.Value);
+                  break;
+                case "Platforms":
+                  foreach (string platform in attrNav.Value.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
+                    _supportedPlatforms.Add(platform.Trim());
                   break;
                 default:
                   throw new ArgumentException("'Plugin' element doesn't support an attribute '" + attrNav.Name + "'");
@@ -527,6 +532,11 @@ namespace MediaPortal.Common.Services.PluginManager
     public bool AutoActivate
     {
       get { return _autoActivate; }
+    }
+
+    public ICollection<string> SupportedPlatforms
+    {
+      get { return _supportedPlatforms; }
     }
 
     public IList<PluginDependencyInfo> DependsOn

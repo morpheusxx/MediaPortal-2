@@ -19,8 +19,9 @@ elsewhere. Services and containers should always pass `--data`.
 ## Status / known limitations
 
 * Verified on Windows only (start, database creation, plugin loading, `running` state, graceful shutdown via IPC). **Not run on Linux yet.**
-* Plugins that are Windows-only (`BassAudioMetadataExtractor`, GDI/WIC thumbnails, `NetworkNeighborhoodResourceProvider`, TV integration, `MP2Extended`)
-  are part of the same plugin folder and fail to load in this host with an error in the log (e.g. missing `System.Windows.Forms`). They are skipped, the server continues.
+* Windows-only plugins (`BassAudioMetadataExtractor`, `AudioCDResourceProvider`, GDI/WIC thumbnails, `NetworkNeighborhoodResourceProvider`, `MP2Extended`,
+  TV integration) declare `Platforms="Windows"` in their `plugin.xml`; the plugin manager does not enable them on other platforms (one info line each in the log, plugins that depend on
+  them get a warning). On Windows this host is not meant to run them (no WinForms): use `MP2-Server.exe` there.
 * The database is SQLite through Microsoft.Data.Sqlite (SQLitePCLRaw, native builds for Windows/Linux/macOS are shipped in the plugin folder). It keeps the schema,
   the PRAGMAs and the 16 byte GUID storage of the former System.Data.SQLite based version, but opening a database file created by that version is **not verified yet**.
   The culture sensitive NOCASE collation differs between Windows (native) and other platforms (managed), so do not copy database files between operating systems.

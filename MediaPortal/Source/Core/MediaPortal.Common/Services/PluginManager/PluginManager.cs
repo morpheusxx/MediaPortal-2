@@ -253,6 +253,32 @@ namespace MediaPortal.Common.Services.PluginManager
     /// <param name="plugin"></param>
     /// <param name="alreadyCheckedPlugins"></param>
     /// <returns></returns>
+    /// <summary>
+    /// Returns whether the given <paramref name="plugin"/> can run on the current platform, according to its <c>Platforms</c> declaration.
+    /// Plugins without declaration are platform independent.
+    /// </summary>
+    public static bool IsPlatformSupported(IPluginMetadata plugin)
+    {
+      ICollection<string> platforms = plugin.SupportedPlatforms;
+      if (platforms == null || platforms.Count == 0)
+        return true;
+      foreach (string platform in platforms)
+        switch (platform.ToLowerInvariant())
+        {
+          case "windows":
+            if (OperatingSystem.IsWindows()) return true;
+            break;
+          case "linux":
+            if (OperatingSystem.IsLinux()) return true;
+            break;
+          case "macos":
+          case "osx":
+            if (OperatingSystem.IsMacOS()) return true;
+            break;
+        }
+      return false;
+    }
+
     protected ICollection<Guid> FindConflicts(IPluginMetadata plugin, HashSet<Guid> alreadyCheckedPlugins)
     {
       ICollection<Guid> result = new HashSet<Guid>();
@@ -262,6 +288,9 @@ namespace MediaPortal.Common.Services.PluginManager
           return result;
         else
           alreadyCheckedPlugins.Add(plugin.PluginId);
+
+        if (!IsPlatformSupported(plugin))
+          throw new PluginIncompatibleException("Plugin '{0}' requires platform {1}", plugin.Name, string.Join("/", plugin.SupportedPlatforms));
 
         // Conflicts declared by plugin
         ICollection<Guid> conflictingPlugins = CollectionUtils.Intersection(plugin.ConflictsWith, _availablePlugins.Keys);
@@ -826,6 +855,11 @@ namespace MediaPortal.Common.Services.PluginManager
         ILogger logger = ServiceRegistration.Get<ILogger>();
         string pluginDisplayName = string.Format("'{0}' [Version: {1}; Authors: {2}; ID: '{3}']", plugin.Metadata.Name, plugin.Metadata.PluginVersion, plugin.Metadata.Author, plugin.Metadata.PluginId);
         logger.Debug("PluginManager: Trying to enable plugin {0}", pluginDisplayName);
+        if (!IsPlatformSupported(plugin.Metadata))
+        {
+          logger.Info("PluginManager: Plugin {0} is only available on {1} and is not enabled on this platform", pluginDisplayName, string.Join("/", plugin.Metadata.SupportedPlatforms));
+          return false;
+        }
         try
         {
           if (FindConflicts(plugin.Metadata).Count > 0)

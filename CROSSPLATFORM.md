@@ -139,10 +139,15 @@ Done (builds, **not yet run**):
 - Native GLFW/Skia libraries of the plugin directory are preloaded by `NativeLibraryHelper` (plugin assemblies are not probed by the runtime).
 - New plugin `MpvPlayer` (same plugin id as the old `VideoPlayers`, so skins keep their dependency); its builder is a stub until Phase 3.1.
 
+**Phase 3.1 (libmpv player) - Windows verified (2026-10-13): a 1920x816 HD trailer plays in the Nereus fullscreen video screen (picture identical to mpv's own frame, pause overlay works); closing the player context and playing again works.**
+- `MpvPlayer` plugin: `MpvPlayer` implements `IVideoFrameSource`, `ISubtitlePlayer`, `IChapterPlayer`, `ITitlePlayer`, `IResumablePlayer`, `IMediaPlaybackControl`, `IAutoRepeatPlayer`, `IReusablePlayer`, `IPlayerEvents` (video only; audio files stay with the audio player). libmpv renders into an OpenGL texture (`VideoTarget`) at the beginning of each SkinEngine frame (`VideoRenderHost.SceneBegin`), `Texture.FromOpenGlTexture` wraps it for Skia without copy. Audio goes through mpv's own audio output.
+- libmpv is not in the repository (120 MB): `build.targets` copies `libmpv-2.dll` from `native\win-x64\` of the plugin project (git-ignored), `-p:MpvNativeDir=...` or the PoC folder. Linux uses the system `libmpv2`.
+- Not verified yet: audio output, seeking/resume, audio/subtitle stream switching, DVD (`.ifo` -> `dvd://`; `IDVDPlayer` menu navigation is not implemented), Bluray, network/streamed resources (via `LocalFsResourceAccessorHelper`), hardware decoding choice, Linux, the OSD of the skins while playing.
+
 Open (next steps, in order):
 2. Look at the remaining runtime issues (CloseTopmostDialog parameter conversion, "Cannot open texture", path separators), check other skins, fullscreen/window modes, input.
 3. Win32 message hook for Windows-only features (`WM_INPUT`/HID, `WM_APPCOMMAND`, single-instance message, touch), kerning (HarfBuzz) and skin sounds on other platforms.
-4. `IVideoFrameSource` implementation: libmpv player plugin (Phase 3.1), port `ImagePlayer` details, TV client + Bluray/Cinema/UPnP renderer on top of it.
+4. Verify and complete the libmpv player (see above), port `ImagePlayer` details, TV client + Bluray/Cinema/UPnP renderer on top of it.
 
 ## Working conventions
 

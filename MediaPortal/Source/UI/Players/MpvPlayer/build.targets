@@ -15,7 +15,19 @@
       <LanguageFiles Include="$(ProjectDir)Language\*.*" />
     </ItemGroup>
 
+    <!-- libmpv is not part of the repository (about 120 MB). Put libmpv-2.dll of a libmpv dev build (https://github.com/shinchiro/mpv-winbuild-cmake)
+         into native\win-x64\ or set the property MpvNativeDir. On Linux the system package (libmpv2) is used. -->
+    <PropertyGroup>
+      <MpvNativeDir Condition="'$(MpvNativeDir)' == ''">$(ProjectDir)native\win-x64\</MpvNativeDir>
+      <MpvNativeDir Condition="!Exists('$(MpvNativeDir)libmpv-2.dll')">$(ProjectDir)..\..\..\..\..\poc\MpvSkiaPoc\native\</MpvNativeDir>
+    </PropertyGroup>
+    <ItemGroup Condition="Exists('$(MpvNativeDir)libmpv-2.dll')">
+      <MpvNativeFiles Include="$(MpvNativeDir)libmpv-2.dll" />
+    </ItemGroup>
+    <Message Importance="high" Text="MpvPlayer: libmpv-2.dll not found, video playback on Windows won't work (see build.targets)" Condition="!Exists('$(MpvNativeDir)libmpv-2.dll')" />
+
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
+    <Copy SourceFiles="@(MpvNativeFiles)" DestinationFolder="$(PluginDestination)runtimes\win-x64\native\" Condition="'@(MpvNativeFiles)' != ''" />
     <Copy SourceFiles="@(LanguageFiles)" DestinationFolder="$(PluginDestination)Language\" />
   </Target>
 

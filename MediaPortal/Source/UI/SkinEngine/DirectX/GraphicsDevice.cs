@@ -168,6 +168,33 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     }
 
     /// <summary>
+    /// Returns <c>true</c> if the calling thread owns the OpenGL context.
+    /// </summary>
+    public static bool IsRenderThread
+    {
+      get { return _setup.IsRenderThread; }
+    }
+
+    /// <summary>
+    /// Gets the address of an OpenGL function of the context of the render thread. For players which render into GPU textures.
+    /// </summary>
+    public static IntPtr GetGlProcAddress(string name)
+    {
+      IRenderHost host = _host;
+      return host == null ? IntPtr.Zero : host.GetProcAddress(name);
+    }
+
+    /// <summary>
+    /// Has to be called by users of the OpenGL context (like video players) which changed the OpenGL state, before the SkinEngine continues drawing.
+    /// </summary>
+    public static void ResetGlState()
+    {
+      GRContext context = _grContext;
+      if (context != null)
+        context.ResetContext();
+    }
+
+    /// <summary>
     /// Gets the display mode of the monitor the window is shown on.
     /// </summary>
     public static DisplayMode CurrentDisplayMode

@@ -167,6 +167,25 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     }
 
     /// <summary>
+    /// Creates a texture which draws the given OpenGL texture (RGBA, 8 bit per channel, premultiplied alpha, first row is the top row)
+    /// without copying it. Has to be called from the render thread. The caller keeps the ownership of the OpenGL texture and must
+    /// not delete it before the returned texture is disposed.
+    /// </summary>
+    public static Texture FromOpenGlTexture(uint textureId, int width, int height)
+    {
+      const uint GL_TEXTURE_2D = 0x0DE1;
+      const uint GL_RGBA8 = 0x8058;
+      GRContext context = GraphicsDevice.GrContext;
+      if (context == null)
+        return null;
+      using (GRBackendTexture backendTexture = new GRBackendTexture(width, height, false, new GRGlTextureInfo(GL_TEXTURE_2D, textureId, GL_RGBA8)))
+      {
+        SKImage image = SKImage.FromTexture(context, backendTexture, GRSurfaceOrigin.TopLeft, SKColorType.Rgba8888);
+        return image == null ? null : new Texture(image, Format.A8R8G8B8);
+      }
+    }
+
+    /// <summary>
     /// Creates a texture from the pixels of a bitmap. The texture takes ownership of the <paramref name="bitmap"/>.
     /// </summary>
     public static Texture FromBitmap(SKBitmap bitmap)

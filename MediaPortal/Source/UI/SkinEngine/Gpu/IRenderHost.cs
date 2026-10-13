@@ -64,6 +64,11 @@ namespace MediaPortal.UI.SkinEngine.Gpu
     GRContext CreateGrContext();
 
     /// <summary>
+    /// Gets the address of an OpenGL function of the current context. Returns <see cref="IntPtr.Zero"/> if the function doesn't exist.
+    /// </summary>
+    IntPtr GetProcAddress(string name);
+
+    /// <summary>
     /// Width of the framebuffer in pixels.
     /// </summary>
     int FramebufferWidth { get; }

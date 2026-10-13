@@ -1177,6 +1177,18 @@ namespace MediaPortal.UI.SkinEngine.GUI
       return GRContext.CreateGl(glInterface);
     }
 
+    public IntPtr GetProcAddress(string name)
+    {
+      try
+      {
+        return _window.GLContext.TryGetProcAddress(name, out IntPtr result) ? result : IntPtr.Zero;
+      }
+      catch
+      {
+        return IntPtr.Zero;
+      }
+    }
+
     public int FramebufferWidth
     {
       get { return _window.FramebufferSize.X; }

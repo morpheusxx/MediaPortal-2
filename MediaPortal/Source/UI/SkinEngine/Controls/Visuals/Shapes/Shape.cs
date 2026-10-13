@@ -24,7 +24,7 @@
 
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
+using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.MpfElements;
 using MediaPortal.UI.SkinEngine.Rendering;
@@ -295,7 +295,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
     protected GraphicsPath CalculateTransformedPath(GraphicsPath path, SharpDX.RectangleF baseRect)
     {
       GraphicsPath result = path;
-      using (Matrix m = new Matrix())
+      using (Matrix2D m = new Matrix2D())
       {
         RectangleF bounds = result.GetBounds();
         _fillDisabled = bounds.Width < StrokeThickness || bounds.Height < StrokeThickness;

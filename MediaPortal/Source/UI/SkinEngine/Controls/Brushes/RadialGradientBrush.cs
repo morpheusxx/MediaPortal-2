@@ -28,7 +28,7 @@ using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.Utilities.DeepCopy;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
@@ -241,7 +241,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       _effect.Parameters[PARAM_RADIUS] = g_radius;
       _effect.Parameters[PARAM_OPACITY] = (float) (Opacity * renderContext.Opacity);
 
-      GraphicsDevice.Device.SetSamplerState(0, SamplerState.AddressU, SpreadAddressMode);
+      GraphicsDevice.SetSamplerAddress(0, SpreadAddressMode, TextureAddress.Clamp);
       _effect.StartRender(_gradientBrushTexture.Texture, finalTransform);
 
       return true;

@@ -36,7 +36,7 @@ namespace MediaPortal.UI.SkinEngine.Players
   {
     public static void ReleaseGUIResources(IPlayerSlotController psc)
     {
-      ISharpDXVideoPlayer sdvp = psc.CurrentPlayer as ISharpDXVideoPlayer;
+      IVideoFrameSource sdvp = psc.CurrentPlayer as IVideoFrameSource;
       if (sdvp == null)
         return;
       try
@@ -51,7 +51,7 @@ namespace MediaPortal.UI.SkinEngine.Players
 
     public static void ReallocGUIResources(IPlayerSlotController psc)
     {
-      ISharpDXVideoPlayer sdvp = psc.CurrentPlayer as ISharpDXVideoPlayer;
+      IVideoFrameSource sdvp = psc.CurrentPlayer as IVideoFrameSource;
       if (sdvp == null)
         return;
       try

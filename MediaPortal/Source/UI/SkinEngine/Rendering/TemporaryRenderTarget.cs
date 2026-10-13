@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -24,87 +24,37 @@
 
 using System;
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.Rendering
 {
   /// <summary>
-  /// <see cref="TemporaryRenderTarget"/> allows rendering to texture surface. It automatically sets
-  /// the RenderTarget of the GraphicsDevice and restores all changes at the end (in Dispose).
+  /// Switches the render target of the graphics device until this object is disposed.
   /// </summary>
   public class TemporaryRenderTarget : IDisposable
   {
-    // The current D3D device
-    private readonly DeviceEx _device = GraphicsDevice.Device;
-
-    // Support multiple render target indexes
-    private readonly int _renderTargetIndex = 0;
+    // The active render target before we change it
+    private readonly Surface _previousTarget;
 
     // The target surface to render on
     private readonly Surface _targetSurface;
 
-    // The active RendertTarget before we change it
-    private readonly Surface _backBuffer;
-
-    // Only need to dispose surface if we created them
-    private readonly bool _disposeSurface = false;
-
-    /// <summary>
-    /// Constructs a <see cref="TemporaryRenderTarget"/> instance.
-    /// </summary>
-    /// <param name="targetSurface">Target surface to render on</param>
-    public TemporaryRenderTarget(Surface targetSurface) :
-      this(0, targetSurface)
-    { }
-
-    /// <summary>
-    /// Constructs a <see cref="TemporaryRenderTarget"/> instance.
-    /// </summary>
-    /// <param name="targetTexture">Target texture to render on</param>
-    public TemporaryRenderTarget(Texture targetTexture) :
-      this(0, targetTexture)
-    { }
-
-    /// <summary>
-    /// Constructs a <see cref="TemporaryRenderTarget"/> instance.
-    /// </summary>
-    /// <param name="renderTargetIndex">Render target index</param>
-    /// <param name="targetTexture">Target texture to render on</param>
-    public TemporaryRenderTarget(int renderTargetIndex, Texture targetTexture)
-      : this(renderTargetIndex, targetTexture.GetSurfaceLevel(0))
+    public TemporaryRenderTarget(Surface targetSurface)
     {
-      _disposeSurface = true;
-    }
-
-
-    /// <summary>
-    /// Constructs a <see cref="TemporaryRenderTarget"/> instance.
-    /// </summary>
-    /// <param name="renderTargetIndex">Render target index</param>
-    /// <param name="targetSurface">Target surface to render on</param>
-    public TemporaryRenderTarget(int renderTargetIndex, Surface targetSurface)
-    {
-      // Select target index (0 by default)
-      _renderTargetIndex = renderTargetIndex;
-
-      // Remember old RenderTarget
-      _backBuffer = _device.GetRenderTarget(_renderTargetIndex);
-
-      // Get information of new Texture target
+      _previousTarget = GraphicsDevice.GetRenderTarget();
       _targetSurface = targetSurface;
-
-      // Set new target
-      _device.SetRenderTarget(_renderTargetIndex, _targetSurface);
+      GraphicsDevice.SetRenderTarget(_targetSurface);
     }
+
+    public TemporaryRenderTarget(Texture targetTexture)
+      : this(targetTexture.GetSurfaceLevel(0))
+    { }
 
     public void Dispose()
     {
-      // Restore all previous rembered values
-      using(_backBuffer)
-        _device.SetRenderTarget(_renderTargetIndex, _backBuffer);
-
-      if (_disposeSurface && _targetSurface != null)
-        _targetSurface.Dispose();
+      // Restore the previous render target
+      GraphicsDevice.SetRenderTarget(_previousTarget);
+      _targetSurface.MarkChanged();
     }
   }
 }

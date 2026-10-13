@@ -29,7 +29,7 @@ using System.Linq;
 using MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes;
 using Poly2Tri;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.Triangulate
 {

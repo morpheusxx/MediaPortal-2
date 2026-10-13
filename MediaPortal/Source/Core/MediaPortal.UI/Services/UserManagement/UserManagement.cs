@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Async;
 using MediaPortal.Common.Services.ServerCommunication;
@@ -143,7 +142,7 @@ namespace MediaPortal.UI.Services.UserManagement
         // First check if there is an "old" client profile with same name but different ID. This happens only for older versions.
         // This needs to be done to avoid unique constraint violations when creating the new profile by name.
         // If client profile exists rename it and convert it to a user profile so it can be deleted or used otherwise.
-        string profileName = SystemInformation.ComputerName;
+        string profileName = Environment.MachineName;
         var existingProfile = await updm.GetProfileByNameAsync(profileName);
         if (existingProfile.Success && existingProfile.Result.ProfileId != systemId)
           if (await updm.ChangeProfileIdAsync(existingProfile.Result.ProfileId, systemId))

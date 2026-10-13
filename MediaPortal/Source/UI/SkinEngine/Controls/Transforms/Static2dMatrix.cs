@@ -47,7 +47,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Transforms
 
     #endregion
 
-    public void Set2DMatrix(System.Drawing.Drawing2D.Matrix matrix2d)
+    public void Set2DMatrix(MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D matrix2d)
     {
       _elements = matrix2d.Elements;
       CreateMatrix();

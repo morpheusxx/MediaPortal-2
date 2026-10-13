@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -35,13 +35,14 @@ using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.SkinEngine;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.SkinManagement;
-using SharpDX;
-using SharpDX.Direct3D9;
-using SharpDX.Mathematics.Interop;
-using Size = SharpDX.Size2;
+using SkiaSharp;
 
 namespace MediaPortal.Plugins.StatisticsRenderer
 {
+  /// <summary>
+  /// Draws render statistics (frame rate, render time, glitches) over the GUI. Toggled by F10; F11 switches the render strategy and
+  /// F12 the render pipeline.
+  /// </summary>
   public class StatisticsRenderer : IPluginStateTracker, IDisposable
   {
     #region Constants and structs
@@ -53,7 +54,6 @@ namespace MediaPortal.Plugins.StatisticsRenderer
     struct Stats
     {
       public float Fps;
-      public float MsToNextVBlank;
       public float MsFrameRenderTime;
       public int Glitch;
     }
@@ -62,27 +62,21 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     #region Fields
 
-    private DeviceEx _device;
-    private SwapChain _swapChain;
-    private SwapChain9Ex _swapChainEx;
-    private DisplayModeEx _adapterDisplayModeEx;
-
     private readonly RingBuffer<Stats> _stats = new RingBuffer<Stats>(MAX_STAT_VALUES, true);
 
     private int _tearingPos;
-    private Sprite _fontSprite;
-    private Font _font;
-    private Line _line;
+    private SKFont _font;
 
     private TimeSpan _totalGuiRenderDuration;
     private TimeSpan _guiRenderDuration;
     private int _totalFrameCount = 0;
     private int _frameCount = 0;
-    private float _sumMsToVBlank = 0;
     private DateTime _frameRenderingStartTime;
+    private DateTime _lastFrameEndTime = DateTime.MinValue;
     private int _fpsCounter;
+    private int _glitchCounter;
     private DateTime _fpsTimer;
-    private string _perfLogString;
+    private string _perfLogString = string.Empty;
     private volatile bool _statsEnabled;
 
     private float _fps;
@@ -96,25 +90,15 @@ namespace MediaPortal.Plugins.StatisticsRenderer
     #region Members
 
     /// <summary>
-    /// Allocates DirectX resources and attaches to render events.
+    /// Allocates resources and attaches to render events.
     /// </summary>
     private void EnableStats()
     {
-      Log("Try get Device");
-      _device = SkinContext.Device;
-      if (_device == null)
-        return;
+      _font = new SKFont(SKTypeface.Default, TEXT_SIZE);
+      _fpsTimer = DateTime.Now;
+      _lastFrameEndTime = DateTime.MinValue;
 
-      _swapChain = _device.GetSwapChain(0);
-      _swapChainEx = new SwapChain9Ex(_swapChain.NativePointer);
-      _line = new Line(_device) { Width = 2.5f, Antialias = true };
-
-      _fontSprite = new Sprite(_device);
-      _font = new Font(_device, TEXT_SIZE, 0, FontWeight.Normal, 0, false, FontCharacterSet.Default, FontPrecision.Default, FontQuality.ClearTypeNatural, FontPitchAndFamily.DontCare, "tahoma");
-
-      // Get device info
-      _adapterDisplayModeEx = SkinContext.Direct3D.GetAdapterDisplayModeEx(0);
-      Log("Screen height {0} at refresh rate {1} Hz", _adapterDisplayModeEx.Height, _adapterDisplayModeEx.RefreshRate);
+      Log("Screen {0}x{1} at refresh rate {2} Hz", SkinContext.CurrentDisplayMode.Width, SkinContext.CurrentDisplayMode.Height, SkinContext.CurrentDisplayMode.RefreshRate);
 
       Log("Attach render events");
       SkinContext.DeviceSceneBegin += BeginScene;
@@ -131,7 +115,7 @@ namespace MediaPortal.Plugins.StatisticsRenderer
     }
 
     /// <summary>
-    /// Detaches renderer events and frees DirectX resources.
+    /// Detaches renderer events and frees resources.
     /// </summary>
     private void DisableStats()
     {
@@ -139,16 +123,9 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       SkinContext.DeviceSceneBegin -= BeginScene;
       SkinContext.DeviceSceneEnd -= EndScene;
       _renderFinished.WaitOne(TimeSpan.FromSeconds(2)); // Wait for the last render cycle to finish
-      TryDispose(ref _line);
       TryDispose(ref _font);
-      TryDispose(ref _fontSprite);
-      TryDispose(ref _swapChainEx);
-      TryDispose(ref _swapChain);
     }
 
-    /// <summary>
-    /// ToggleRenderMode calls the <see cref="SkinContext.NextRenderStrategy"/> method to switch between the available RenderModes.
-    /// </summary>
     private static void ToggleRenderMode()
     {
       Log("Toggling render mode...");
@@ -156,9 +133,6 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       Log("Render mode is now '" + SkinContext.RenderStrategy.Name + "'");
     }
 
-    /// <summary>
-    /// ToggleRenderPipeline calls the <see cref="SkinContext.NextRenderPipeline"/> method to switch between the available RenderPipelines.
-    /// </summary>
     private static void ToggleRenderPipeline()
     {
       Log("Toggling render pipeline...");
@@ -166,9 +140,6 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       Log("Render pipeline is now '" + SkinContext.RenderPipeline.GetType().Name + "'");
     }
 
-    /// <summary>
-    /// ToggleStatsRendering enables or disables the stats gathering and rendering.
-    /// </summary>
     private void ToggleStatsRendering()
     {
       if (_statsEnabled)
@@ -202,54 +173,65 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       _renderFinished.Reset();
       try
       {
-        TimeSpan guiDur = DateTime.Now - _frameRenderingStartTime;
+        DateTime now = DateTime.Now;
+        TimeSpan guiDur = now - _frameRenderingStartTime;
         _totalGuiRenderDuration += guiDur;
         _guiRenderDuration += guiDur;
         _totalFrameCount++;
         _frameCount++;
-        int scanLine = _device.GetRasterStatus(0).ScanLine;
-        _sumMsToVBlank += ScanlineToVblankOffset(scanLine);
+
+        // A frame is a glitch if it took (nearly) two refresh intervals since the last frame
+        int glitch = 0;
+        int refreshRate = Math.Max(SkinContext.CurrentDisplayMode.RefreshRate, 1);
+        if (_lastFrameEndTime != DateTime.MinValue && (now - _lastFrameEndTime).TotalMilliseconds > 1.5 * 1000.0 / refreshRate)
+        {
+          glitch = 1;
+          _glitchCounter++;
+        }
+        _lastFrameEndTime = now;
 
         _fpsCounter++;
-        TimeSpan ts = DateTime.Now - _fpsTimer;
-        float secs = (float)ts.TotalSeconds;
+        TimeSpan ts = now - _fpsTimer;
+        float secs = (float) ts.TotalSeconds;
         _fps = _fpsCounter / secs;
 
         Stats currentFrameStats = new Stats
           {
             Fps = _fps,
-            MsFrameRenderTime = (float)guiDur.TotalMilliseconds,
-            MsToNextVBlank = ScanlineToVblankOffset(scanLine)
+            MsFrameRenderTime = (float) guiDur.TotalMilliseconds,
+            Glitch = glitch
           };
 
         if (ts.TotalSeconds >= 1.0f)
         {
-          float totalAvgGuiTime = (float)_totalGuiRenderDuration.TotalMilliseconds / _totalFrameCount;
-          float avgGuiTime = (float)_guiRenderDuration.TotalMilliseconds / _frameCount;
-          float avgMsToVBlank = _sumMsToVBlank / _frameCount;
+          float totalAvgGuiTime = (float) _totalGuiRenderDuration.TotalMilliseconds / _totalFrameCount;
+          float avgGuiTime = (float) _guiRenderDuration.TotalMilliseconds / _frameCount;
 
-          int glitches;
           _perfLogString = string.Format(
               "Render: {0:0.00} fps [red], {1} frames last meas., avg GUI time {2:0.00}, last sec: {3:0.00} [blue], " +
-              "avg ms to vblank: {6:0.00} [grn]\r\nRender mode enabled: {4}\r\n{5}",
-              _fps, _fpsCounter, totalAvgGuiTime, avgGuiTime, SkinContext.RenderStrategy.Name,
-              GetPresentStats(out glitches), avgMsToVBlank);
-
-          currentFrameStats.Glitch = glitches;
+              "glitches last sec: {5} [ylw]\r\nRender mode enabled: {4}",
+              _fps, _fpsCounter, totalAvgGuiTime, avgGuiTime, SkinContext.RenderStrategy.Name, _glitchCounter);
           _perfLogString += "\r\n" + GetScreenInfo();
           _perfLogString += "\r\n" + GetRenderPipelineInfo();
           _perfLogString += "\r\n" + GetPlayerInfos();
           _fpsCounter = 0;
           _frameCount = 0;
+          _glitchCounter = 0;
           _guiRenderDuration = TimeSpan.Zero;
           _fpsTimer = DateTime.Now;
-          _sumMsToVBlank = 0;
         }
 
         _stats.Push(currentFrameStats);
-        DrawLines();
-        DrawTearingTest();
-        DrawText(_perfLogString);
+        SKCanvas canvas = SkinContext.Canvas;
+        if (canvas != null)
+        {
+          canvas.Save();
+          canvas.ResetMatrix();
+          DrawLines(canvas);
+          DrawTearingTest(canvas);
+          DrawText(canvas, _perfLogString);
+          canvas.Restore();
+        }
       }
       finally
       {
@@ -261,117 +243,81 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     #region Rendering
 
-    private void DrawTearingTest()
+    private void DrawTearingTest(SKCanvas canvas)
     {
-      using (Surface surface = _device.GetRenderTarget(0))
-      {
-        int left = _tearingPos;
-        int width = surface.Description.Width;
-        int height = surface.Description.Height;
-        Size size = new Size(4, height);
-        Point topLeft = new Point(left, 0);
-        if (topLeft.X + size.Width >= width)
-          topLeft.X = 0;
+      int width = SkinContext.BackBufferWidth;
+      int height = SkinContext.BackBufferHeight;
+      const int tearWidth = 4;
+      int left = _tearingPos;
+      if (left + tearWidth >= width)
+        left = 0;
 
-        Rectangle rcTearing = SharpDXExtensions.CreateRectangle(topLeft, size);
+      using (SKPaint paint = new SKPaint { Color = new SKColor(255, 255, 255, 255) })
+        canvas.DrawRect(SKRect.Create(left, 0, tearWidth, height), paint);
 
-        _device.ColorFill(surface, rcTearing, ColorConverter.FromArgb(255, 255, 255, 255));
+      left = (left + tearWidth + 15) % width;
+      if (left + tearWidth >= width)
+        left = 0;
+      using (SKPaint paint = new SKPaint { Color = new SKColor(100, 100, 100, 255) })
+        canvas.DrawRect(SKRect.Create(left, 0, tearWidth, height), paint);
 
-        topLeft = new Point((rcTearing.Right + 15) % width, 0);
-        if (topLeft.X + size.Width >= width)
-          topLeft.X = 0;
-
-        rcTearing = SharpDXExtensions.CreateRectangle(topLeft, size);
-        _device.ColorFill(surface, rcTearing, ColorConverter.FromArgb(255, 100, 100, 100));
-
-        _tearingPos = (_tearingPos + 7) % width;
-      }
+      _tearingPos = (_tearingPos + 7) % width;
     }
 
-    private void DrawText(string text)
+    private void DrawText(SKCanvas canvas, string text)
     {
-      int numberOfLines = text.Split('\n').Length;
-      int bgHeight = TEXT_SIZE * numberOfLines;
-      Rectangle rcTextField = new Rectangle(RENDER_OFFSET_LEFT, 0, SkinContext.BackBufferWidth - RENDER_OFFSET_LEFT, bgHeight);
-      _fontSprite.Begin(SpriteFlags.AlphaBlend);
-      _font.DrawText(_fontSprite, text, rcTextField, FontDrawFlags.Left, Color.Red);
-      _fontSprite.End();
-    }
-
-    private void DrawLines()
-    {
-      RawVector2[] pointsFps = new RawVector2[2];
-      RawVector2[] pointsRenderTime = new RawVector2[2];
-      RawVector2[] pointsTimeToPresent = new RawVector2[2];
-      RawVector2[] pointsGlitches = new RawVector2[2];
-      RawVector2[] renderBaseLine = new RawVector2[2];
-      RawVector2[] presentBaseLine = new RawVector2[2];
-      renderBaseLine[0].X = presentBaseLine[0].X = RENDER_OFFSET_LEFT;
-      renderBaseLine[1].X = presentBaseLine[1].X = RENDER_OFFSET_LEFT + MAX_STAT_VALUES;
-      renderBaseLine[0].Y = renderBaseLine[1].Y = RENDER_OFFSET_TOP + 30;
-      presentBaseLine[0].Y = presentBaseLine[1].Y = RENDER_OFFSET_TOP + 70;
-      int x = 0;
-      _line.Begin();
-
-      _line.Draw(renderBaseLine, new ColorBGRA(0.8f, 0.8f, 0.8f, 0.8f));
-      _line.Draw(presentBaseLine, new ColorBGRA(0.8f, 0.8f, 0.8f, 0.8f));
-
-      foreach (Stats stats in _stats.ReadAll(_totalFrameCount))
+      if (string.IsNullOrEmpty(text) || _font == null)
+        return;
+      using (SKPaint paint = new SKPaint { Color = SKColors.Red, IsAntialias = true })
       {
-        int pIdx = x % 2;
-        pointsFps[pIdx].X = pointsRenderTime[pIdx].X = pointsTimeToPresent[pIdx].X = pointsGlitches[pIdx].X = RENDER_OFFSET_LEFT + x;
-
-        pointsFps[pIdx].Y = RENDER_OFFSET_TOP - stats.Fps;
-        pointsRenderTime[pIdx].Y = RENDER_OFFSET_TOP + 30 + 2 * stats.MsFrameRenderTime;
-        pointsTimeToPresent[pIdx].Y = RENDER_OFFSET_TOP + 70 - 2 * stats.MsToNextVBlank;
-        pointsGlitches[pIdx].Y = RENDER_OFFSET_TOP + stats.Glitch * -5; // scale to see glitches better, mirror them
-        if (pIdx == 1)
+        float y = TEXT_SIZE;
+        foreach (string line in text.Split(new[] { "\r\n" }, StringSplitOptions.None))
         {
-          _line.Draw(pointsFps, Color.Red);
-          _line.Draw(pointsRenderTime, Color.Blue);
-          _line.Draw(pointsTimeToPresent, Color.Green);
-          _line.Draw(pointsGlitches, Color.Yellow);
+          canvas.DrawText(line, RENDER_OFFSET_LEFT, y, _font, paint);
+          y += TEXT_SIZE;
         }
-        x++;
       }
-      _line.End();
+    }
+
+    private void DrawLines(SKCanvas canvas)
+    {
+      using (SKPaint paint = new SKPaint { StrokeWidth = 2.5f, IsAntialias = true, Style = SKPaintStyle.Stroke })
+      {
+        paint.Color = new SKColor(204, 204, 204, 204);
+        canvas.DrawLine(RENDER_OFFSET_LEFT, RENDER_OFFSET_TOP + 30, RENDER_OFFSET_LEFT + MAX_STAT_VALUES, RENDER_OFFSET_TOP + 30, paint);
+
+        int x = 0;
+        float lastFps = 0, lastRender = 0, lastGlitch = 0;
+        foreach (Stats stats in _stats.ReadAll(_totalFrameCount))
+        {
+          float px = RENDER_OFFSET_LEFT + x;
+          float fps = RENDER_OFFSET_TOP - stats.Fps;
+          float render = RENDER_OFFSET_TOP + 30 + 2 * stats.MsFrameRenderTime;
+          float glitch = RENDER_OFFSET_TOP + stats.Glitch * -5; // scale to see glitches better, mirror them
+          if (x > 0)
+          {
+            paint.Color = SKColors.Red;
+            canvas.DrawLine(px - 1, lastFps, px, fps, paint);
+            paint.Color = SKColors.Blue;
+            canvas.DrawLine(px - 1, lastRender, px, render, paint);
+            paint.Color = SKColors.Yellow;
+            canvas.DrawLine(px - 1, lastGlitch, px, glitch, paint);
+          }
+          lastFps = fps;
+          lastRender = render;
+          lastGlitch = glitch;
+          x++;
+        }
+      }
     }
 
     #endregion
 
     #region Helpers
 
-    private float ScanlineToVblankOffset(int currentScanline)
-    {
-      float singleLineDuration = 1000f / _adapterDisplayModeEx.RefreshRate / _adapterDisplayModeEx.Height;
-      return (_adapterDisplayModeEx.Height - currentScanline) * singleLineDuration;
-    }
-
-    private String GetPresentStats(out int glitchCount)
-    {
-      string presentStats = string.Empty;
-      glitchCount = 0;
-      if (SkinContext.IsMultiSample)
-        return "Present statistics only available when not using antialiasing.";
-
-      try
-      {
-        PresentationStatistics stats = _swapChainEx.PresentStats;
-        glitchCount = stats.SyncRefreshCount - stats.PresentRefreshCount;
-        presentStats = string.Format("PresentCount: {0}, Glitches (SRC-PRC): {1} [ylw]", stats.PresentCount, glitchCount);
-      }
-      catch (SharpDXException e)
-      {
-        // Ignore "stats disjoint" exception that can happen the first time access of PresentStatistics
-        if (e.ResultCode.Code != -2005530492)
-          throw;
-      }
-      return presentStats;
-    }
-
     private string GetScreenInfo()
     {
-      return string.Format("Screen Res: {0}x{1} @ {2}Hz", SkinContext.BackBufferWidth, SkinContext.BackBufferHeight, _adapterDisplayModeEx.RefreshRate);
+      return string.Format("Screen Res: {0}x{1} @ {2}Hz", SkinContext.BackBufferWidth, SkinContext.BackBufferHeight, SkinContext.CurrentDisplayMode.RefreshRate);
     }
 
     private string GetRenderPipelineInfo()
@@ -386,11 +332,10 @@ namespace MediaPortal.Plugins.StatisticsRenderer
       int index = 0;
       pm.ForEach(psc =>
         {
-          ISharpDXVideoPlayer player = psc.CurrentPlayer as ISharpDXVideoPlayer;
+          IVideoFrameSource player = psc.CurrentPlayer as IVideoFrameSource;
           if (player == null || player.Texture == null)
             return;
-          SurfaceDescription desc = player.Texture.GetLevelDescription(0);
-          playerInfos += String.Format("{0}Player {1}: Resolution {2}x{3}", string.IsNullOrEmpty(playerInfos) ? "" : "\r\n", index++, desc.Width, desc.Height);
+          playerInfos += String.Format("{0}Player {1}: Resolution {2}x{3}", string.IsNullOrEmpty(playerInfos) ? "" : "\r\n", index++, player.Texture.Width, player.Texture.Height);
         });
       return playerInfos;
     }
@@ -404,9 +349,6 @@ namespace MediaPortal.Plugins.StatisticsRenderer
 
     #region IDisposable implementation
 
-    /// <summary>
-    /// Free resources.
-    /// </summary>
     public void Dispose()
     {
       DisableStats();
@@ -470,10 +412,10 @@ namespace MediaPortal.Plugins.StatisticsRenderer
     {
       if (message.ChannelName == SystemMessaging.CHANNEL)
       {
-        SystemMessaging.MessageType messageType = (SystemMessaging.MessageType)message.MessageType;
+        SystemMessaging.MessageType messageType = (SystemMessaging.MessageType) message.MessageType;
         if (messageType == SystemMessaging.MessageType.SystemStateChanged)
         {
-          SystemState newState = (SystemState)message.MessageData[SystemMessaging.NEW_STATE];
+          SystemState newState = (SystemState) message.MessageData[SystemMessaging.NEW_STATE];
           if (newState == SystemState.Running)
           {
             RegisterKeyBindings();

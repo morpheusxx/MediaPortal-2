@@ -23,7 +23,7 @@
 #endregion
 
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
 {
@@ -35,8 +35,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     public virtual void BeginRender()
     {
       GraphicsDevice.RenderPass = RenderPassType.SingleOrFirstPass;
-      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.Black, 1.0f, 0);
-      GraphicsDevice.Device.BeginScene();
+      GraphicsDevice.Clear(SkiaSharp.SKColors.Black);
     }
 
     public virtual void Render()
@@ -45,9 +44,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     }
 
     public virtual void EndRender()
-    {
-      GraphicsDevice.Device.EndScene();
-    }
+    { }
 
     public virtual void GetVideoClip (RectangleF fullVideoClip, out RectangleF tranformedRect)
     {

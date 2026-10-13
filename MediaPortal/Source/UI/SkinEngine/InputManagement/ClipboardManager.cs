@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -23,23 +23,18 @@
 #endregion
 
 using System;
-using System.Threading;
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Control.InputManager;
-using MediaPortal.Utilities;
 
 namespace MediaPortal.UI.SkinEngine.InputManagement
 {
+  /// <summary>
+  /// Provides access to the text contents of the system clipboard. The access to the clipboard is implemented by the
+  /// window host, which registers its accessors in <see cref="GetTextAccessor"/> and <see cref="SetTextAccessor"/>.
+  /// </summary>
   public class ClipboardManager : IClipboardManager
   {
-    #region Consts
-
-    protected const int MAX_WAIT_MS = 500;
-
-    #endregion
-
     #region Static fields and instance
 
     private static readonly object _syncObj = new object();
@@ -59,24 +54,38 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
     #endregion
 
     /// <summary>
-    /// Tries to get text contents from the Windows clipboard. If the clipboard contains any other type then text, the returned result will be <c>false</c>.
+    /// Function which returns the text of the clipboard. Must be set by the window host; it is called in the thread of the caller.
+    /// </summary>
+    internal Func<string> GetTextAccessor { get; set; }
+
+    /// <summary>
+    /// Action which sets the text of the clipboard. Must be set by the window host; it is called in the thread of the caller.
+    /// </summary>
+    internal Action<string> SetTextAccessor { get; set; }
+
+    /// <summary>
+    /// Tries to get text contents from the clipboard. If the clipboard contains any other type then text, the returned result will be <c>false</c>.
     /// </summary>
     /// <returns><c>true</c> if text could be retrieved.</returns>
     public bool GetClipboardText(out string text)
     {
-      string result = null;
-      ManualResetEvent finishedEvent = new ManualResetEvent(false);
-      Thread thread = ThreadingUtils.RunSTAThreaded(() => GetClipboardText_STA(finishedEvent, ref result));
-      if (!finishedEvent.WaitOne(MAX_WAIT_MS))
-        thread.Abort();
-
-      finishedEvent.Close();
-      text = result;
-      return !string.IsNullOrWhiteSpace(result);
+      text = null;
+      Func<string> accessor = GetTextAccessor;
+      if (accessor == null)
+        return false;
+      try
+      {
+        text = accessor();
+      }
+      catch (Exception ex)
+      {
+        ServiceRegistration.Get<ILogger>().Error("ClipboardManager: Error getting text data from clipboard.", ex);
+      }
+      return !string.IsNullOrWhiteSpace(text);
     }
 
     /// <summary>
-    /// Tries to set text contents into Windows clipboard.
+    /// Tries to set text contents into the clipboard.
     /// </summary>
     /// <param name="text">Text to copy.</param>
     /// <returns><c>true</c> if text was set.</returns>
@@ -84,54 +93,18 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
     {
       if (string.IsNullOrWhiteSpace(text))
         return false;
-
-      ManualResetEvent finishedEvent = new ManualResetEvent(false);
-      Thread thread = ThreadingUtils.RunSTAThreaded(() => SetClipboardText_STA(finishedEvent, text));
-
-      if (!finishedEvent.WaitOne(MAX_WAIT_MS))
-        thread.Abort();
-
-      finishedEvent.Close();
-      return true;
-    }
-
-    /// <summary>
-    /// Copies the <paramref name="text"/> into the clipboard. This methods must be executed inside a STA thread!
-    /// </summary>
-    protected void SetClipboardText_STA(EventWaitHandle finishedEvent, string text)
-    {
+      Action<string> accessor = SetTextAccessor;
+      if (accessor == null)
+        return false;
       try
       {
-        if (!string.IsNullOrWhiteSpace(text))
-          Clipboard.SetText(text);
+        accessor(text);
+        return true;
       }
       catch (Exception ex)
       {
-        ServiceRegistration.Get<ILogger>().Error("ClipboardManager: Error getting text data from clipboard.", ex);
-      }
-      finally
-      {
-        finishedEvent.Set();
-      }
-    }
-
-    /// <summary>
-    /// Gets the contents of clipboard into <paramref name="text"/>. This methods must be executed inside a STA thread!
-    /// </summary>
-    protected void GetClipboardText_STA(EventWaitHandle finishedEvent, ref string text)
-    {
-      try
-      {
-        if (Clipboard.ContainsData(DataFormats.Text))
-          text = Clipboard.GetText(TextDataFormat.Text);
-      }
-      catch (Exception ex)
-      {
-        ServiceRegistration.Get<ILogger>().Error("ClipboardManager: Error getting text data from clipboard.", ex);
-      }
-      finally
-      {
-        finishedEvent.Set();
+        ServiceRegistration.Get<ILogger>().Error("ClipboardManager: Error setting text data into clipboard.", ex);
+        return false;
       }
     }
   }

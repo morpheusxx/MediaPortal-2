@@ -23,7 +23,7 @@
 #endregion
 
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -108,12 +108,10 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 
         // Note that it doesn't seem to be possible to create a texture with multisample surfaces inside. So rendering to that texture
         // won't provide multisample antialiasing.
-        _texture = new Texture(GraphicsDevice.Device, width, height, 1, usage, format, Pool.Default);
-        _surface0 = _texture.GetSurfaceLevel(0);
-
-        SurfaceDescription desc = _texture.GetLevelDescription(0);
-        _maxU = _size.Width/((float) desc.Width);
-        _maxV = _size.Height/((float) desc.Height);
+        _texture = new Texture(width, height, usage, format);
+        _surface0 = _texture.IsRenderTarget ? _texture.GetSurfaceLevel(0) : null;
+        _maxU = 1.0f;
+        _maxV = 1.0f;
       }
       AllocationChanged(AllocationSize);
       KeepAlive();
@@ -138,7 +136,6 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       lock (_texture)
       {
         AllocationChanged(-AllocationSize);
-        _surface0.Dispose();
         _texture.Dispose();
         _texture = null;
         _surface0 = null;

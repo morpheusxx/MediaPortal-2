@@ -24,15 +24,14 @@
 
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.Utilities.DeepCopy;
-using Matrix = System.Drawing.Drawing2D.Matrix;
+using Matrix = MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D;
 using RectangleF = System.Drawing.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes

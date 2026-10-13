@@ -25,14 +25,10 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Cache;
-#if !NET6_0_OR_GREATER
-using FreeImageAPI;
-#endif
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Logging;
@@ -40,7 +36,8 @@ using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.Network;
 using SharpDX;
-using SharpDX.Direct3D9;
+using SkiaSharp;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.Common.Services.ThumbnailGenerator;
 using MediaPortal.Utilities.Graphics;
 using Color = SharpDX.Color;
@@ -130,27 +127,11 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 
     protected Texture AllocateFromImageStream(Stream dataStream, ref ImageInformation info)
     {
-      // GDI decoding was measured to be faster in nearly all cases. WIC based was faster, but was missing rotation support and had other dependencies (WPF or SharpDX.WIC).
-      // FreeImage decoding is kept in place as fallback to support image formats which are not handled by GDI.
-      Texture texture = 
-        AllocateFromImageStream_GDI(dataStream, ref info)
-#if NET6_0_OR_GREATER
-       ;
-#else
-        ?? AllocateFromImageStream_FreeImage(dataStream, ref info);
-#endif
-      return texture;
-    }
-
-
-    protected Texture AllocateFromImageStream_GDI(Stream dataStream, ref ImageInformation info)
-    {
       Texture texture = null;
       try
       {
         if (dataStream.CanSeek)
           dataStream.Position = 0;
-        Image image = Image.FromStream(dataStream);
 
         // Scale down larger images
         int resizeWidth = MAX_TEXTURE_DIMENSION;
@@ -162,111 +143,22 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         if (_decodeHeight > 0)
           resizeHeight = Math.Min(_decodeHeight, MAX_TEXTURE_DIMENSION);
 
-       image.ExifAutoRotate();
-
-        if (image.Size.Width > resizeWidth || image.Size.Height > resizeHeight)
+        SKBitmap bitmap = ImageUtilities.LoadBitmap(dataStream, resizeWidth, resizeHeight);
+        if (bitmap == null)
         {
-          var oldImage = image;
-          image = GdiImageUtilities.ResizeImage(image, resizeWidth, resizeHeight);
-          oldImage.Dispose();
+          ServiceRegistration.Get<ILogger>().Warn("TextureAssetCore: Image data could not be decoded");
+          return null;
         }
-
-        // Write uncompressed data to temporary stream.
-        using (var loadStream = new MemoryStream())
-        {
-          image.Save(loadStream, ImageFormat.Bmp);
-          image.Dispose();
-          loadStream.Position = 0;
-          texture = Texture.FromStream(GraphicsDevice.Device, loadStream, (int)loadStream.Length, _decodeWidth, _decodeHeight, 1,
-            Usage.None, Format.A8R8G8B8, Pool.Default, Filter.None, Filter.None, 0, out info);
-        }
+        info.Width = bitmap.Width;
+        info.Height = bitmap.Height;
+        texture = Texture.FromBitmap(bitmap);
       }
       catch (Exception ex)
       {
-        ServiceRegistration.Get<ILogger>().Warn("TextureAssetCore: Error loading texture from stream using GDI", ex);
+        ServiceRegistration.Get<ILogger>().Warn("TextureAssetCore: Error loading texture from stream", ex);
       }
       return texture;
     }
-
-#if !NET6_0_OR_GREATER
-    protected Texture AllocateFromImageStream_FreeImage(Stream dataStream, ref ImageInformation info)
-    {
-      Texture texture = null;
-      FIBITMAP image = FIBITMAP.Zero;
-      try
-      {
-        if (dataStream.CanSeek)
-          dataStream.Position = 0;
-        image = FreeImage.LoadFromStream(dataStream);
-
-        // Write uncompressed data to temporary stream.
-        using (var memoryStream = new MemoryStream())
-        {
-          // Scale down larger images
-          int resizeWidth = MAX_TEXTURE_DIMENSION;
-          int resizeHeight = MAX_TEXTURE_DIMENSION;
-
-          if (_decodeWidth > 0)
-            resizeWidth = Math.Min(_decodeWidth, MAX_TEXTURE_DIMENSION);
-
-          if (_decodeHeight > 0)
-            resizeHeight = Math.Min(_decodeHeight, MAX_TEXTURE_DIMENSION);
-
-          Stream loadStream = dataStream;
-          if (!image.IsNull)
-          {
-            image = ResizeImage(image, resizeWidth, resizeHeight);
-            FreeImage.SaveToStream(image, memoryStream, FREE_IMAGE_FORMAT.FIF_BMP);
-            loadStream = memoryStream;
-          }
-
-          loadStream.Position = 0;
-          texture = Texture.FromStream(GraphicsDevice.Device, loadStream, (int)loadStream.Length, _decodeWidth, _decodeHeight, 1,
-            Usage.None, Format.A8R8G8B8, Pool.Default, Filter.None, Filter.None, 0, out info);
-        }
-      }
-      catch (Exception ex)
-      {
-        ServiceRegistration.Get<ILogger>().Warn("TextureAssetCore: Error loading texture from stream using FreeImage", ex);
-      }
-      finally
-      {
-        FreeImage.UnloadEx(ref image);
-      }
-      return texture;
-    }
-
-    /// <summary>
-    /// Resizes the given <paramref name="fullsizeImage"/> to a maximum <paramref name="maxWidth"/> and <paramref name="maxHeight"/> while preserving
-    /// corrent aspect ratio.
-    /// </summary>
-    /// <param name="fullsizeImage">Image</param>
-    /// <param name="maxWidth">Max. width</param>
-    /// <param name="maxHeight">Max. height</param>
-    /// <returns>Resized image</returns>
-    public static FIBITMAP ResizeImage(FIBITMAP fullsizeImage, int maxWidth, int maxHeight)
-    {
-      int width = (int)FreeImage.GetWidth(fullsizeImage);
-      int height = (int)FreeImage.GetHeight(fullsizeImage);
-      if (width <= maxWidth && height <= maxHeight)
-        return fullsizeImage;
-
-      if (width <= maxWidth)
-        maxWidth = width;
-
-      int newHeight = height * maxWidth / width;
-      if (newHeight > maxHeight)
-      {
-        // Resize with height instead
-        maxWidth = width * maxHeight / height;
-        newHeight = maxHeight;
-      }
-
-      FIBITMAP rescaled = FreeImage.Rescale(fullsizeImage, maxWidth, newHeight, FREE_IMAGE_FILTER.FILTER_LANCZOS3);
-      FreeImage.UnloadEx(ref fullsizeImage);
-      return rescaled;
-    }
-#endif
 
     protected virtual void FinalizeAllocation(Texture texture, int fileWidth, int fileHeight)
     {
@@ -947,15 +839,9 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
             buffer[offset++] = _color.A;
           }
 
-          _texture = new Texture(GraphicsDevice.Device, TEXTURE_SIZE, TEXTURE_SIZE, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-
-          DataStream dataStream;
-          _texture.LockRectangle(0, LockFlags.None, out dataStream);
-          using (dataStream)
-          {
-            dataStream.Write(buffer, 0, buffer.Length);
-            _texture.UnlockRectangle(0);
-          }
+          SKBitmap bitmap = new SKBitmap(new SKImageInfo(TEXTURE_SIZE, TEXTURE_SIZE, SKColorType.Bgra8888, SKAlphaType.Premul));
+          bitmap.Erase(new SKColor(_color.R, _color.G, _color.B, _color.A));
+          _texture = Texture.FromBitmap(bitmap);
 
           _width = TEXTURE_SIZE;
           _height = TEXTURE_SIZE;

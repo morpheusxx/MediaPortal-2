@@ -38,7 +38,7 @@ using MediaPortal.UI.SkinEngine.Controls.Brushes.Animation;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.Utilities;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using RightAngledRotation = MediaPortal.UI.Presentation.Players.RightAngledRotation;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
@@ -51,7 +51,7 @@ using MediaPortal.UI.ServerCommunication;
 
 namespace MediaPortal.UI.Players.Image
 {
-  public class ImagePlayer : IDisposable, ISharpDXImagePlayer, IPlayerEvents, IReusablePlayer, IMediaPlaybackControl
+  public class ImagePlayer : IDisposable, IImageFrameSource, IPlayerEvents, IReusablePlayer, IMediaPlaybackControl
   {
     #region Consts
 
@@ -453,7 +453,7 @@ namespace MediaPortal.UI.Players.Image
 
     #endregion
 
-    #region ISharpDXImagePlayer implementation
+    #region IImageFrameSource implementation
 
     public object ImagesLock
     {

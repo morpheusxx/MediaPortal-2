@@ -25,12 +25,11 @@
 using System;
 using System.Drawing;
 using System.Threading;
-using System.Windows.Forms;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.DirectX.RenderPipelines;
 using MediaPortal.UI.SkinEngine.DirectX.RenderStrategy;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.SkinManagement
 {
@@ -83,11 +82,6 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
     /// <summary>
     /// Gets or sets the Application's main windows form.
     /// </summary>
-    public static Form Form
-    {
-      get { return GraphicsDevice.Setup.RenderTarget; }
-    }
-
     public static Thread RenderThread
     {
       get { return _renderThread; }
@@ -97,22 +91,28 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
     /// <summary>
     /// Gets the DirectX device.
     /// </summary>
-    public static DeviceEx Device
-    {
-      get { return GraphicsDevice.Device; }
-    }
-
     /// <summary>
     /// Returns the Direct3D instance of the SkinEngine.
     /// </summary>
-    public static Direct3DEx Direct3D
-    {
-      get { return MPDirect3D.Direct3D; }
-    }
-
     /// <summary>
     /// Gets the current RenderStrategy (affects frame sync and present mode).
     /// </summary>
+    /// <summary>
+    /// Gets the main window of the SkinEngine or <c>null</c>, if it wasn't created yet.
+    /// </summary>
+    public static MediaPortal.UI.SkinEngine.GUI.MainWindow MainWindow
+    {
+      get { return MediaPortal.Common.ServiceRegistration.Get<MediaPortal.UI.Presentation.Screens.IScreenControl>(false) as MediaPortal.UI.SkinEngine.GUI.MainWindow; }
+    }
+
+    /// <summary>
+    /// Gets the canvas of the current render target. Only valid while a frame is rendered.
+    /// </summary>
+    public static SkiaSharp.SKCanvas Canvas
+    {
+      get { return GraphicsDevice.Canvas; }
+    }
+
     public static IRenderStrategy RenderStrategy
     {
       get { return GraphicsDevice.RenderStrategy; }
@@ -198,12 +198,7 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
     /// </summary>
     public static DisplayMode CurrentDisplayMode
     {
-      get
-      {
-        int ordinal = GraphicsDevice.Device.Capabilities.AdapterOrdinal;
-        AdapterInformation adapterInfo = MPDirect3D.Direct3D.Adapters[ordinal];
-        return adapterInfo.CurrentDisplayMode;
-      }
+      get { return GraphicsDevice.CurrentDisplayMode; }
     }
 
     /// <summary>

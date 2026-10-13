@@ -52,7 +52,7 @@ namespace MediaPortal.UI.SkinEngine
 
     protected const string HOME_STATE_STR = "{7F702D9C-F2DD-42da-9ED8-0BA92F07787F}";
 
-    protected MainForm _mainForm = null;
+    protected MainWindow _mainWindow = null;
     protected ScreenManager _screenManager = null;
     protected bool _screenSaverWasEnabled = false;
     protected UserMessageHandler _userMessageHandler;
@@ -133,12 +133,11 @@ namespace MediaPortal.UI.SkinEngine
       //SharpDX.Configuration.EnableObjectTracking = true;
 #endif
 
-      logger.Debug("SkinEnginePlugin: Create DirectX main window");
-      _mainForm = new MainForm(_screenManager);
+      logger.Debug("SkinEnginePlugin: Create main window");
+      _mainWindow = new MainWindow(_screenManager);
       // Install background manager before the mainform gets visible
       _screenManager.InstallBackgroundManager();
-      _mainForm.Visible = true;
-      _mainForm.Start();
+      _mainWindow.Start();
 
       logger.Debug("SkinEnginePlugin: Switching workflow manager to home state");
       ServiceRegistration.Get<IWorkflowManager>().NavigatePush(new Guid(HOME_STATE_STR));
@@ -160,7 +159,7 @@ namespace MediaPortal.UI.SkinEngine
       logger.Debug("SkinEnginePlugin: Uninstalling background manager");
       _screenManager.UninstallBackgroundManager();
 
-      _mainForm.StopRenderThread();
+      _mainWindow.StopRenderThread();
       _screenManager.Shutdown();
 
       ServiceRegistration.Get<ILogger>().Debug("SkinEnginePlugin: Removing ISkinResourceManager service");
@@ -188,12 +187,12 @@ namespace MediaPortal.UI.SkinEngine
 
     public void Dispose()
     {
-      if (_mainForm == null)
+      if (_mainWindow == null)
         return;
-      _mainForm.DisposeDirectX();
-      _mainForm.Dispose();
+      _mainWindow.DisposeGraphics();
+      _mainWindow.Dispose();
       _screenManager = null;
-      _mainForm = null;
+      _mainWindow = null;
       _userMessageHandler.Dispose();
     }
 

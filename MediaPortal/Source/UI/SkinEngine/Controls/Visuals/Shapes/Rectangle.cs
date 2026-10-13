@@ -23,13 +23,12 @@
 #endregion
 
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.Utilities.DeepCopy;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using RectangleF = SharpDX.RectangleF;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;

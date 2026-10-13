@@ -108,6 +108,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Triggers
       if (resourceFilePath == null)
         return;
 
+      // TODO: Skin sounds on other platforms (needs an audio output which is independent of the players)
+      if (!System.OperatingSystem.IsWindows())
+        return;
+
       using (SoundPlayer simpleSound = new SoundPlayer(resourceFilePath))
         simpleSound.Play();
     }

@@ -25,7 +25,8 @@
 using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.DirectX;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Effect = MediaPortal.UI.SkinEngine.Controls.Visuals.Effects.Effect;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
@@ -58,17 +59,15 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       RenderContext localRenderContext = parentRenderContext.Derive(bounds, layoutTransformMatrix, renderTransformMatrix, RenderTransformOrigin, Opacity);
       _inverseFinalTransform = Matrix.Invert(localRenderContext.Transform);
 
-      DeviceEx device = SkinContext.Device;
-      Surface backBuffer = device.GetRenderTarget(0);
+      Surface backBuffer = GraphicsDevice.GetRenderTarget();
       SurfaceDescription desc = backBuffer.Description;
       SurfaceDescription? textureDesc = _texture == null ? new SurfaceDescription?() : _texture.GetLevelDescription(0);
       if (!textureDesc.HasValue || textureDesc.Value.Width != desc.Width || textureDesc.Value.Height != desc.Height)
       {
         TryDispose(ref _texture);
-        _texture = new Texture(device, desc.Width, desc.Height, 1, Usage.RenderTarget, Format.A8R8G8B8, Pool.Default);
+        _texture = new Texture(desc.Width, desc.Height, Usage.RenderTarget, Format.A8R8G8B8);
       }
-      using (Surface destSurfaceRef = _texture.GetSurfaceLevel(0))
-        device.StretchRectangle(backBuffer, destSurfaceRef, TextureFilter.None);
+      GraphicsDevice.StretchRectangle(backBuffer, _texture.GetSurfaceLevel(0));
 
       UpdateEffectMask(effect, localRenderContext.OccupiedTransformedBounds, desc.Width, desc.Height, localRenderContext.ZOrder);
       if (effect.BeginRender(_texture, new RenderContext(Matrix.Identity, 1.0d, bounds, localRenderContext.ZOrder)))
@@ -76,7 +75,6 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         _effectContext.Render(0);
         effect.EndRender();
       }
-      backBuffer.Dispose();
     }
 
     public override void Dispose()

@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -24,18 +24,25 @@
 
 using System;
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
+using SkiaSharp;
 
 namespace MediaPortal.UI.SkinEngine.Rendering
 {
+  /// <summary>
+  /// Encapsulates a list of vertices which can be rendered with the effect that is currently active
+  /// (see <see cref="MediaPortal.UI.SkinEngine.ContentManagement.EffectAsset"/>).
+  /// </summary>
   public class PrimitiveBuffer : IDisposable
   {
     #region Protected fields
 
-    protected VertexBuffer _vertexBuffer = null;
+    protected SKVertices _vertices = null; // Positions and texture coordinates, with vertex colors
+    protected SKVertices _verticesNoColors = null; // Positions and texture coordinates only
+    protected PositionColoredTextured[] _vertexData = null;
     protected PrimitiveType _primitiveType = PrimitiveType.TriangleList;
     protected int _primitiveCount = 0;
+    protected int _vertexCount = 0;
     protected static int _allocationCount = 0;
 
     #endregion
@@ -80,18 +87,19 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     /// <param name="numVertices">The number of vertices to allocate.</param>
     public void Create(int numVertices)
     {
-      if (_vertexBuffer != null)
+      if (_vertexData != null)
         Clear();
-      _vertexBuffer = new VertexBuffer(GraphicsDevice.Device, PositionColoredTextured.StrideSize * numVertices, Usage.WriteOnly, PositionColoredTextured.Format, Pool.Default);
+      _vertexData = new PositionColoredTextured[numVertices];
+      _vertexCount = numVertices;
       ++_allocationCount;
     }
 
     /// <summary>
-    /// Copies the given vertex data into a vertex buffer, re-allocating it if necessary.
+    /// Copies the given vertex data into the buffer, re-allocating it if necessary.
     /// </summary>
     /// <param name="vertices">The vertex data to copy.</param>
     /// <param name="primitiveType">The primitive type to be used when rendering.</param>
-    public void Set(ref PositionColoredTextured[] vertices,  PrimitiveType primitiveType)
+    public void Set(ref PositionColoredTextured[] vertices, PrimitiveType primitiveType)
     {
       if (vertices == null)
       {
@@ -99,22 +107,11 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         return;
       }
       int numVertices = vertices.Length;
-      if (_vertexBuffer == null || numVertices > VertexCount)
+      if (_vertexData == null || numVertices > VertexCount)
         Create(numVertices);
 
       switch (primitiveType)
       {
-        // case PrimitiveType.PointList:
-        case PrimitiveType.LineList:
-          if (numVertices % 2 != 0 || numVertices < 2)
-            ThrowInvalidVertexCount();
-          _primitiveCount = numVertices / 2;
-          break;
-        case PrimitiveType.LineStrip:
-          if (numVertices < 2)
-            ThrowInvalidVertexCount();
-          _primitiveCount = numVertices - 1;
-          break;
         case PrimitiveType.TriangleList:
           if (numVertices < 3 || numVertices % 3 != 0)
             ThrowInvalidVertexCount();
@@ -127,31 +124,52 @@ namespace MediaPortal.UI.SkinEngine.Rendering
           _primitiveCount = numVertices - 2;
           break;
         default:
-          throw new NotImplementedException("Unknown PrimitiveType");
+          throw new NotImplementedException("PrimitiveType " + primitiveType + " is not supported");
       }
       _primitiveType = primitiveType;
+      _vertexCount = numVertices;
+      Array.Copy(vertices, _vertexData, numVertices);
+      DisposeVertices();
+      BuildVertices();
+    }
 
-      // Update vertices to compensate texel/pixel coordinate origins (top left of pixel vs. center of texel)
-      // See https://msdn.microsoft.com/en-us/library/bb219690(VS.85).aspx
-      for (int i = 0; i < vertices.Length; i++)
+    protected void BuildVertices()
+    {
+      SKPoint[] positions = new SKPoint[_vertexCount];
+      SKPoint[] texCoords = new SKPoint[_vertexCount];
+      SKColor[] colors = new SKColor[_vertexCount];
+      for (int i = 0; i < _vertexCount; i++)
       {
-        vertices[i].X -= 0.5f;
-        vertices[i].Y -= 0.5f;
+        PositionColoredTextured v = _vertexData[i];
+        positions[i] = new SKPoint(v.X, v.Y);
+        texCoords[i] = new SKPoint(v.Tu1, v.Tv1);
+        colors[i] = new SKColor((uint) v.Color);
       }
-      using (DataStream stream = _vertexBuffer.Lock(0, 0, LockFlags.None))
-        stream.WriteRange(vertices);
-      _vertexBuffer.Unlock();
+      SKVertexMode mode = _primitiveType.ToVertexMode();
+      _vertices = SKVertices.CreateCopy(mode, positions, texCoords, colors);
+      _verticesNoColors = SKVertices.CreateCopy(mode, positions, texCoords, null);
+    }
+
+    protected void DisposeVertices()
+    {
+      if (_vertices != null)
+        _vertices.Dispose();
+      _vertices = null;
+      if (_verticesNoColors != null)
+        _verticesNoColors.Dispose();
+      _verticesNoColors = null;
     }
 
     protected void Clear()
     {
-      if (_vertexBuffer != null)
+      DisposeVertices();
+      if (_vertexData != null)
       {
-        _vertexBuffer.Dispose();
         --_allocationCount;
-        _vertexBuffer = null;
+        _vertexData = null;
       }
       _primitiveCount = 0;
+      _vertexCount = 0;
     }
 
     public static void SetPrimitiveBuffer(ref PrimitiveBuffer _buffer, ref PositionColoredTextured[] verts, PrimitiveType type)
@@ -173,19 +191,25 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     #region Rendering
 
     /// <summary>
-    /// Renders the resource.
+    /// Renders the primitives with the current draw state (see <see cref="GraphicsDevice.SetDrawState"/>).
     /// </summary>
-    /// <param name="stream"></param>
+    /// <param name="stream">Stream number, not used.</param>
     public void Render(int stream)
     {
-      if (_vertexBuffer == null)
+      SKCanvas canvas = GraphicsDevice.Canvas;
+      SKVertices vertices = GraphicsDevice.CurrentUsesVertexColors ? _vertices : _verticesNoColors;
+      if (canvas == null || vertices == null)
         return;
-      GraphicsDevice.Device.VertexFormat = VertexFormat;
-
-      GraphicsDevice.Device.SetRenderState(RenderState.MultisampleAntialias, true);
-
-      GraphicsDevice.Device.SetStreamSource(stream, _vertexBuffer, 0, StrideSize);
-      GraphicsDevice.Device.DrawPrimitives(_primitiveType, 0, _primitiveCount);
+      using (SKPaint paint = new SKPaint())
+      {
+        paint.Shader = GraphicsDevice.CurrentShader;
+        paint.BlendMode = GraphicsDevice.SkBlendMode;
+        paint.IsAntialias = true;
+        canvas.SetMatrix(GraphicsDevice.CurrentMatrix);
+        canvas.DrawVertices(vertices, SKBlendMode.Modulate, paint);
+        canvas.ResetMatrix();
+      }
+      GraphicsDevice.RenderTargetChanged();
     }
 
     #endregion
@@ -195,47 +219,21 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     /// <summary>
     /// Gets a value indicating the resource is allocated.
     /// </summary>
-    /// <value>
-    /// 	<c>true</c> if this asset is allocated; otherwise, <c>false</c>.
-    /// </value>
     public bool IsAllocated
     {
-      get { return _vertexBuffer != null && _primitiveCount > 0; }
-    }
-    /// <summary>
-    /// Gets the internal <see cref="VertexBuffer"/> object.
-    /// </summary>
-    public VertexBuffer VertexBuffer
-    {
-      get { return _vertexBuffer; }
+      get { return _vertexData != null; }
     }
 
     /// <summary>
-    /// Gets the <see cref="PrimitiveType"/> used for rendering this buffer.
+    /// Gets the number of vertices in this buffer.
     /// </summary>
-    public PrimitiveType PrimitiveType
+    public int VertexCount
     {
-      get { return _primitiveType; }
+      get { return _vertexData == null ? 0 : _vertexData.Length; }
     }
 
     /// <summary>
-    /// Gets the <see cref="VertexFormat"/> of this buffer.
-    /// </summary>
-    public VertexFormat VertexFormat
-    {
-      get { return PositionColoredTextured.Format; }
-    }
-
-    /// <summary>
-    /// Gets the stride between vertices used for this buffer.
-    /// </summary>
-    public int StrideSize
-    {
-      get { return PositionColoredTextured.StrideSize; }
-    }
-
-    /// <summary>
-    /// Gets the number of primitives stored in this buffer.
+    /// Gets the number of primitives in this buffer.
     /// </summary>
     public int PrimitiveCount
     {
@@ -243,31 +241,26 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     }
 
     /// <summary>
-    /// Returns the total number of allocated <see cref="PrimitiveBuffer"/>s.
+    /// Gets the type of the primitives.
     /// </summary>
-    static public int GlobalAllocationCount
+    public PrimitiveType PrimitiveType
+    {
+      get { return _primitiveType; }
+    }
+
+    /// <summary>
+    /// Gets the allocation count of all primitive buffers.
+    /// </summary>
+    public static int AllocationCount
     {
       get { return _allocationCount; }
     }
 
-    /// <summary>
-    /// Calculates the number of vertices stored in this buffer.
-    /// </summary>
-    /// <returns></returns>
-    public int VertexCount
-    {
-      get { return (_vertexBuffer == null) ? 0 : (_vertexBuffer.Description.SizeInBytes / StrideSize); }
-    }
-
     #endregion
 
-    #region Private members
-
-    private static void ThrowInvalidVertexCount()
+    protected static void ThrowInvalidVertexCount()
     {
-      throw new ArgumentException("Vertex count does not match primitive type");
+      throw new ArgumentException("Invalid number of vertices for the given primitive type");
     }
-
-    #endregion
   }
 }

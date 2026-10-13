@@ -23,13 +23,12 @@
 #endregion
 
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using MediaPortal.Common.General;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.Rendering;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.Utilities.DeepCopy;
 using Point = System.Drawing.Point;
 using RectangleF = System.Drawing.RectangleF;
@@ -131,9 +130,9 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
     /// </summary>
     private GraphicsPath GetPolygon()
     {
-      Point[] points = new Point[Points.Count];
+      PointF[] points = new PointF[Points.Count];
       for (int i = 0; i < Points.Count; ++i)
-        points[i] = Points[i].ToDrawingPoint();
+        points[i] = new PointF(Points[i].X, Points[i].Y);
       GraphicsPath mPath = new GraphicsPath();
       mPath.AddPolygon(points);
       mPath.CloseFigure();

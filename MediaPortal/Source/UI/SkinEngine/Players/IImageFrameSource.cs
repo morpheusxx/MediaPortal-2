@@ -24,7 +24,7 @@
 
 using MediaPortal.UI.Presentation.Players;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 
 namespace MediaPortal.UI.SkinEngine.Players
@@ -32,7 +32,7 @@ namespace MediaPortal.UI.SkinEngine.Players
   /// <summary>
   /// Interface which has to be implemented by image players which are written for this SkinEngine.
   /// </summary>
-  public interface ISharpDXImagePlayer : IImagePlayer
+  public interface IImageFrameSource : IImagePlayer
   {
     /// <summary>
     /// Returns a synchronization mutex object to be acquired while accessing/changing the image textures.

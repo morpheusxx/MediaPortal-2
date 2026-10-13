@@ -28,7 +28,7 @@ using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Xaml.Exceptions;
 using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using MediaPortal.Utilities.DeepCopy;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 {

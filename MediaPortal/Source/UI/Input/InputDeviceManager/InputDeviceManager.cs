@@ -22,6 +22,7 @@
 
 #endregion
 
+using MediaPortal.Utilities;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.Messaging;
@@ -124,7 +125,7 @@ namespace MediaPortal.Plugins.InputDeviceManager
             switch (messageType)
             {
               case WindowsMessaging.MessageType.WindowsBroadcast:
-                Message msg = (Message)message.MessageData[WindowsMessaging.MESSAGE];
+                Message msg = ((WindowsMessage)message.MessageData[WindowsMessaging.MESSAGE]).ToMessage();
                 //We need to handle the keyboard keys in HID handler because we need know which device sends them
                 if (msg.Msg == WM_KEYDOWN || msg.Msg == WM_KEYUP || msg.Msg == WM_SYSKEYDOWN || msg.Msg == WM_SYSKEYUP)
                 {

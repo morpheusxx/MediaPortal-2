@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -26,16 +26,19 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.DirectX.RenderPipelines;
 using MediaPortal.UI.SkinEngine.DirectX.RenderStrategy;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Utils;
+using MediaPortal.UI.SkinEngine.Utils;
 using SharpDX;
-using SharpDX.Direct3D9;
+using SkiaSharp;
+using Matrix = SharpDX.Matrix;
+using Rectangle = SharpDX.Rectangle;
 
 namespace MediaPortal.UI.SkinEngine.DirectX
 {
@@ -47,24 +50,52 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     SecondPass
   }
 
+  /// <summary>
+  /// How incoming fragments are combined with the destination.
+  /// </summary>
+  public enum BlendState
+  {
+    /// <summary>Premultiplied alpha: <c>dst = src + dst * (1 - srcAlpha)</c>.</summary>
+    Default,
+    /// <summary>Only the alpha channel of the incoming fragments is used to scale the destination (opacity masks).</summary>
+    AlphaChannelOnly,
+    /// <summary>The destination is replaced.</summary>
+    Replace
+  }
+
+  /// <summary>
+  /// The graphics device of the SkinEngine. It owns the Skia GPU context (the OpenGL context is provided by the window host),
+  /// the current render target and the state which was set by the effects before primitives are drawn.
+  /// </summary>
   internal static class GraphicsDevice
   {
     #region Variables
 
-    private static readonly D3DSetup _setup = new D3DSetup();
+    private static readonly RenderSetup _setup = new RenderSetup();
     private static readonly ReaderWriterLockSlim _renderAndResourceAccessLock = new ReaderWriterLockSlim();
-    private static DeviceEx _device;
+    private static IRenderHost _host;
+    private static GRContext _grContext;
+    private static GRBackendRenderTarget _backBufferTarget;
+    private static SKSurface _backBufferSurface;
     private static Surface _backBuffer;
+    private static int _backBufferWidth;
+    private static int _backBufferHeight;
+    private static Surface _currentTarget;
     private static bool _deviceOk = true;
-    private static DxCapabilities _dxCapabilities = null;
     private static ScreenManager _screenManager = null;
+
+    // State which is set by the effects before a primitive buffer is rendered
+    private static SKShader _currentShader;
+    private static SKMatrix _currentMatrix = SKMatrix.CreateIdentity();
+    private static bool _currentUsesVertexColors;
+    private static BlendState _blendState = BlendState.Default;
 
     #endregion
 
     public static Matrix TransformWorld;
     public static Matrix TransformView;
     public static Matrix TransformProjection;
-    public static Matrix FinalTransform;
+    public static Matrix FinalTransform = Matrix.Identity;
 
     // Render process related events
     public static event EventHandler DeviceSceneBegin;
@@ -80,11 +111,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     private static List<IRenderPipeline> _renderPipelines;
 
     /// <summary>
-    /// Returns the information if the graphics device is healthy, which means it was neither lost nor hung nor removed.
+    /// Returns the information if the graphics device is healthy, which means it was neither lost nor removed.
     /// </summary>
-    /// <remarks>
-    /// If this property is <c>false</c>, <see cref="ReclaimDevice"/> must be called.
-    /// </remarks>
     public static bool DeviceOk
     {
       get { return _deviceOk; }
@@ -92,7 +120,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX
 
     /// <summary>
     /// Returns the target rendering target framerate. This value can be changed according to screen refresh rate or video fps using
-    /// one of the methods <see cref="AdaptTargetFrameRateToDisplayMode"/> or <see cref="SetFrameRate"/>.
+    /// <see cref="SetFrameRate"/>.
     /// </summary>
     public static double TargetFrameRate
     {
@@ -114,65 +142,342 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     }
 
     /// <summary>
-    /// Gets the DirectX device which is used to render.
-    /// </summary>
-    public static DeviceEx Device
-    {
-      get { return _device; }
-    }
-
-    /// <summary>
-    /// Gets the DirectX back-buffer width.
+    /// Gets the back-buffer width.
     /// </summary>
     public static int Width
     {
-      get { return _setup.PresentParameters.BackBufferWidth; }
+      get { return _backBufferWidth; }
     }
 
     /// <summary>
-    /// Gets the DirectX back-buffer height.
+    /// Gets the back-buffer height.
     /// </summary>
     public static int Height
     {
-      get { return _setup.PresentParameters.BackBufferHeight; }
+      get { return _backBufferHeight; }
     }
 
-    public static DxCapabilities DxCapabilities
-    {
-      get { return _dxCapabilities; }
-    }
-
-    public static D3DSetup Setup
+    public static RenderSetup Setup
     {
       get { return _setup; }
     }
 
+    public static GRContext GrContext
+    {
+      get { return _grContext; }
+    }
+
+    /// <summary>
+    /// Gets the display mode of the monitor the window is shown on.
+    /// </summary>
     public static DisplayMode CurrentDisplayMode
     {
       get
       {
-        Capabilities deviceCapabilities = _device.Capabilities;
-        int ordinal = deviceCapabilities.AdapterOrdinal;
-        AdapterInformation adapterInfo = MPDirect3D.Direct3D.Adapters[ordinal];
-        return adapterInfo.CurrentDisplayMode;
+        return new DisplayMode
+          {
+            Width = _setup.DesktopWidth,
+            Height = _setup.DesktopHeight,
+            RefreshRate = _host == null ? 60 : (int) Math.Round(_host.RefreshRate),
+            Format = Format.A8R8G8B8
+          };
       }
     }
 
     public static RenderPassType RenderPass { get; set; }
 
     /// <summary>
-    /// Lock to be used during DirectX (and maybe also other) resource access and during rendering.
+    /// Lock to be used during GPU resource access and during rendering.
     /// </summary>
     public static ReaderWriterLockSlim RenderAndResourceAccessLock
     {
       get { return _renderAndResourceAccessLock; }
     }
 
+    #region Resource creation
+
+    /// <summary>
+    /// Creates a GPU render surface. If no GPU context is available (headless), a raster surface is created.
+    /// </summary>
+    public static SKSurface CreateGpuSurface(SKImageInfo info)
+    {
+      GRContext context = _grContext;
+      SKSurface result = context == null ? null : SKSurface.Create(context, false, info);
+      return result ?? SKSurface.Create(info);
+    }
+
+    /// <summary>
+    /// Uploads a raster image to the GPU. Returns <c>null</c>, if this isn't possible, i.e. when called outside of the render thread.
+    /// </summary>
+    public static SKImage UploadImage(SKImage raster)
+    {
+      GRContext context = _grContext;
+      if (context == null || !_setup.IsRenderThread)
+        return null;
+      return raster.ToTextureImage(context);
+    }
+
+    #endregion
+
+    #region Render target handling
+
+    /// <summary>
+    /// Gets the canvas of the current render target.
+    /// </summary>
+    public static SKCanvas Canvas
+    {
+      get { return _currentTarget == null ? null : _currentTarget.Canvas; }
+    }
+
+    public static Surface BackBuffer
+    {
+      get { return _backBuffer; }
+    }
+
+    public static Surface GetRenderTarget()
+    {
+      return _currentTarget;
+    }
+
+    public static void SetRenderTarget(Surface target)
+    {
+      _currentTarget = target;
+    }
+
+    public static void Clear(SKColor color)
+    {
+      SKCanvas canvas = Canvas;
+      if (canvas != null)
+        canvas.Clear(color);
+    }
+
+    /// <summary>
+    /// Clears the given area of the current render target.
+    /// </summary>
+    public static void ClearRect(SharpDX.RectangleF area, SKColor color)
+    {
+      SKCanvas canvas = Canvas;
+      if (canvas == null)
+        return;
+      canvas.Save();
+      canvas.ResetMatrix();
+      canvas.ClipRect(SKRect.Create((float) Math.Floor(area.Left), (float) Math.Floor(area.Top),
+          (float) (Math.Ceiling(area.Right) - Math.Floor(area.Left)), (float) (Math.Ceiling(area.Bottom) - Math.Floor(area.Top))));
+      canvas.Clear(color);
+      canvas.Restore();
+      RenderTargetChanged();
+    }
+
+    /// <summary>
+    /// Copies the complete <paramref name="source"/> surface to the <paramref name="destination"/> surface.
+    /// </summary>
+    public static void StretchRectangle(Surface source, Surface destination)
+    {
+      StretchRectangle(source, new Rectangle(0, 0, source.Width, source.Height), destination, new Rectangle(0, 0, destination.Width, destination.Height), false);
+    }
+
+    /// <summary>
+    /// Copies a part of the <paramref name="source"/> surface to the <paramref name="destination"/> surface.
+    /// </summary>
+    public static void StretchRectangle(Surface source, Rectangle sourceRect, Surface destination, Rectangle destinationRect, bool linear)
+    {
+      using (SKImage image = source.Snapshot())
+      using (SKPaint paint = new SKPaint { FilterQuality = linear ? SKFilterQuality.Medium : SKFilterQuality.None, BlendMode = SKBlendMode.Src })
+      {
+        SKCanvas canvas = destination.Canvas;
+        canvas.Save();
+        canvas.ResetMatrix();
+        canvas.DrawImage(image, SKRect.Create(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height),
+            SKRect.Create(destinationRect.X, destinationRect.Y, destinationRect.Width, destinationRect.Height), paint);
+        canvas.Restore();
+      }
+      destination.MarkChanged();
+    }
+
+    #endregion
+
+    #region Draw state (set by the effects, consumed by the primitive buffers)
+
+    /// <summary>
+    /// Sets the shader and transformation which will be used for the primitive buffers which are rendered next.
+    /// </summary>
+    /// <param name="shader">Shader to use for the fill of the primitives.</param>
+    /// <param name="transform">Transformation of the primitive vertices into back buffer coordinates.</param>
+    /// <param name="usesVertexColors">Indicates that the vertex colors are to be modulated with the shader output.</param>
+    public static void SetDrawState(SKShader shader, Matrix transform, bool usesVertexColors)
+    {
+      _currentShader = shader;
+      _currentMatrix = ToSkMatrix(transform);
+      _currentUsesVertexColors = usesVertexColors;
+    }
+
+    public static void ClearDrawState()
+    {
+      _currentShader = null;
+      _currentUsesVertexColors = false;
+    }
+
+    public static SKShader CurrentShader
+    {
+      get { return _currentShader; }
+    }
+
+    public static SKMatrix CurrentMatrix
+    {
+      get { return _currentMatrix; }
+    }
+
+    public static bool CurrentUsesVertexColors
+    {
+      get { return _currentUsesVertexColors; }
+    }
+
+    /// <summary>
+    /// Converts a row-vector 4x4 matrix as used by the SkinEngine into a 3x3 Skia matrix. The z coordinate is ignored.
+    /// </summary>
+    public static SKMatrix ToSkMatrix(Matrix m)
+    {
+      return new SKMatrix(m.M11, m.M21, m.M41, m.M12, m.M22, m.M42, m.M14, m.M24, m.M44);
+    }
+
+    #endregion
+
+    #region Sampler and texture state
+
+    private static readonly SamplerState[] _samplers =
+      {
+        SamplerState.Default, SamplerState.Default, SamplerState.Default, SamplerState.Default
+      };
+    private static readonly Texture[] _boundTextures = new Texture[4];
+
+    public static SamplerState GetSamplerState(int sampler)
+    {
+      return _samplers[sampler];
+    }
+
+    public static void SetSamplerAddress(int sampler, TextureAddress addressU, TextureAddress addressV)
+    {
+      _samplers[sampler].AddressU = addressU;
+      _samplers[sampler].AddressV = addressV;
+    }
+
+    public static void SetSamplerBorderColor(int sampler, int bgraColor)
+    {
+      _samplers[sampler].BorderColor = bgraColor;
+    }
+
+    /// <summary>
+    /// Binds a texture to a sampler. It is used by effects which are started without an explicit texture.
+    /// </summary>
+    public static void SetTexture(int sampler, Texture texture)
+    {
+      _boundTextures[sampler] = texture;
+    }
+
+    public static Texture GetTexture(int sampler)
+    {
+      return _boundTextures[sampler];
+    }
+
+    /// <summary>
+    /// Has to be called after the content of the current render target was changed, so a texture which uses this target
+    /// refreshes its image.
+    /// </summary>
+    public static void RenderTargetChanged()
+    {
+      if (_currentTarget != null)
+        _currentTarget.MarkChanged();
+    }
+
+    #endregion
+
+    #region Blending
+
+    public static BlendState BlendState
+    {
+      get { return _blendState; }
+    }
+
+    public static void SetBlendState(BlendState blendState)
+    {
+      _blendState = blendState;
+    }
+
+    public static SKBlendMode SkBlendMode
+    {
+      get
+      {
+        switch (_blendState)
+        {
+          case BlendState.AlphaChannelOnly:
+            return SKBlendMode.DstIn;
+          case BlendState.Replace:
+            return SKBlendMode.Src;
+          default:
+            return SKBlendMode.SrcOver;
+        }
+      }
+    }
+
+    /// <summary>
+    /// Sets the render states to enable the default alpha blend compositing.
+    /// </summary>
+    public static void EnableDefaultAlphaBlending()
+    {
+      _blendState = BlendState.Default;
+    }
+
+    /// <summary>
+    /// Sets the render states to disable alpha compositing.
+    /// </summary>
+    public static void DisableAlphaBlending()
+    {
+      _blendState = BlendState.Replace;
+    }
+
+    /// <summary>
+    /// Gets an indicator, if alpha blending for opacity masks is enabled. Enabling is done by <see cref="EnableAlphaChannelBlending"/>,
+    /// disabling by <see cref="DisableAlphaChannelBlending"/>.
+    /// </summary>
+    public static bool IsAlphaChannelBlendingEnabled
+    {
+      get { return _blendState == BlendState.AlphaChannelOnly; }
+    }
+
+    /// <summary>
+    /// Sets the render states to enable alpha blending for opacity masks, where only the alpha channel of incoming fragments is blended.
+    /// </summary>
+    public static void EnableAlphaChannelBlending()
+    {
+      _blendState = BlendState.AlphaChannelOnly;
+    }
+
+    /// <summary>
+    /// Sets the render states to disable separate blending for the alpha channel.
+    /// </summary>
+    public static void DisableAlphaChannelBlending()
+    {
+      EnableDefaultAlphaBlending();
+    }
+
+    /// <summary>
+    /// Alpha testing is not used any more; fragments with a zero alpha value don't change the destination anyway.
+    /// </summary>
+    public static void EnableAlphaTest()
+    { }
+
+    public static void DisableAlphaTest()
+    { }
+
+    #endregion
+
+    #region Initialization
+
     public static void ExecuteInMainThread(WorkDlgt method)
     {
       try
       {
-        _setup.RenderTarget.Invoke(method);
+        _host.Invoke(() => method());
       }
       catch (Exception ex)
       {
@@ -186,77 +491,99 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     }
 
     /// <summary>
-    /// Calls <see cref="DeviceEx.CheckDeviceState"/> on the DX device and returns its result.
-    /// </summary>
-    internal static DeviceState CheckDeviceState()
-    {
-      return _device.CheckDeviceState(_setup.RenderTarget.Handle);
-    }
-
-    /// <summary>
-    /// Initializes or re-initializes the DirectX device and the backbuffer. This is necessary in the initialization phase
-    /// of the SkinEngine and after a parameter was changed which affects the DX device creation.
+    /// Initializes the graphics device with the given window host. The host must already have created the OpenGL context.
     /// </summary>
     /// <remarks>
-    /// This method has to be called from the main application thread because the DirectX device will be created by this method.
+    /// This method has to be called from the render thread, which is the thread which owns the OpenGL context.
     /// </remarks>
-    /// <param name="window">The window which is being used as render target; that window will contain the DX device.</param>
-    internal static void Initialize_MainThread(Form window)
+    internal static void Initialize_MainThread(IRenderHost host)
     {
-      _setup.RenderTarget = window;
+      _host = host;
+      _setup.Host = host;
       DoReCreateDevice_MainThread();
     }
 
     /// <summary>
-    /// Creates or re-creates the DirectX device and the backbuffer. This is necessary in the initialization phase
-    /// of the SkinEngine and after a parameter was changed which affects the DX device creation.
+    /// Creates or re-creates the Skia GPU context and the back buffer.
     /// </summary>
     internal static void DoReCreateDevice_MainThread()
     {
       try
       {
-        // Note that only the thread which handles window messages is allowed to call CreateDevice and Reset
-        // (see http://msdn.microsoft.com/en-us/library/windows/desktop/bb147224%28v=vs.85%29.aspx )
-        ServiceRegistration.Get<ILogger>().Debug("GraphicsDevice: Initializing DirectX");
-        MPDirect3D.Load();
+        ServiceRegistration.Get<ILogger>().Debug("GraphicsDevice: Initializing graphics device");
 
-        // Cleanup-part: Only necessary during re-initialization
         UIResourcesHelper.ReleaseUIResources();
-        if (_backBuffer != null)
-          _backBuffer.Dispose();
-        if (_device != null)
-          _device.Dispose();
-        _device = _setup.SetupDirectX();
-        // End cleanup part
+        ReleaseBackBuffer();
+        if (_grContext != null)
+          _grContext.Dispose();
+        _grContext = _host.CreateGrContext();
+        if (_grContext == null)
+          throw new InvalidOperationException("Unable to create the Skia GPU context");
 
         SetupRenderStrategies();
         SetupRenderPipelines();
-
-        Capabilities deviceCapabilities = _device.Capabilities;
-        _backBuffer = _device.GetRenderTarget(0);
-        _device.MaximumFrameLatency = _setup.PresentParameters.BackBufferCount; // Enables the device to queue as many frames as we have backbuffers defined
-        int ordinal = deviceCapabilities.AdapterOrdinal;
-        AdapterInformation adapterInfo = MPDirect3D.Direct3D.Adapters[ordinal];
-        DisplayMode currentMode = adapterInfo.CurrentDisplayMode;
-        AdaptTargetFrameRateToDisplayMode(currentMode);
-        LogScreenMode(currentMode);
-        bool firstTimeInitialization = _dxCapabilities == null;
-        _dxCapabilities = DxCapabilities.RequestCapabilities(deviceCapabilities, currentMode);
-        if (firstTimeInitialization)
-        {
-          if (!_dxCapabilities.SupportsShaders)
-          {
-            string text = String.Format("MediaPortal 2 needs a graphics card wich supports shader model 2.0\nYour card does NOT support this.\nMediaportal 2 will continue but migh run slow");
-            MessageBox.Show(text, "GraphicAdapter", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-          }
-        }
+        CreateBackBuffer();
+        AdaptTargetFrameRateToRefreshRate(_host.RefreshRate);
+        ServiceRegistration.Get<ILogger>().Info("GraphicsDevice: Initialized {0}x{1} ({2} Hz), {3}", Width, Height, TargetFrameRate, _host.RendererDescription);
         SetRenderState();
         UIResourcesHelper.ReallocUIResources();
       }
       catch (Exception ex)
       {
-        ServiceRegistration.Get<ILogger>().Critical("GraphicsDevice: Failed to setup DirectX", ex);
+        ServiceRegistration.Get<ILogger>().Critical("GraphicsDevice: Failed to setup the graphics device", ex);
         Environment.Exit(0);
+      }
+    }
+
+    private static void ReleaseBackBuffer()
+    {
+      if (_backBuffer != null)
+        _backBuffer.Dispose();
+      _backBuffer = null;
+      _currentTarget = null;
+      if (_backBufferSurface != null)
+        _backBufferSurface.Dispose();
+      _backBufferSurface = null;
+      if (_backBufferTarget != null)
+        _backBufferTarget.Dispose();
+      _backBufferTarget = null;
+    }
+
+    private static void CreateBackBuffer()
+    {
+      int width = _host.FramebufferWidth;
+      int height = _host.FramebufferHeight;
+      if (width <= 0 || height <= 0)
+        return;
+      ReleaseBackBuffer();
+      _backBufferTarget = new GRBackendRenderTarget(width, height, _setup.MultiSampleCount, 8, new GRGlFramebufferInfo(0, 0x8058 /* GL_RGBA8 */));
+      _backBufferSurface = SKSurface.Create(_grContext, _backBufferTarget, GRSurfaceOrigin.BottomLeft, SKColorType.Rgba8888);
+      if (_backBufferSurface == null)
+        throw new InvalidOperationException("Unable to create the back buffer surface");
+      _backBufferWidth = width;
+      _backBufferHeight = height;
+      _backBuffer = new Surface(_backBufferSurface, width, height, false, null);
+      _currentTarget = _backBuffer;
+    }
+
+    /// <summary>
+    /// Has to be called by the window host when the size of the framebuffer was changed.
+    /// </summary>
+    internal static void OnFramebufferResized()
+    {
+      if (_grContext == null)
+        return;
+      if (_host.FramebufferWidth == _backBufferWidth && _host.FramebufferHeight == _backBufferHeight)
+        return;
+      _renderAndResourceAccessLock.EnterWriteLock();
+      try
+      {
+        CreateBackBuffer();
+        SetCameraProjection(Width, Height);
+      }
+      finally
+      {
+        _renderAndResourceAccessLock.ExitWriteLock();
       }
     }
 
@@ -267,13 +594,12 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     {
       _renderStrategies = new List<IRenderStrategy>
         {
-          new Default(_setup), 
-          new VSync(_setup), 
+          new Default(_setup),
+          new VSync(_setup),
           new MaxPerformance(_setup)
         };
-      if (_setup.IsMultiSample)
-        _renderStrategies.RemoveAll(s => !s.IsMultiSampleCompatible);
       _currentRenderStrategyIndex = 0;
+      _host.VSync = RenderStrategy.PresentVSync;
     }
 
     /// <summary>
@@ -292,12 +618,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX
       _currentRenderPipeplineIndex = 0;
     }
 
-    private static void LogScreenMode(DisplayMode mode)
-    {
-      ServiceRegistration.Get<ILogger>().Info("GraphicsDevice: DirectX initialized {0}x{1} (format: {2} {3} Hz)", Width,
-          Height, mode.Format, TargetFrameRate);
-    }
-
     /// <summary>
     /// Gets the current <see cref="IRenderStrategy"/>.
     /// </summary>
@@ -312,7 +632,8 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     public static void NextRenderStrategy()
     {
       _currentRenderStrategyIndex = (_currentRenderStrategyIndex + 1) % _renderStrategies.Count;
-      LogScreenMode(CurrentDisplayMode);
+      _host.VSync = RenderStrategy.PresentVSync;
+      ServiceRegistration.Get<ILogger>().Info("GraphicsDevice: Render strategy {0}, {1} Hz", RenderStrategy.Name, TargetFrameRate);
     }
 
     /// <summary>
@@ -333,14 +654,10 @@ namespace MediaPortal.UI.SkinEngine.DirectX
 
     internal static void Dispose()
     {
-      if (_backBuffer != null)
-        _backBuffer.Dispose();
-      _backBuffer = null;
-
-      if (_device != null)
-        _device.Dispose();
-      _device = null;
-      MPDirect3D.Unload();
+      ReleaseBackBuffer();
+      if (_grContext != null)
+        _grContext.Dispose();
+      _grContext = null;
       _renderAndResourceAccessLock.Dispose();
     }
 
@@ -349,244 +666,83 @@ namespace MediaPortal.UI.SkinEngine.DirectX
       RenderStrategy.SetTargetFrameRate(frameRate);
     }
 
-    private static void AdaptTargetFrameRateToDisplayMode(DisplayMode displayMode)
+    private static void AdaptTargetFrameRateToRefreshRate(double refreshRate)
     {
-      SetFrameRate(displayMode.RefreshRate);
+      SetFrameRate(refreshRate);
     }
 
     /// <summary>
-    /// Resets the DirectX device. This will release all screens, other UI resources and our back buffer, reset the DX device and realloc
-    /// all resources.
+    /// Resets the graphics device. This will release all screens, other UI resources and our back buffer, and re-create them.
     /// </summary>
     public static bool Reset()
     {
-      ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Resetting DX device...");
+      ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Resetting device...");
       _screenManager.ExecuteWithTempReleasedResources(() => ExecuteInMainThread(() =>
-          {
-            // Note that the thread which created the device must call this (see http://msdn.microsoft.com/en-us/library/windows/desktop/bb174344%28v=vs.85%29.aspx ).
-            // Note also that only the thread which handles window messages is allowed to call CreateDevice and Reset
-            // (see http://msdn.microsoft.com/en-us/library/windows/desktop/bb147224%28v=vs.85%29.aspx )
-            ServiceRegistration.Get<ILogger>().Debug("GraphicsDevice: Reset DirectX");
-            UIResourcesHelper.ReleaseUIResources();
+        {
+          UIResourcesHelper.ReleaseUIResources();
 
-            if (ContentManager.Instance.TotalAllocationSize != 0)
-              ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: ContentManager.TotalAllocationSize = {0}, should be 0!", ContentManager.Instance.TotalAllocationSize / (1024 * 1024));
+          if (ContentManager.Instance.TotalAllocationSize != 0)
+            ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: ContentManager.TotalAllocationSize = {0}, should be 0!", ContentManager.Instance.TotalAllocationSize / (1024 * 1024));
 
-            if (_backBuffer != null)
-              _backBuffer.Dispose();
-            _backBuffer = null;
-
-            _setup.BuildPresentParamsFromSettings();
-            PresentParameters parameters = _setup.PresentParameters;
-            _device.ResetEx(ref parameters);
-            _setup.PresentParameters = parameters;
-
-            SetupRenderStrategies();
-            SetupRenderPipelines();
-
-            Capabilities deviceCapabilities = _device.Capabilities;
-            int ordinal = deviceCapabilities.AdapterOrdinal;
-            AdapterInformation adapterInfo = MPDirect3D.Direct3D.Adapters[ordinal];
-            DisplayMode currentMode = adapterInfo.CurrentDisplayMode;
-            AdaptTargetFrameRateToDisplayMode(currentMode);
-            ServiceRegistration.Get<ILogger>().Debug("GraphicsDevice: DirectX reset {0}x{1} format: {2} {3} Hz", Width, Height,
-                currentMode.Format, TargetFrameRate);
-            _backBuffer = _device.GetRenderTarget(0);
-            _device.MaximumFrameLatency = _setup.PresentParameters.BackBufferCount; // Enables the device to queue as many frames as we have backbuffers defined
-            _dxCapabilities = DxCapabilities.RequestCapabilities(deviceCapabilities, currentMode);
-
-            ScreenRefreshWorkaround();
-
-            UIResourcesHelper.ReallocUIResources();
-          }));
+          if (_grContext != null)
+            _grContext.AbandonContext(false);
+          DoReCreateDevice_MainThread();
+        }));
       ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Device successfully reset");
       return true;
     }
 
     /// <summary>
-    /// This workaround is required for changing the AntiAliasing setting from "None" to any AA mode. The rendering stalls until the window is moved,
-    /// the focus is lost and gained or the window size changed. So we work around that problem by changing the size of the MainForm temporary,
-    /// so the screen get's refreshed properly.
+    /// Reclaims the device if it has been lost (see <see cref="DeviceOk"/>).
     /// </summary>
-    /// <remarks>
-    /// To reproduce the problem, remove the call to this method, go to the AntiAliasing configuration (Settings/Appearance/GUI antialiasing)
-    /// and check that the AA mode "None" is currently active. If you now switch to any other AA mode than "None", the last rendered GUI image
-    /// remains on screen but isn't updated any more. If you move the mouse over the position where buttons are located, you hear button sounds,
-    /// but you don't see an up-to-date image.
-    /// The problem only occurs when you switch from AA None to any other AA mode, but switching between different AA levels is working fine!
-    /// TODO: Find a proper solution and remove this workaround.
-    /// </remarks>
-    private static void ScreenRefreshWorkaround()
-    {
-      Form target = _setup.RenderTarget;
-      Size oldSize = target.ClientSize;
-      target.ClientSize = new Size(oldSize.Width, oldSize.Height + 1);
-      target.ClientSize = new Size(oldSize.Width, oldSize.Height);
-    }
-
-    /// <summary>
-    /// Reclaims the DirectX device if it has been lost (see <see cref="DeviceOk"/>).
-    /// </summary>
-    /// <returns><c>true</c>, if the device could successfully be reclaimed. In this case, <see cref="DeviceOk"/> will be reset to
-    /// <c>false</c>. <c>false</c>, if the device could not be reclaimed.</returns>
+    /// <returns><c>true</c>, if the device could successfully be reclaimed. <c>false</c>, if the device could not be reclaimed.</returns>
     public static bool ReclaimDevice()
     {
       try
       {
-        // Handling is implemented based on http://msdn.microsoft.com/en-us/library/windows/desktop/bb172554%28v=vs.85%29.aspx
-        switch (CheckDeviceState())
+        if (_grContext != null && !_grContext.IsAbandoned)
+          _deviceOk = true;
+        else
         {
-          case DeviceState.Ok:
-            _deviceOk = true;
-            break;
-          case DeviceState.DeviceLost:
-          case DeviceState.DeviceHung:
-            Reset();
-            _deviceOk = CheckDeviceState() == DeviceState.Ok;
-            break;
-          case DeviceState.DeviceRemoved:
-            // Albert, 2012-02-26: Note that this code path is not verified/tested yet. The description of D3DERR_DEVICEREMOVED in
-            // http://msdn.microsoft.com/en-us/library/windows/desktop/bb172554%28v=vs.85%29.aspx says the device must be re-created,
-            // so we do that here. I'm not sure if we maybe must re-create our IDirect3D9Ex object and do all the initialization work
-            // again, according to http://msdn.microsoft.com/en-us/library/bb219800%28v=vs.85%29.aspx#Lost_Device_Behavior_Changes
-            ReCreateDXDevice();
-            _deviceOk = CheckDeviceState() == DeviceState.Ok;
-            break;
-          default:
-            _deviceOk = false;
-            break;
+          Reset();
+          _deviceOk = _grContext != null && !_grContext.IsAbandoned;
         }
       }
       catch (Exception ex)
       {
-        ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Reclaiming DX device failed", ex);
+        ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Reclaiming device failed", ex);
         _deviceOk = false;
       }
       return !_deviceOk;
     }
 
     /// <summary>
-    /// Sets the directx render states and project matrices.
+    /// Sets the default render states and the projection.
     /// </summary>
     public static void SetRenderState()
     {
-      _device.SetRenderState(RenderState.CullMode, Cull.None);
-      _device.SetRenderState(RenderState.Lighting, false);
-
-      _device.SetRenderState(RenderState.ZEnable, false);
-      _device.SetRenderState(RenderState.ZWriteEnable, false);
-
-      _device.SetRenderState(RenderState.FillMode, FillMode.Solid);
       EnableDefaultAlphaBlending();
-
-      if (_dxCapabilities.SupportsAlphaBlend)
-      {
-        EnableAlphaTest();
-      }
-      for (int sampler = 0; sampler < 3; sampler++)
-      {
-        _device.SetSamplerState(sampler, SamplerState.MinFilter, TextureFilter.Linear);
-        _device.SetSamplerState(sampler, SamplerState.MagFilter, TextureFilter.Linear);
-        _device.SetSamplerState(sampler, SamplerState.MipFilter, TextureFilter.None);
-      }
-
-      // Projection onto screen space
       SetCameraProjection(Width, Height);
     }
 
     /// <summary>
-    /// Enables DirectX alpha testing to discard transparent pixels.
+    /// Creates the camera and projection matrices which are used in future rendering.
     /// </summary>
-    public static void EnableAlphaTest()
-    {
-      _device.SetRenderState(RenderState.AlphaTestEnable, true);
-      _device.SetRenderState(RenderState.AlphaRef, 0x05);
-      _device.SetRenderState(RenderState.AlphaFunc, Compare.GreaterEqual);
-    }
-
-    /// <summary>
-    /// Disables DirectX alpha testing.
-    /// </summary>
-    public static void DisableAlphaTest()
-    {
-      _device.SetRenderState(RenderState.AlphaTestEnable, false);
-    }
-
-    /// <summary>
-    /// Sets the DirectX render states to enable the default alpha blend compositing.
-    /// </summary>
-    public static void EnableDefaultAlphaBlending()
-    {
-      _device.SetRenderState(RenderState.AlphaBlendEnable, true);
-      _device.SetRenderState(RenderState.SourceBlend, Blend.One);
-      _device.SetRenderState(RenderState.DestinationBlend, Blend.InverseSourceAlpha);
-    }
-
-    /// <summary>
-    /// Sets the DirectX render states to disbale alpha compositing.
-    /// </summary>
-    public static void DisableAlphaBlending()
-    {
-      _device.SetRenderState(RenderState.AlphaBlendEnable, false);
-    }
-
-    /// <summary>
-    /// Gets an indicator, if alpha blending is enabled. Enabling is done by <see cref="EnableAlphaChannelBlending"/>, disabling by <see cref="DisableAlphaChannelBlending"/>.
-    /// </summary>
-    public static bool IsAlphaChannelBlendingEnabled
-    {
-      get
-      {
-        return _device.GetRenderState<bool>(RenderState.SeparateAlphaBlendEnable);
-      }
-    }
-
-    /// <summary>
-    /// Sets the DirectX render states to enable alpha blending for opacity masks, where only the alpha channel of incoming fragments is blended.
-    /// </summary>
-    public static void EnableAlphaChannelBlending()
-    {
-      _device.SetRenderState(RenderState.AlphaBlendEnable, true);
-      _device.SetRenderState(RenderState.SourceBlend, Blend.Zero);
-      _device.SetRenderState(RenderState.DestinationBlend, Blend.One);
-      _device.SetRenderState(RenderState.SeparateAlphaBlendEnable, true);
-      _device.SetRenderState(RenderState.SourceBlendAlpha, Blend.Zero);
-      _device.SetRenderState(RenderState.DestinationBlendAlpha, Blend.SourceAlpha);
-    }
-
-    /// <summary>
-    /// Sets the DirectX render states to disable separate blending for the alpha channel.
-    /// </summary>
-    public static void DisableAlphaChannelBlending()
-    {
-      EnableDefaultAlphaBlending();
-      _device.SetRenderState(RenderState.SeparateAlphaBlendEnable, false);
-    }
-
-    /// <summary>
-    /// Creates and the camera and projection matrices use in future rendering. FinalTransform is 
-    /// updated to reflect this change.
-    /// </summary>
-    /// <param name="width">The width of the desired screen-space.</param>
-    /// <param name="height">The height of the desired screen-space.</param>
+    /// <remarks>
+    /// The primitives are drawn directly in back buffer pixel coordinates (origin top left), so this is the identity.
+    /// </remarks>
     public static void SetCameraProjection(int width, int height)
     {
-      float w = width * 0.5f;
-      float h = height * 0.5f;
-
-      // Setup a 2D camera view
-      Matrix flipY = Matrix.Scaling(1.0f, -1.0f, 1.0f);
-      Matrix translate = Matrix.Translation(-w, -h, 0.0f);
-      TransformView = Matrix.Multiply(translate, flipY);
-
-      TransformProjection = Matrix.OrthoOffCenterLH(-w, w, -h, h, 0.0f, 2.0f);
-      FinalTransform = TransformView * TransformProjection;
+      TransformView = Matrix.Identity;
+      TransformProjection = Matrix.Identity;
+      FinalTransform = Matrix.Identity;
     }
+
+    #endregion
 
     /// <summary>
     /// Fires an event if listeners are available.
     /// </summary>
-    /// <param name="eventHandler"></param>
     private static void Fire(EventHandler eventHandler)
     {
       try
@@ -601,14 +757,14 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     }
 
     /// <summary>
-    /// Renders the entire scene.
+    /// Renders the entire scene. Has to be called from the render callback of the window host; the host swaps the buffers afterwards.
     /// </summary>
     /// <param name="doWaitForNextFame"><c>true</c>, if this method should wait to the correct frame start time
     /// before it renders, else <c>false</c>.</param>
     /// <returns><c>true</c>, if the caller should wait some milliseconds before rendering the next time.</returns>
     public static bool Render(bool doWaitForNextFame)
     {
-      if (_device == null || !_deviceOk)
+      if (_grContext == null || _backBuffer == null || !_deviceOk)
         return true;
 
       IRenderStrategy renderStrategy = RenderStrategy;
@@ -621,6 +777,7 @@ namespace MediaPortal.UI.SkinEngine.DirectX
       bool doReset = false;
       try
       {
+        _grContext.ResetContext(); // The video player or other GL users might have changed the GL state
         Fire(DeviceSceneBegin);
 
         pipeline.BeginRender();
@@ -631,24 +788,24 @@ namespace MediaPortal.UI.SkinEngine.DirectX
 
         Fire(DeviceSceneEnd);
 
-        _device.PresentEx(renderStrategy.PresentMode);
+        _backBufferSurface.Canvas.Flush();
+        _grContext.Flush();
 
         Fire(DeviceScenePresented);
 
         ContentManager.Instance.Clean();
       }
-      catch (SharpDXException e)
+      catch (Exception e)
       {
         doReset = true;
-        DeviceState state = CheckDeviceState();
-        ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: DirectX Exception, DeviceState: {0}", e, state);
-        _deviceOk = state == DeviceState.Ok;
+        _deviceOk = _grContext != null && !_grContext.IsAbandoned;
+        ServiceRegistration.Get<ILogger>().Warn("GraphicsDevice: Exception during rendering, device ok: {0}", e, _deviceOk);
         return !_deviceOk;
       }
       finally
       {
         _renderAndResourceAccessLock.ExitReadLock();
-        // If there are exceptions during render pass, the device can stay in an invalid state, even if the CheckDeviceState returns "ok".
+        // If there are exceptions during render pass, the device can stay in an invalid state.
         // So we prefer to reset the device and try continue rendering.
         if (doReset)
           Reset();

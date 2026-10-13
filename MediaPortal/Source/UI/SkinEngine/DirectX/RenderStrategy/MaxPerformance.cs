@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -21,18 +21,17 @@
 */
 
 #endregion
-using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
 {
   /// <summary>
-  /// For maximum performance, rendering will be done without manual waiting and presenting using <see cref="Present.ForceImmediate"/>.
+  /// Renders as fast as possible, without any frame limiting or synchronization.
   /// </summary>
   class MaxPerformance : AbstractStrategy
   {
-    public MaxPerformance(D3DSetup setup) : base(setup)
+    public MaxPerformance(RenderSetup setup) : base(setup)
     {
-      PresentMode = Present.ForceImmediate;
+      PresentVSync = false;
     }
   }
 }

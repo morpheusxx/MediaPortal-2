@@ -23,11 +23,10 @@
 #endregion
 
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using MediaPortal.UI.SkinEngine.Rendering;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes
 {

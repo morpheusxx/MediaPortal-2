@@ -23,7 +23,7 @@
 #endregion
 
 using MediaPortal.UI.SkinEngine.ContentManagement.AssetCore;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.DirectX;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
@@ -34,7 +34,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement
   /// <summary>
   /// Represents a font set (of glyphs).
   /// </summary>
-  public class FontAsset : AssetWrapper<FontAssetCore>, ITextureAsset
+  public class FontAsset : AssetWrapper<FontAssetCore>
   {
     public delegate void DeallocationHandler();
 
@@ -152,9 +152,20 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement
     /// <param name="textSize">Output size of the created text.</param>
     /// <param name="lineIndex">Output indices of the first vertex for of each line of text.</param>
     /// <returns>An array of vertices representing a triangle list.</returns>
-    public PositionColoredTextured[] CreateText(string[] text, float size, bool kerning, out SizeF textSize, out int[] lineIndex)
+    /// <summary>
+    /// Gets the height of the glyph of the given character below the baseline, at the size of this font asset.
+    /// </summary>
+    public float CharDescent(char character)
     {
-      return _assetCore.CreateText(text, size, kerning, out textSize, out lineIndex);
+      return _assetCore.CharDescent(character);
+    }
+
+    /// <summary>
+    /// Creates the Skia font to draw text with the given <paramref name="size"/>. The font must be disposed by the caller.
+    /// </summary>
+    public SkiaSharp.SKFont CreateFont(float size)
+    {
+      return _assetCore.CreateFont(size);
     }
 
     public void Allocate()
@@ -167,14 +178,5 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement
       if (allocationDelta < 0 && Deallocated != null)
         Deallocated();
     }
-
-    #region ITextureAsset Members
-
-    public Texture Texture
-    {
-      get { return _assetCore.Texture; }
-    }
-
-    #endregion
   }
 }

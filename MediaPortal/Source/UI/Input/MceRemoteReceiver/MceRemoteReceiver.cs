@@ -22,6 +22,7 @@
 
 #endregion
 
+using MediaPortal.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -121,7 +122,7 @@ namespace MediaPortal.Plugins.MceRemoteReceiver
         switch (messageType)
         {
           case WindowsMessaging.MessageType.WindowsBroadcast:
-            Message msg = (Message) message.MessageData[WindowsMessaging.MESSAGE];
+            Message msg = ((WindowsMessage) message.MessageData[WindowsMessaging.MESSAGE]).ToMessage();
             HandleWindowsMessage(msg);
             break;
         }

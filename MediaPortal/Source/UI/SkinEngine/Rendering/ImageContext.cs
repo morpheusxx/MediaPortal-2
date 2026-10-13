@@ -28,7 +28,7 @@ using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -256,12 +256,9 @@ namespace MediaPortal.UI.SkinEngine.Rendering
 
       startContext.ApplyTransitionParametersAsStartingSource(_effectTransition, startFrameData);
 
-      // Disable antialiasing for image rendering.
-      GraphicsDevice.Device.SetRenderState(RenderState.MultisampleAntialias, false);
-
       // Set border colour for area outside of texture boundaries
-      GraphicsDevice.Device.SetSamplerState(0, SamplerState.BorderColor, borderColor.ToBgra());
-      GraphicsDevice.Device.SetSamplerState(1, SamplerState.BorderColor, borderColor.ToBgra());
+      GraphicsDevice.SetSamplerBorderColor(0, borderColor.ToBgra());
+      GraphicsDevice.SetSamplerBorderColor(1, borderColor.ToBgra());
           
       // Render
       _effectTransition.StartRender(_lastTexture, renderContext.Transform);
@@ -321,11 +318,8 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         foreach (KeyValuePair<string, object> pair in _extraParameters)
           _effect.Parameters[pair.Key] = pair.Value;
 
-      // Disable antialiasing for image rendering.
-      GraphicsDevice.Device.SetRenderState(RenderState.MultisampleAntialias, false);
-
       // Set border colour for area outside of texture boundaries
-      GraphicsDevice.Device.SetSamplerState(0, SamplerState.BorderColor, borderColor.ToBgra());
+      GraphicsDevice.SetSamplerBorderColor(0, borderColor.ToBgra());
       
       // Render
       _effect.StartRender(_lastTexture, renderContext.Transform);

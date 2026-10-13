@@ -24,7 +24,7 @@
 
 using MediaPortal.UI.SkinEngine.ContentManagement.AssetCore;
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement
@@ -70,8 +70,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement
     /// </summary>
     public void AllocateRenderTarget(int width, int height)
     {
-      AllocateCustom(width, height, Format.A8R8G8B8, GraphicsDevice.Setup.PresentParameters.MultiSampleType,
-          GraphicsDevice.Setup.PresentParameters.MultiSampleQuality, false);
+      AllocateCustom(width, height, Format.A8R8G8B8, MultisampleType.None, 0, false);
     }
 
     /// <summary>

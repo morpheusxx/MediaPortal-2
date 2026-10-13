@@ -22,7 +22,6 @@
 
 #endregion
 
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Control.InputManager;

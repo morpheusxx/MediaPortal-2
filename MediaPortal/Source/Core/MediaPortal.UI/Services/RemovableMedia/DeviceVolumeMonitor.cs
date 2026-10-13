@@ -24,7 +24,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using MediaPortal.Common.Messaging;
+using MediaPortal.UI.General;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
@@ -44,12 +45,13 @@ namespace MediaPortal.UI.Services.RemovableMedia
     public DeviceVolumeMonitorException(string message) : base(message) { }
   }
 
-  internal class _DeviceVolumeMonitor : NativeWindow, IDisposable
+  internal class _DeviceVolumeMonitor : IDisposable
   {
     #region Protectded fields
 
     protected DeviceVolumeMonitor _monitor;
     protected bool _enabled = false;
+    protected SynchronousMessageQueue _messageQueue = null;
     protected IEnumerable<char> _knownDrives = null;
     protected DelayedEvent _checkDrivesTimer = null;
     protected IList<char> _arrivedDrives = new List<char>();
@@ -126,13 +128,25 @@ namespace MediaPortal.UI.Services.RemovableMedia
       _checkDrivesTimer.OnEventHandler += CheckDrives;
     }
 
+    private void MessagesAvailable(SynchronousMessageQueue queue)
+    {
+      SystemMessage message;
+      while ((message = queue.Dequeue()) != null)
+      {
+        if (message.ChannelName != WindowsMessaging.CHANNEL ||
+            (WindowsMessaging.MessageType) message.MessageType != WindowsMessaging.MessageType.WindowsBroadcast)
+          continue;
+        WindowsMessage msg = (WindowsMessage) message.MessageData[WindowsMessaging.MESSAGE];
+        HandleMessage(ref msg);
+      }
+    }
+
     /// <summary>
-    /// WndProc method that traps all messages sent to the Handle.
+    /// Handles the native windows messages broadcasted by the main window.
     /// </summary>
     /// <param name="msg">A Windows message.</param>
-    protected override void WndProc(ref Message msg)
+    protected void HandleMessage(ref WindowsMessage msg)
     {
-      base.WndProc(ref msg);
       if (!_monitor.Enabled)
         return;
       if (msg.Msg == WM_DEVICECHANGE)
@@ -223,6 +237,7 @@ namespace MediaPortal.UI.Services.RemovableMedia
 
     public void Dispose()
     {
+      Enabled = false;
       _checkDrivesTimer.Dispose();
       _checkDrivesTimer = null;
     }
@@ -237,12 +252,18 @@ namespace MediaPortal.UI.Services.RemovableMedia
       {
         if (!_enabled && value)
         {
-          if (Handle == IntPtr.Zero) { AssignHandle(_monitor.WindowHandle); }
+          _messageQueue = new SynchronousMessageQueue(this, new[] { WindowsMessaging.CHANNEL });
+          _messageQueue.MessagesAvailable += MessagesAvailable;
+          _messageQueue.RegisterAtAllMessageChannels();
           _enabled = true;
         }
         if (_enabled && !value)
         {
-          if (Handle != IntPtr.Zero) { ReleaseHandle(); }
+          if (_messageQueue != null)
+          {
+            _messageQueue.Dispose();
+            _messageQueue = null;
+          }
           _enabled = false;
         }
       }
@@ -279,8 +300,7 @@ namespace MediaPortal.UI.Services.RemovableMedia
     {
       if (_internalMonitorWindow == null)
         return;
-      if (_internalMonitorWindow.Handle != IntPtr.Zero)
-        _internalMonitorWindow.ReleaseHandle();
+      _internalMonitorWindow.Dispose();
       _internalMonitorWindow = null;
       GC.SuppressFinalize(this);
     }

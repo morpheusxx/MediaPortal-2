@@ -23,7 +23,7 @@
 #endregion
 
 using System;
-using System.Drawing.Drawing2D;
+using MediaPortal.UI.SkinEngine.DirectX.Triangulate;
 using System.Linq;
 using SharpDX;
 using Size = SharpDX.Size2;

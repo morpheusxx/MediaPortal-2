@@ -24,7 +24,7 @@
 
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
 {
@@ -43,14 +43,13 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     public override void BeginRender()
     {
       // Remember current backbuffer and set internal surface as new render target.
-      _backbuffer = GraphicsDevice.Device.GetRenderTarget(0);
+      _backbuffer = GraphicsDevice.GetRenderTarget();
       _renderTarget = ContentManager.Instance.GetRenderTarget(GLOBAL_RENDER_SURFACE_ASSET_KEY);
       _renderTarget.AllocateRenderTarget(GraphicsDevice.Width, GraphicsDevice.Height);
       _renderRect = new Rectangle(0, 0, GraphicsDevice.Width, GraphicsDevice.Height);
-      GraphicsDevice.Device.SetRenderTarget(0, _renderTarget.Surface);
+      GraphicsDevice.SetRenderTarget(_renderTarget.Surface);
       GraphicsDevice.RenderPass = RenderPassType.SingleOrFirstPass;
-      GraphicsDevice.Device.Clear(ClearFlags.Target, Color.Black, 1.0f, 0);
-      GraphicsDevice.Device.BeginScene();
+      GraphicsDevice.Clear(SkiaSharp.SKColors.Black);
     }
 
     public override void Render()
@@ -58,11 +57,9 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
       // First frame.
       base.Render();
       CopyFirstFrameToBackbuffer();
-      GraphicsDevice.Device.EndScene();
 
       // Second frame.
       GraphicsDevice.RenderPass = RenderPassType.SecondPass;
-      GraphicsDevice.Device.BeginScene();
       base.Render();
       CopySecondFrameToBackbuffer();
     }
@@ -70,19 +67,18 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderPipelines
     public override void EndRender()
     {
       // Restore backbuffer as render target.
-      using (_backbuffer)
-        GraphicsDevice.Device.SetRenderTarget(0, _backbuffer);
+      GraphicsDevice.SetRenderTarget(_backbuffer);
       base.EndRender();
     }
 
     protected virtual void CopyFirstFrameToBackbuffer()
     {
-      GraphicsDevice.Device.StretchRectangle(_renderTarget.Surface, _firstFrameTargetRect, _backbuffer, _firstFrameTargetRect, TextureFilter.None);
+      GraphicsDevice.StretchRectangle(_renderTarget.Surface, _firstFrameTargetRect, _backbuffer, _firstFrameTargetRect, false);
     }
 
     protected virtual void CopySecondFrameToBackbuffer()
     {
-      GraphicsDevice.Device.StretchRectangle(_renderTarget.Surface, _secondFrameTargetRect, _backbuffer, _secondFrameTargetRect, TextureFilter.None);
+      GraphicsDevice.StretchRectangle(_renderTarget.Surface, _secondFrameTargetRect, _backbuffer, _secondFrameTargetRect, false);
     }
   }
 }

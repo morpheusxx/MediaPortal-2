@@ -22,7 +22,7 @@
 
 #endregion
 
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement
 {

@@ -23,7 +23,6 @@
 #endregion
 
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Text.RegularExpressions;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
@@ -34,8 +33,8 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.Xaml;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX;
-using SharpDX.Direct3D9;
-using FillMode=System.Drawing.Drawing2D.FillMode;
+using MediaPortal.UI.SkinEngine.Gpu;
+
 using RectangleF = System.Drawing.RectangleF;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals.Shapes

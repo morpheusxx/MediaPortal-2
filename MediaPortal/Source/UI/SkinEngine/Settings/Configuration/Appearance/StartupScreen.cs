@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -24,65 +24,34 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
-using System.Runtime.InteropServices;
 using System.Linq;
 using MediaPortal.UI.Settings;
 using MediaPortal.Common.Localization;
 using MediaPortal.Common.Configuration.ConfigurationClasses;
+using MediaPortal.UI.SkinEngine.GUI;
+using Silk.NET.Windowing;
 
 namespace MediaPortal.UI.SkinEngine.Settings.Configuration.Appearance
 {
   public class StartupScreen : SingleSelectionList
   {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal class DisplayDevice
-    {
-      public int cb = 0;
-      [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-      public string DeviceName = new String(' ', 32);
-      [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-      public string DeviceString = new String(' ', 128);
-      public int StateFlags = 0;
-      [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-      public string DeviceID = new String(' ', 128);
-      [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-      public string DeviceKey = new String(' ', 128);
-    }
-
-    [DllImport("user32.dll")]
-    internal static extern bool EnumDisplayDevices(string lpDevice, int iDevNum, [In, Out] DisplayDevice lpDisplayDevice, int dwFlags);
-
-    #region Protected fields
-
-    protected IList<Screen> _screens;
-
-    #endregion
-
     #region Base overrides
 
     public override void Load()
     {
-      _screens = new List<Screen>(Screen.AllScreens);
+      IList<IMonitor> monitors = MainWindow.GetMonitors();
 
       IList<String> options = new List<String>();
       options.Add("[Settings.Appearance.System.StartupScreen.DoNotUseSelection]");
 
-      foreach (Screen screen in Screen.AllScreens)
-      {
-        const int dwf = 0;
-        DisplayDevice info = new DisplayDevice();
-        string monitorname = null;
-        info.cb = Marshal.SizeOf(info);
-        if (EnumDisplayDevices(screen.DeviceName, 0, info, dwf))
-          monitorname = info.DeviceString;
-        options.Add(string.Format("{0} ({1}x{2})", monitorname, screen.Bounds.Width, screen.Bounds.Height));
-      }
+      foreach (IMonitor monitor in monitors)
+        options.Add(string.Format("{0} ({1}x{2})", string.IsNullOrEmpty(monitor.Name) ? "Monitor " + (monitor.Index + 1) : monitor.Name,
+            monitor.Bounds.Size.X, monitor.Bounds.Size.Y));
 
       int startupScreenNum = SettingsManager.Load<StartupSettings>().StartupScreenNum;
 
-      if (startupScreenNum < Screen.AllScreens.Length)
-        Selected = SettingsManager.Load<StartupSettings>().StartupScreenNum + 1;
+      if (startupScreenNum < monitors.Count)
+        Selected = startupScreenNum + 1;
       else
         Selected = 0;
 

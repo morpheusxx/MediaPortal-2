@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Logging;
@@ -1712,10 +1711,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
     { }
 
     public static readonly RoutedEvent KeyPressEvent = EventManager.RegisterRoutedEvent(
-      "KeyPress", RoutingStrategy.Bubble, typeof(KeyPressEventHandler), typeof(UIElement));
+      "KeyPress", RoutingStrategy.Bubble, typeof(KeyEventHandler), typeof(UIElement));
 
     // Provide CLR accessors for the event 
-    public event KeyPressEventHandler KeyPress
+    public event KeyEventHandler KeyPress
     {
       add { AddHandler(KeyPressEvent, value); }
       remove { RemoveHandler(KeyPressEvent, value); }

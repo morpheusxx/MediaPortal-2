@@ -22,6 +22,7 @@
 
 #endregion
 
+using MediaPortal.Utilities;
 using HidInput.DefaultMappings;
 using HidInput.Devices;
 using HidInput.Hid;
@@ -66,8 +67,8 @@ namespace HidInput
       // should be done on the same thread as the main window to ensure that
       // both windows' message loops are synchronized and we don't create
       // a message loop on a random thread.
-      if (SkinContext.Form != null && SkinContext.Form.InvokeRequired)
-        SkinContext.Form.BeginInvoke(new Action(Init));
+      if (SkinContext.MainWindow != null && !SkinContext.MainWindow.IsRenderThread)
+        SkinContext.MainWindow.BeginInvoke(Init);
       // If autoactivating when the PluginManager starts up the main window might not
       // have been created yet but currently this always happens on the main thread so
       // it should be OK to Init directly. This could break if the PluginManager is
@@ -135,7 +136,7 @@ namespace HidInput
       WindowsMessaging.MessageType messageType = (WindowsMessaging.MessageType)message.MessageType;
       if (messageType == WindowsMessaging.MessageType.WindowsBroadcast)
       {
-        Message msg = (Message)message.MessageData[WindowsMessaging.MESSAGE];
+        Message msg = ((WindowsMessage)message.MessageData[WindowsMessaging.MESSAGE]).ToMessage();
 
         bool handled = (bool?)message.MessageData[WindowsMessaging.HANDLED] == true;
         if (handled)
@@ -148,7 +149,7 @@ namespace HidInput
         // A message might get modified by the call to ShouldFilter above by reducing the repeat count in a key down message.
         // Due to [un]boxing the modified message needs to be copied back into the message data.
         if (modified)
-          message.MessageData[WindowsMessaging.MESSAGE] = msg;
+          message.MessageData[WindowsMessaging.MESSAGE] = msg.ToWindowsMessage();
       }
     }
 

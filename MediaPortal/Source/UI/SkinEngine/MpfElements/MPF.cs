@@ -343,7 +343,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements
             TypeConverter.Convert(parts[i], typeof(double), out obj);
             f[i] = (float)obj;
           }
-          System.Drawing.Drawing2D.Matrix matrix2D = new System.Drawing.Drawing2D.Matrix(f[0], f[1], f[2], f[3], f[4], f[5]);
+          MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D matrix2D = new MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D(f[0], f[1], f[2], f[3], f[4], f[5]);
           Static2dMatrix matrix = new Static2dMatrix();
           matrix.Set2DMatrix(matrix2D);
           result = matrix;

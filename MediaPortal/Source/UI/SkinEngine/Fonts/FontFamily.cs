@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -23,52 +23,41 @@
 #endregion
 
 using System;
-using Tao.FreeType;
+using SkiaSharp;
 
 namespace MediaPortal.UI.SkinEngine.Fonts
 {
   /// <summary>
-  /// Represents a font family.
+  /// A font family which was loaded from a font file (TrueType or OpenType).
   /// </summary>
   public class FontFamily : IDisposable
   {
-    private static IntPtr _library = IntPtr.Zero;
-
     private readonly string _name;
-    private readonly IntPtr _face;
+    private readonly SKTypeface _typeface;
 
     public FontFamily(string name, string filePathName)
     {
       _name = name;
-
-      if (_library == IntPtr.Zero)
-        FT.FT_Init_FreeType(out _library);
-
       // Load the requested font.
-      if (FT.FT_New_Face(_library, filePathName, 0, out _face) != 0)
-        throw new ArgumentException("Failed to load face.");
+      _typeface = SKTypeface.FromFile(filePathName);
+      if (_typeface == null)
+        throw new ArgumentException("Failed to load font file '" + filePathName + "'.");
     }
 
-    /// <summary>
-    /// Gets the name of font family.
-    /// </summary>
     public string Name
     {
       get { return _name; }
     }
 
-    /// <summary>
-    /// Gets the font face FreeType object.
-    /// </summary>
-    public IntPtr Face
+    public SKTypeface Typeface
     {
-      get { return _face; }
+      get { return _typeface; }
     }
 
     public void Dispose()
     {
-      if (_face != IntPtr.Zero)
-        FT.FT_Done_Face(_face);
+      if (_typeface != null)
+        _typeface.Dispose();
     }
   }
 }

@@ -51,7 +51,7 @@ namespace MediaPortal.UI.Players.Video
   /// <summary>
   /// BluRayPlayer implements a BluRay player including menu support.
   /// </summary>
-  public class BluRayPlayer : VideoPlayer, IDVDPlayer, IBDReaderCallback, ISharpDXMultiTexturePlayer
+  public class BluRayPlayer : VideoPlayer, IDVDPlayer, IBDReaderCallback, IVideoFrameOverlays
   {
     public const double MINIMAL_FULL_FEATURE_LENGTH = 3000;
 

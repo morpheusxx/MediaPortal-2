@@ -40,7 +40,7 @@ namespace MediaPortal.UiComponents.Diagnostics.Settings.Configuration
 
     public override void Load()
     {
-      SkinContext.Form.Invoke(new Action(()=> 
+      SkinContext.MainWindow.Invoke(new Action(()=> 
       { 
         _yes = DiagnosticsHandler.LogViewerInstance.Visible; 
       }));
@@ -48,7 +48,7 @@ namespace MediaPortal.UiComponents.Diagnostics.Settings.Configuration
 
     public override void Save()
     {
-      SkinContext.Form.Invoke(new Action(() =>
+      SkinContext.MainWindow.Invoke(new Action(() =>
       {
         if (_yes)
         {

@@ -180,6 +180,39 @@ namespace MediaPortal.Utilities.Graphics
     }
 
     /// <summary>
+    /// Decodes the image in <paramref name="sourceStream"/> into a premultiplied BGRA bitmap, applies the EXIF orientation and scales it
+    /// down to fit <paramref name="maxWidth"/> x <paramref name="maxHeight"/> (never upscaled). The result is suited to be uploaded to the GPU.
+    /// </summary>
+    /// <returns>The bitmap, or <c>null</c> if the data could not be decoded.</returns>
+    public static SKBitmap LoadBitmap(Stream sourceStream, int maxWidth, int maxHeight)
+    {
+      using (SKCodec codec = SKCodec.Create(sourceStream))
+      {
+        if (codec == null)
+          return null;
+        SKEncodedOrigin origin = codec.EncodedOrigin;
+        SKImageInfo info = new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        SKBitmap decoded = new SKBitmap(info);
+        SKCodecResult result = codec.GetPixels(info, decoded.GetPixels());
+        if (result != SKCodecResult.Success && result != SKCodecResult.IncompleteInput)
+        {
+          decoded.Dispose();
+          return null;
+        }
+        SKBitmap oriented = ApplyOrigin(decoded, origin);
+        if (!ReferenceEquals(oriented, decoded))
+          decoded.Dispose();
+
+        SKSizeI size = FitInto(oriented.Width, oriented.Height, maxWidth, maxHeight);
+        if (size.Width == oriented.Width && size.Height == oriented.Height)
+          return oriented;
+        SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul), SKFilterQuality.High);
+        oriented.Dispose();
+        return resized;
+      }
+    }
+
+    /// <summary>
     /// Decodes an image from <paramref name="imageData"/> and saves it as JPEG to <paramref name="path"/>.
     /// </summary>
     /// <exception cref="InvalidDataException">The data could not be decoded as an image.</exception>

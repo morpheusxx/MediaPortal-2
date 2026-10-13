@@ -25,7 +25,6 @@
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using System.Xml.XPath;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
@@ -251,10 +250,13 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
     {
       // return 16d / 10d; // TEST
       // return 21d / 9d; // TEST
-      Screen screen = ServiceRegistration.Get<IScreenControl>(false) is Form mainForm ?
-        Screen.FromControl(mainForm) :
-        Screen.PrimaryScreen;
-      return (double)screen.Bounds.Width / screen.Bounds.Height;
+      MediaPortal.UI.SkinEngine.GUI.MainWindow window = ServiceRegistration.Get<IScreenControl>(false) as MediaPortal.UI.SkinEngine.GUI.MainWindow;
+      if (window != null && window.DesktopHeight > 0)
+        return (double) window.DesktopWidth / window.DesktopHeight;
+      var monitors = MediaPortal.UI.SkinEngine.GUI.MainWindow.GetMonitors();
+      if (monitors.Count > 0 && monitors[0].Bounds.Size.Y > 0)
+        return (double) monitors[0].Bounds.Size.X / monitors[0].Bounds.Size.Y;
+      return 16d / 9d;
     }
     /// <summary>
     /// Will trigger the lazy metadata initialization on request.

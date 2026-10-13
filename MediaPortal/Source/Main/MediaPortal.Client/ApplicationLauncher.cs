@@ -263,7 +263,8 @@ namespace MediaPortal.Client
           if (mpOptions.AutoStart)
             StartFocusKeeper();
 
-          Application.Run();
+          // Runs the main loop of the main window until it is closed
+          ServiceRegistration.Get<IScreenControl>().RunMainLoop();
           systemStateService.SwitchSystemState(SystemState.ShuttingDown, true);
           ServiceRegistration.IsShuttingDown = true; // Block ServiceRegistration from trying to load new services in shutdown phase
 
@@ -326,8 +327,8 @@ namespace MediaPortal.Client
     /// </summary>
     private static void StartFocusKeeper()
     {
-      Form form = ServiceRegistration.Get<IScreenControl>() as Form;
-      if (form != null)
+      IScreenControl screenControl = ServiceRegistration.Get<IScreenControl>(false);
+      if (screenControl != null)
       {
         ServiceRegistration.Get<ILogger>().Info("ApplicationLauncher: Autostart by Windows. Starting Focus Keeper.");
         // Max. seconds after startup of MainForm.
@@ -339,7 +340,7 @@ namespace MediaPortal.Client
         // This is especially required, because in deactivate event handler it's not possible to reactivate the form.
         _deactivatedEvent = new DelayedEvent(500);
         _deactivatedEvent.OnEventHandler += PreventDeactivate;
-        form.Deactivate += EnqueueDeactivationEvent;
+        screenControl.Deactivated += EnqueueDeactivationEvent;
       }
     }
 
@@ -352,9 +353,9 @@ namespace MediaPortal.Client
     {
       ServiceRegistration.Get<ILogger>().Info("ApplicationLauncher: Stopping Focus Keeper.");
 
-      Form form = ServiceRegistration.Get<IScreenControl>() as Form;
-      if (form != null)
-        form.Deactivate -= EnqueueDeactivationEvent;
+      IScreenControl screenControl = ServiceRegistration.Get<IScreenControl>(false);
+      if (screenControl != null)
+        screenControl.Deactivated -= EnqueueDeactivationEvent;
 
       _deactivatedEvent.Dispose();
       _deactivatedEvent = null;
@@ -365,9 +366,9 @@ namespace MediaPortal.Client
     private static void PreventDeactivate(object sender, EventArgs e)
     {
       ServiceRegistration.Get<ILogger>().Info("ApplicationLauncher: Window got deactivated. Reactivate it again.");
-      Form form = ServiceRegistration.Get<IScreenControl>() as Form;
-      if (form != null)
-        form.SafeActivate();
+      IScreenControl screenControl = ServiceRegistration.Get<IScreenControl>(false);
+      if (screenControl != null)
+        screenControl.Activate();
     }
 
     #endregion

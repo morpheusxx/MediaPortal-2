@@ -57,7 +57,7 @@ using SizeF = SharpDX.Size2F;
 
 namespace MediaPortal.UI.Players.Video
 {
-  public class VideoPlayer : BaseDXPlayer, ISharpDXVideoPlayer, ISubtitlePlayer, IChapterPlayer, ITitlePlayer, IResumablePlayer
+  public class VideoPlayer : BaseDXPlayer, IVideoFrameSource, ISubtitlePlayer, IChapterPlayer, ITitlePlayer, IResumablePlayer
   {
     #region Classes & interfaces
 
@@ -317,7 +317,7 @@ namespace MediaPortal.UI.Players.Video
 
     #endregion
 
-    #region ISharpDXVideoPlayer implementation
+    #region IVideoFrameSource implementation
 
     public override string Name
     {

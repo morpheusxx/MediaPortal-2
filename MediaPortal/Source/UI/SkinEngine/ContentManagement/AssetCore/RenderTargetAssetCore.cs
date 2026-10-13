@@ -23,7 +23,7 @@
 #endregion
 
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
@@ -82,7 +82,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         _size.Height = height;
         _format = format;
 
-        _surface = Surface.CreateRenderTarget(GraphicsDevice.Device, width, height, format, multisampleType, multisampleQuality, lockable);
+        _surface = Surface.Create(width, height, format);
       }
       AllocationChanged(AllocationSize);
       KeepAlive();

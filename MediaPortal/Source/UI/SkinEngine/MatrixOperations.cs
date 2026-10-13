@@ -225,9 +225,9 @@ namespace MediaPortal.UI.SkinEngine
     /// </summary>
     /// <param name="matrix">Matrix to convert.</param>
     /// <returns>Matrix of the 2D-namespace.</returns>
-    public static System.Drawing.Drawing2D.Matrix Get2dMatrix(this Matrix matrix)
+    public static MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D Get2dMatrix(this Matrix matrix)
     {
-      return new System.Drawing.Drawing2D.Matrix(matrix.M11, matrix.M12, matrix.M21, matrix.M22, 0, 0);
+      return new MediaPortal.UI.SkinEngine.DirectX.Triangulate.Matrix2D(matrix.M11, matrix.M12, matrix.M21, matrix.M22, 0, 0);
     }
   }
 }

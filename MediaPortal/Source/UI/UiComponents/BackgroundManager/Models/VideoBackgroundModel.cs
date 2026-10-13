@@ -28,7 +28,6 @@ using MediaPortal.Common.General;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.Services.Settings;
-using MediaPortal.UI.Players.Video;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Screens;
 using MediaPortal.UI.Presentation.Workflow;
@@ -52,7 +51,6 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
     #region Protected fields
 
     protected string _videoFilename;
-    protected VideoPlayer _videoPlayer;
     protected AbstractProperty _videoPlayerProperty;
     protected AbstractProperty _isEnabledProperty;
     protected IPlayerSlotController _backgroundPsc = null;
@@ -76,9 +74,9 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
       get { return _videoPlayerProperty; }
     }
 
-    public ISharpDXVideoPlayer VideoPlayer
+    public IVideoFrameSource VideoPlayer
     {
-      get { return (ISharpDXVideoPlayer) _videoPlayerProperty.GetValue(); }
+      get { return (IVideoFrameSource) _videoPlayerProperty.GetValue(); }
       set { _videoPlayerProperty.SetValue(value); }
     }
 
@@ -100,7 +98,7 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
 
     public VideoBackgroundModel()
     {
-      _videoPlayerProperty = new WProperty(typeof(ISharpDXVideoPlayer), null);
+      _videoPlayerProperty = new WProperty(typeof(IVideoFrameSource), null);
       _isEnabledProperty = new WProperty(typeof(bool), false);
       _settings.SettingsChanged += RefreshSettings;
       RefreshSettings();
@@ -173,11 +171,11 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
       try
       {
         _backgroundPsc.Play(_video, StartTime.AtOnce);
-        BaseDXPlayer player = _backgroundPsc.CurrentPlayer as BaseDXPlayer;
-        if (player != null)
-          player.AutoRepeat = true;
+        IAutoRepeatPlayer repeatPlayer = _backgroundPsc.CurrentPlayer as IAutoRepeatPlayer;
+        if (repeatPlayer != null)
+          repeatPlayer.AutoRepeat = true;
 
-        VideoPlayer = player as ISharpDXVideoPlayer;
+        VideoPlayer = _backgroundPsc.CurrentPlayer as IVideoFrameSource;
       }
       catch (Exception ex)
       {

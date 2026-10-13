@@ -294,7 +294,7 @@ namespace MediaPortal.Plugins.WifiRemote.MessageParser
         case "audiotrack":
           if (Helper.IsNowPlaying())
           {
-            ISharpDXVideoPlayer videoPlayer = ServiceRegistration.Get<IPlayerContextManager>().PrimaryPlayerContext.CurrentPlayer as ISharpDXVideoPlayer;
+            IVideoFrameSource videoPlayer = ServiceRegistration.Get<IPlayerContextManager>().PrimaryPlayerContext.CurrentPlayer as IVideoFrameSource;
             if (videoPlayer != null)
             {
               var availableAudiotracksList = videoPlayer.AudioStreams.ToList();
@@ -318,7 +318,7 @@ namespace MediaPortal.Plugins.WifiRemote.MessageParser
         case "aspectratio":
           if (Helper.IsNowPlaying())
           {
-            ISharpDXVideoPlayer videoPlayer = ServiceRegistration.Get<IPlayerContextManager>().PrimaryPlayerContext.CurrentPlayer as ISharpDXVideoPlayer;
+            IVideoFrameSource videoPlayer = ServiceRegistration.Get<IPlayerContextManager>().PrimaryPlayerContext.CurrentPlayer as IVideoFrameSource;
             if (videoPlayer != null)
             {
               var availableGeometriesList = availableGeometries.Values.ToList();

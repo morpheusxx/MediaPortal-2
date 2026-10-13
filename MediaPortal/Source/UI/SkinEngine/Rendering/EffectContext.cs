@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.DirectX;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 
@@ -139,7 +139,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
           _effect.Parameters[pair.Key] = pair.Value;
 
       // Set border colour for area outside of texture boundaries
-      GraphicsDevice.Device.SetSamplerState(0, SamplerState.BorderColor, borderColor.ToBgra());
+      GraphicsDevice.SetSamplerBorderColor(0, borderColor.ToBgra());
       // Render
       _effect.StartRender(_lastTexture, renderContext.Transform);
       return true;

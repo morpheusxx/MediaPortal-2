@@ -26,7 +26,7 @@ using System.Drawing;
 using MediaPortal.Common.Runtime;
 using MediaPortal.Common.Settings;
 using MediaPortal.UI.Presentation.Screens;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.Settings
 {

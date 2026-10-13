@@ -37,21 +37,21 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
       get { return _videoPlayerProperty; }
     }
 
-    public ISharpDXVideoPlayer VideoPlayer
+    public IVideoFrameSource VideoPlayer
     {
       get
       {
         // Workaround for virtual member call by base constructor
         return _videoPlayerProperty == null ? 
           null : 
-          (ISharpDXVideoPlayer)_videoPlayerProperty.GetValue();
+          (IVideoFrameSource)_videoPlayerProperty.GetValue();
       }
       set { _videoPlayerProperty.SetValue(value); }
     }
 
     public BackgroundVideoBrush()
     {
-      _videoPlayerProperty = new SProperty(typeof(ISharpDXVideoPlayer), null);
+      _videoPlayerProperty = new SProperty(typeof(IVideoFrameSource), null);
     }
 
     public override void DeepCopy(Utilities.DeepCopy.IDeepCopyable source, Utilities.DeepCopy.ICopyManager copyManager)
@@ -61,7 +61,7 @@ namespace MediaPortal.UiComponents.BackgroundManager.Models
       VideoPlayer = b.VideoPlayer;
     }
 
-    protected override bool GetPlayer(out ISharpDXVideoPlayer player)
+    protected override bool GetPlayer(out IVideoFrameSource player)
     {
       player = VideoPlayer;
       return player != null;

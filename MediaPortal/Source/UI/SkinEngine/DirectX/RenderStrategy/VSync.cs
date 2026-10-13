@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -21,19 +21,17 @@
 */
 
 #endregion
-using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
 {
   /// <summary>
-  /// The presenting is using <see cref="Present.None"/>, so each frame will be syncronized with v-blank.
-  /// If MultiSampling is used, this mode is equal to <see cref="Default"/>.
+  /// The buffer swap is synchronized to the vertical blank of the display.
   /// </summary>
   class VSync : AbstractStrategy
   {
-    public VSync(D3DSetup setup) : base(setup)
+    public VSync(RenderSetup setup) : base(setup)
     {
-      PresentMode = Present.None;
+      PresentVSync = true;
     }
   }
 }

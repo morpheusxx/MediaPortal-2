@@ -23,7 +23,7 @@
 #endregion
 
 using System;
-using System.Windows.Forms;
+using MediaPortal.UI.Control.InputManager;
 
 namespace MediaPortal.UI.SkinEngine.MpfElements.Input
 {

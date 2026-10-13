@@ -30,7 +30,8 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.SkinManagement;
 using MediaPortal.Utilities.DeepCopy;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.DirectX;
+using MediaPortal.UI.SkinEngine.Gpu;
 using RightAngledRotation = MediaPortal.UI.SkinEngine.Rendering.RightAngledRotation;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
@@ -119,7 +120,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
         return;
       }
 
-      ISharpDXImagePlayer player = playerContextManager[Stream] as ISharpDXImagePlayer;
+      IImageFrameSource player = playerContextManager[Stream] as IImageFrameSource;
       if (player == null) 
       {
         FreeData();
@@ -235,11 +236,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       }
       SurfaceDescription desc = sourceTexture.GetLevelDescription(0);
       textureSize = new SizeF(desc.Width, desc.Height);
-      DeviceEx device = SkinContext.Device;
-      Texture result = new Texture(device, desc.Width, desc.Height, 1, Usage.None, Format.A8R8G8B8, Pool.Default);
-      using(Surface target = result.GetSurfaceLevel(0))
-      using(Surface source = sourceTexture.GetSurfaceLevel(0))
-        device.StretchRectangle(source, target, TextureFilter.None);
+      Texture result = new Texture(desc.Width, desc.Height, Usage.RenderTarget, Format.A8R8G8B8);
+      GraphicsDevice.StretchRectangle(sourceTexture.GetSurfaceLevel(0), result.GetSurfaceLevel(0));
       return result;
     }
 

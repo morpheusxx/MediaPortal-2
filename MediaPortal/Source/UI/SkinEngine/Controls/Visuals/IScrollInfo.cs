@@ -22,7 +22,6 @@
 
 #endregion
 
-using System.Windows.Forms;
 
 namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 {

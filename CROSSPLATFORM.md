@@ -101,11 +101,49 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
 4. Based on that, propose the concrete interface for the rendering abstraction (what MPF actually calls today)
    and for the video frame source. Discuss before implementing.
 
+## Phase 2/3 plan (client GUI) - decided 2026-10-13
+
+**Decision: the Direct3D 9 backend is dropped completely** (old MP2 versions remain available for D3D9/DirectShow). Consequences:
+the existing Windows client does not need to *run* between commits of this phase (it must keep *building*); no D3D9-vs-Skia parity harness;
+everything that needs a D3D9 texture (DirectShow `VideoPlayer`, `EVRPresenter`, `DirectShowWrapper`, `BDHandler`) goes away with it and is replaced by libmpv.
+
+Measured surface of the old backend (SkinEngine: 494 files / 97k lines): `GraphicsDevice.Device` is used in only 18 files and ~100 calls
+(SetRenderState 25, SetSamplerState 9, StretchRectangle 5, Get/SetRenderTarget 9, Clear/BeginScene/EndScene/Present, one DrawPrimitives);
+shaders are 18 `.fx` files / 1,530 lines of HLSL; the 140 files with `using SharpDX` mostly use only `SharpDX.Mathematics` (Vector2/Matrix/RectangleF/Color4),
+which is pure managed and stays for now (replace by System.Numerics later, optional).
+
+Approach: keep tessellation (`PositionColoredTextured` vertex lists) and the control/brush/effect model; replace the device layer.
+- `PrimitiveBuffer` -> `SKVertices` + `DrawVertices`; brushes -> `SKShader`; `.fx` effects -> SkSL `SKRuntimeEffect`; render targets -> `SKSurface`; images -> `SKCodec`; text -> Skia typefaces.
+- A thin D3D9-shaped facade (`Texture`, `Surface`, `Format`, `PrimitiveType`, ...) in `SkinEngine/Gpu` lets the 140 files compile unchanged; it is then simplified.
+- Window/GL context/input via Silk.NET (`IWindowHost`) replaces WinForms `MainForm`; Windows-only input (raw input, APPCOMMAND, HID/IR) stays in a Windows plugin.
+- Video: backend-neutral `IVideoFrameSource` replaces `ISharpDXVideoPlayer`; new portable libmpv player plugin ported from the PoC. `ImagePlayer` becomes portable; BASS -> ManagedBass in Phase 4.
+
+Steps: 2.1 SkinEngine off WinForms/D3D9 compile (facade + stubs) -> 2.2 Silk.NET window + GL/Skia device, first frame -> 2.3 vertices/brushes/images/render targets -> 2.4 text -> 2.5 SkSL effects/transitions
+-> 2.6 input -> 3.1 `IVideoFrameSource` + mpv plugin -> 3.2 remove DirectShow players, port ImagePlayer. Milestone 1: default skin main menu renders on Windows. Milestone 2: video with OSD overlay. Milestone 3: same on Linux.
+
+### Phase 2 progress (2026-10-13)
+
+Done (builds, **not yet run**):
+- `MediaPortal.UI` and `Configuration` are plain `net10.0` (WinForms `Message`/`MouseButtons`/`NativeWindow` replaced by `WindowsMessage`, own `MouseButtons`, message-queue based `DeviceVolumeMonitor`).
+- **`SkinEngine` is plain `net10.0`**: D3D9 device layer replaced by `Gpu/` (`Texture`, `Surface`, `Effect` = SkSL runtime effect, `SamplerState`...), `DirectX/GraphicsDevice` now owns the Skia `GRContext`,
+  the back buffer (`GRBackendRenderTarget`) and the draw state (current shader, matrix, blend state); `PrimitiveBuffer` draws `SKVertices`; render targets are `SKSurface`s; images are decoded with Skia (`ImageUtilities.LoadBitmap`);
+  text uses Skia fonts (`FontAssetCore` = metrics only, `TextBuffer` draws lines with clip/scroll/fade; FreeType wrapper removed); `System.Drawing.Drawing2D` paths replaced by `DirectX/Triangulate/Drawing2D.cs`.
+- `GUI/MainWindow` (Silk.NET window + GL context, input, screen saver, window modes) replaces `MainForm`; the client runs `IScreenControl.RunMainLoop()` instead of `Application.Run()`.
+- `ISharpDXVideoPlayer` -> `IVideoFrameSource` (+ `IVideoFrameOverlays`), `ISharpDXImagePlayer` -> `IImageFrameSource`; `IAutoRepeatPlayer` added.
+- Removed from `MP2-Client.sln` (sources kept in the repo for porting): DirectShow `VideoPlayers`, `BDHandler`, `DirectShowWrapper`, `DotNetStreamSource`, `VideoEffectChanger`, TV client (`SlimTv.Client`, `SlimTv.TvMosaicProvider`),
+  `BluRayPlayer`, `Cinema`, `UPnPRenderer`, `WifiRemote`, `Tests.Client`, `Tests.TVMosaic`.
+- Windows-only input plugins (`HidInput`, `InputDeviceManager`, `MceRemoteReceiver`, ...) are `net10.0-windows` with explicit WinForms; they receive `WindowsMessage` via `WindowsMessageExtensions`.
+
+Open (next steps, in order):
+1. Port the 35 HLSL shaders (`SkinEngine/Skin/default/shaders/**/*.fx`) to SkSL (`.sksl`, loaded by `EffectAssetCore`); until then no effect loads and nothing is drawn.
+2. Run the client on Windows, fix runtime issues (GL context/threading, resource loading, `Skin` path separators, plugin native lookup for Silk/Skia).
+3. Win32 message hook for Windows-only features (`WM_INPUT`/HID, `WM_APPCOMMAND`, single-instance message, touch), kerning (HarfBuzz) and skin sounds on other platforms.
+4. `IVideoFrameSource` implementation: libmpv player plugin (Phase 3.1), port `ImagePlayer` details, TV client + Bluray/Cinema/UPnP renderer on top of it.
+
 ## Working conventions
 
 - Work on a dedicated branch; small, reviewable commits.
-- The existing Windows client must keep building and running throughout. The DirectX backend stays
-  until the Skia backend is at parity.
+- The existing Windows client must keep building throughout. (Phase 2/3: D3D9 backend is dropped, so it may not run between commits, see "Phase 2/3 plan".)
 - Don't modify skin files to make the new backend work; fix the backend instead. Skin compatibility is the point.
 - Update the status section of this file at the end of each session.
 

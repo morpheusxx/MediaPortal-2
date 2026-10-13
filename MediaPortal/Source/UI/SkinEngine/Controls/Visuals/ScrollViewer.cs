@@ -24,7 +24,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.UI.Control.InputManager;
@@ -403,7 +402,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
       if (svfs == null)
         return;
 
-      int scrollByLines = SystemInformation.MouseWheelScrollLines; // Use the system setting as default.
+      int scrollByLines = 3; // Default number of lines of a mouse wheel notch.
 
       IScrollInfo scrollInfo = svfs as IScrollInfo;
       if (scrollInfo != null && scrollInfo.NumberOfVisibleLines != 0) // If ScrollControl can shown less items, use this as limit.

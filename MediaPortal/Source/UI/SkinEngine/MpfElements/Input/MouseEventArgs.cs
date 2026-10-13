@@ -52,7 +52,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements.Input
     {
       get 
       { 
-        return System.Windows.Forms.Control.MouseButtons.HasFlag(System.Windows.Forms.MouseButtons.Left) ? 
+        return MediaPortal.UI.SkinEngine.InputManagement.MouseButtonTracker.Buttons.HasFlag(MediaPortal.UI.Control.InputManager.MouseButtons.Left) ? 
           MouseButtonState.Pressed : 
           MouseButtonState.Released; 
       }
@@ -65,7 +65,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements.Input
     {
       get
       {
-        return System.Windows.Forms.Control.MouseButtons.HasFlag(System.Windows.Forms.MouseButtons.Right) ?
+        return MediaPortal.UI.SkinEngine.InputManagement.MouseButtonTracker.Buttons.HasFlag(MediaPortal.UI.Control.InputManager.MouseButtons.Right) ?
           MouseButtonState.Pressed :
           MouseButtonState.Released;
       }
@@ -78,7 +78,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements.Input
     {
       get
       {
-        return System.Windows.Forms.Control.MouseButtons.HasFlag(System.Windows.Forms.MouseButtons.Middle) ?
+        return MediaPortal.UI.SkinEngine.InputManagement.MouseButtonTracker.Buttons.HasFlag(MediaPortal.UI.Control.InputManager.MouseButtons.Middle) ?
           MouseButtonState.Pressed :
           MouseButtonState.Released;
       }
@@ -91,7 +91,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements.Input
     {
       get
       {
-        return System.Windows.Forms.Control.MouseButtons.HasFlag(System.Windows.Forms.MouseButtons.XButton1) ?
+        return MediaPortal.UI.SkinEngine.InputManagement.MouseButtonTracker.Buttons.HasFlag(MediaPortal.UI.Control.InputManager.MouseButtons.XButton1) ?
           MouseButtonState.Pressed :
           MouseButtonState.Released;
       }
@@ -104,7 +104,7 @@ namespace MediaPortal.UI.SkinEngine.MpfElements.Input
     {
       get
       {
-        return System.Windows.Forms.Control.MouseButtons.HasFlag(System.Windows.Forms.MouseButtons.XButton2) ?
+        return MediaPortal.UI.SkinEngine.InputManagement.MouseButtonTracker.Buttons.HasFlag(MediaPortal.UI.Control.InputManager.MouseButtons.XButton2) ?
           MouseButtonState.Pressed :
           MouseButtonState.Released;
       }

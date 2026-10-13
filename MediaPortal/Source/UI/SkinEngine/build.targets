@@ -20,18 +20,22 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ReferencesX64 Include="$(TargetDir)References\x64\*.*" />
-      <ReferencesX64 Include="$(TargetDir)x64\*.*" />
       <References Include="$(TargetDir)SharpDX.dll" />
-      <References Include="$(TargetDir)SharpDX.Direct3D9.dll" />
       <References Include="$(TargetDir)SharpDX.Mathematics.dll" />
+      <References Include="$(TargetDir)Silk.NET.*.dll" />
+      <References Include="$(TargetDir)SkiaSharp.dll" />
+    </ItemGroup>
+
+    <!-- Native libraries (GLFW, Skia) for all platforms, they are resolved from runtimes\<rid>\native -->
+    <ItemGroup>
+      <NativeFiles Include="$(TargetDir)runtimes\**\native\*.*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
     <Copy SourceFiles="@(LanguageFiles)" DestinationFolder="$(PluginDestination)Language\" />
     <Copy SourceFiles="@(SkinFiles)" DestinationFiles="@(SkinFiles->'$(PluginDestination)Skin\%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(References)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(ReferencesX64)" DestinationFolder="$(PluginDestination)\x64" />
+    <Copy SourceFiles="@(NativeFiles)" DestinationFiles="@(NativeFiles->'$(PluginDestination)runtimes\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
 </Project>

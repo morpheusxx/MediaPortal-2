@@ -135,7 +135,7 @@ namespace MediaPortal.UiComponents.VideoEffectChanger
 
     private void HandleVideoEffectSelection(IPlayerSlotController psc)
     {
-      ISharpDXVideoPlayer player = psc.CurrentPlayer as ISharpDXVideoPlayer;
+      IVideoFrameSource player = psc.CurrentPlayer as IVideoFrameSource;
       if (player == null)
         return;
 

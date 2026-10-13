@@ -45,7 +45,7 @@ using MediaPortal.UI.SkinEngine.Rendering;
 using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Xaml.Interfaces;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Controls.Visuals.Styles;
 using MediaPortal.Utilities.DeepCopy;
@@ -1918,12 +1918,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         RectangleF bounds = renderContext.ClearOccupiedAreaOnly ? renderContext.OccupiedTransformedBounds : new RectangleF(0, 0, description.Width, description.Height);
 
         // Fill the background of the texture with an alpha value of 0
-        GraphicsDevice.Device.Clear(ClearFlags.Target, ColorConverter.FromArgb(0, Color.Black), 1.0f, 0,
-          new [] { new RawRectangle(
-              (int)Math.Floor(bounds.Left),
-              (int)Math.Floor(bounds.Top),
-              (int)Math.Ceiling(bounds.Right),
-              (int)Math.Ceiling(bounds.Bottom))});
+        GraphicsDevice.ClearRect(bounds, SkiaSharp.SKColors.Transparent);
 
         // Render the control into the given texture
         RenderOverride(renderContext);
@@ -2041,7 +2036,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
         tempRenderContext.ClearOccupiedAreaOnly = effect == null;
 
         // An additional copy step is only required for multisampling surfaces
-        bool isMultiSample = GraphicsDevice.Setup.IsMultiSample;
+        bool isMultiSample = false; // Render targets are GPU textures, no additional copy step is necessary
         if (isMultiSample)
         {
           RenderTargetAsset renderSurface = ContentManager.Instance.GetRenderTarget(GLOBAL_RENDER_SURFACE_ASSET_KEY);
@@ -2054,10 +2049,9 @@ namespace MediaPortal.UI.SkinEngine.Controls.Visuals
 
           // Unfortunately, brushes/brush effects are based on textures and cannot work with surfaces, so we need this additional copy step
           // Morpheus_xx, 03/2013: changed to copy only the occupied area of Surface, instead of complete area. This improves performance a lot.
-          GraphicsDevice.Device.StretchRectangle(
-              renderSurface.Surface, ToRect(tempRenderContext.OccupiedTransformedBounds, renderSurface.Size), // new Rectangle(new Point(), renderSurface.Size),
-              renderTexture.Surface0, ToRect(tempRenderContext.OccupiedTransformedBounds, renderTexture.Size), // new Rectangle(new Point(), renderTexture.Size),
-              TextureFilter.None);
+          GraphicsDevice.StretchRectangle(
+              renderSurface.Surface, ToRect(tempRenderContext.OccupiedTransformedBounds, renderSurface.Size),
+              renderTexture.Surface0, ToRect(tempRenderContext.OccupiedTransformedBounds, renderTexture.Size), false);
         }
         else
         {

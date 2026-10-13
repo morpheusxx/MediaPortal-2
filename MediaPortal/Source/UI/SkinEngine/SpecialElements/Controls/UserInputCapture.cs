@@ -23,7 +23,6 @@
 #endregion
 
 using System.Collections.Generic;
-using System.Windows.Forms;
 using MediaPortal.UI.Control.InputManager;
 using MediaPortal.UI.SkinEngine.Commands;
 using MediaPortal.UI.SkinEngine.Controls.Visuals;

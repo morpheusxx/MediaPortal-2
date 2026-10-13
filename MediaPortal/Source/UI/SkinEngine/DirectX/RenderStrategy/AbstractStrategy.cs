@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -21,7 +21,6 @@
 */
 
 #endregion
-using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
 {
@@ -30,17 +29,16 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
     #region Fields
 
     protected double _frameRate = 25d;
-    protected double _msPerFrame;
-    protected D3DSetup _setup;
+    protected double _msPerFrame = 40d;
+    protected RenderSetup _setup;
 
     #endregion
 
     #region Constructor
 
-    protected AbstractStrategy(D3DSetup setup)
+    protected AbstractStrategy(RenderSetup setup)
     {
       _setup = setup;
-      IsMultiSampleCompatible = false;
     }
 
     #endregion
@@ -62,13 +60,12 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
       get { return _msPerFrame; }
     }
 
-    public bool IsMultiSampleCompatible { get; protected set; }
+    public bool PresentVSync { get; protected set; }
 
     public void SetTargetFrameRate(double frameRate)
     {
       if (frameRate == 0)
         frameRate = 1;
-
       _frameRate = frameRate;
       _msPerFrame = 1000 / _frameRate;
     }
@@ -78,8 +75,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
 
     public virtual void EndRender()
     { }
-
-    public Present PresentMode { get; protected set; }
 
     #endregion
   }

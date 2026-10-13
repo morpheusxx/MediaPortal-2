@@ -24,7 +24,7 @@
 
 using MediaPortal.UI.SkinEngine.ContentManagement.AssetCore;
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement
 {
@@ -61,7 +61,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement
     /// </summary>
     public void Bind(int streamNumber)
     {
-      GraphicsDevice.Device.SetTexture(streamNumber, _assetCore.Texture);
+      GraphicsDevice.SetTexture(streamNumber, _assetCore.Texture);
     }
 
     /// <summary>

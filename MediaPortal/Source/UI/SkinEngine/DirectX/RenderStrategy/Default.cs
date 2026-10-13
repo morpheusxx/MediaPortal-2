@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -21,43 +21,35 @@
 */
 
 #endregion
+
 using System;
 using System.Threading;
-using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.SkinEngine.DirectX.RenderStrategy
 {
   /// <summary>
-  /// If MultiSampling is used, this mode uses <see cref="Present.None"/>, otherwise <see cref="Present.ForceImmediate"/> with manual frame time waiting.
+  /// Waits manually for the next frame time; the buffer swap is not synchronized to the display.
   /// </summary>
   class Default : AbstractStrategy
   {
     protected DateTime _frameRenderingStartTime = DateTime.MinValue;
-    private readonly bool _manualWaitFrame;
 
-    public Default(D3DSetup setup) : base(setup)
+    public Default(RenderSetup setup) : base(setup)
     {
-      _manualWaitFrame = !setup.IsMultiSample;
-      PresentMode = setup.Present;
-      IsMultiSampleCompatible = true;
+      PresentVSync = false;
     }
 
     public override void BeginRender(bool doWaitForNextFame)
     {
       base.BeginRender(doWaitForNextFame);
-
-      if (_frameRenderingStartTime != DateTime.MinValue && _manualWaitFrame && doWaitForNextFame)
+      if (_frameRenderingStartTime != DateTime.MinValue && doWaitForNextFame)
         WaitForNextFrame();
-
       _frameRenderingStartTime = DateTime.Now;
     }
 
-    /// <summary>
-    /// Waits for the next frame to be drawn. It calculates the required difference to fit the <see cref="AbstractStrategy.TargetFrameRate"/>.
-    /// </summary>
     private void WaitForNextFrame()
     {
-      double msToNextFrame = _msPerFrame - (DateTime.Now - _frameRenderingStartTime).Milliseconds;
+      double msToNextFrame = _msPerFrame - (DateTime.Now - _frameRenderingStartTime).TotalMilliseconds;
       if (msToNextFrame > 0)
         Thread.Sleep(TimeSpan.FromMilliseconds(msToNextFrame));
     }

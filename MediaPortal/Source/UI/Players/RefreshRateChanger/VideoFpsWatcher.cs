@@ -53,7 +53,11 @@ namespace MediaPortal.Plugins.RefreshRateChanger
 
     protected string GetScreenDeviceName()
     {
-      return System.Windows.Forms.Screen.FromControl(SkinContext.Form)?.DeviceName;
+      System.Drawing.Rectangle monitorBounds = SkinContext.MainWindow.CurrentMonitorBounds;
+      foreach (System.Windows.Forms.Screen screen in System.Windows.Forms.Screen.AllScreens)
+        if (screen.Bounds.Location == monitorBounds.Location)
+          return screen.DeviceName;
+      return System.Windows.Forms.Screen.PrimaryScreen?.DeviceName;
     }
 
     private void SyncToPlayer(IVideoPlayer player)

@@ -54,7 +54,7 @@ applications, and to alter it and redistribute it freely, subject to the followi
 
 using System.Runtime.InteropServices;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 
 namespace MediaPortal.UI.SkinEngine.DirectX
 {
@@ -68,16 +68,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     public int Color; //12..15
     public float Tu1; //16..19
     public float Tv1; //20..23
-
-    public static readonly VertexFormat Format = VertexFormat.Position | VertexFormat.Texture2 | VertexFormat.Diffuse;
-
-    public static readonly VertexElement[] Declarator = new VertexElement[]
-      {
-        new VertexElement(0, 0, DeclarationType.Float3, DeclarationMethod.Default, DeclarationUsage.Position, 0),
-        new VertexElement(0, 12, DeclarationType.Color, DeclarationMethod.Default, DeclarationUsage.Color, 0),
-        new VertexElement(0, 16, DeclarationType.Float2, DeclarationMethod.Default, DeclarationUsage.TextureCoordinate, 0),
-        VertexElement.VertexDeclarationEnd
-      };
 
     public static readonly int StrideSize = 24;
 

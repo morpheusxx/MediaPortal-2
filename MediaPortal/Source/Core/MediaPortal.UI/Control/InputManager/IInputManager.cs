@@ -24,7 +24,6 @@
 
 using System;
 using System.Drawing;
-using System.Windows.Forms;
 using MediaPortal.Common.General;
 using MediaPortal.UI.Presentation.Actions;
 

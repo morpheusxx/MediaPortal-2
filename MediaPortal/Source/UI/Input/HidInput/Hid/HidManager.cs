@@ -127,14 +127,14 @@ namespace HidInput.Hid
     {
       if (_isAttachedToActivated)
         return;
-      Form mainForm = SkinContext.Form;
-      // Form might not be created yet
-      if (mainForm == null)
+      MediaPortal.UI.SkinEngine.GUI.MainWindow mainWindow = SkinContext.MainWindow;
+      // Window might not be created yet
+      if (mainWindow == null)
         return;
       _isAttachedToActivated = true;
-      mainForm.Activated += Activated;
-      mainForm.Deactivate += Deactivate;
-      _isApplicationActivated = Form.ActiveForm == mainForm;
+      mainWindow.Activated += Activated;
+      mainWindow.Deactivated += Deactivate;
+      _isApplicationActivated = mainWindow.IsActive;
     }
 
     private bool IsHidEventNeeded(Event hidEvent)

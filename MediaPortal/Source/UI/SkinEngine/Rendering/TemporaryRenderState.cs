@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -23,40 +23,25 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX.Direct3D9;
 
 namespace MediaPortal.UI.SkinEngine.Rendering
 {
   /// <summary>
-  /// <see cref="TemporaryRenderState"/> allows modifying the RenderState and automatically restoring
-  /// all changes at the end (in Dispose). Use <see cref="SetTemporaryRenderState"/> to change temporary
-  /// RenderStates.
+  /// Changes the blend state of the graphics device until this object is disposed.
   /// </summary>
   public class TemporaryRenderState : IDisposable
   {
-    // The current D3D device
-    private readonly DeviceEx _device = GraphicsDevice.Device;
+    private readonly BlendState _oldBlendState = GraphicsDevice.BlendState;
 
-    private readonly Dictionary<RenderState, int> _changedStates = new Dictionary<RenderState, int>();
-
-    public void SetTemporaryRenderState(RenderState renderState, int value)
+    public void SetTemporaryBlendState(BlendState blendState)
     {
-      int oldState = _device.GetRenderState(renderState);
-      if (oldState.Equals(value))
-        return;
-
-      _changedStates[renderState] = oldState;
-      _device.SetRenderState(renderState, value);
+      GraphicsDevice.SetBlendState(blendState);
     }
 
     public void Dispose()
     {
-      foreach (KeyValuePair<RenderState, int> changedState in _changedStates)
-      {
-        _device.SetRenderState(changedState.Key, changedState.Value);
-      }
+      GraphicsDevice.SetBlendState(_oldBlendState);
     }
   }
 }

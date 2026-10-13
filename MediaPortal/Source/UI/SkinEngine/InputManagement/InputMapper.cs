@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -22,10 +22,8 @@
 
 #endregion
 
-using System;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
 using MediaPortal.UI.Control.InputManager;
+using SilkKey = Silk.NET.Input.Key;
 
 namespace MediaPortal.UI.SkinEngine.InputManagement
 {
@@ -34,215 +32,157 @@ namespace MediaPortal.UI.SkinEngine.InputManagement
   /// </summary>
   public static class InputMapper
   {
-    public static Key MapSpecialKey(KeyEventArgs args)
-    {
-      return MapSpecialKey(args.KeyCode, args.Alt, args.Shift, args.Control);
-    }
-
-    private static class Keyboard
-    {
-      [Flags]
-      private enum KeyStates
-      {
-        None = 0,
-        Down = 1,
-        Toggled = 2
-      }
-
-      [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-      private static extern short GetKeyState(int keyCode);
-
-      private static KeyStates GetKeyState(Keys key)
-      {
-        KeyStates state = KeyStates.None;
-
-        short retVal = GetKeyState((int)key);
-
-        // If the high-order bit is 1, the key is down, otherwise, it is up.
-        if ((retVal & 0x8000) == 0x8000)
-          state |= KeyStates.Down;
-
-        // If the low-order bit is 1, the key is toggled.
-        if ((retVal & 1) == 1)
-          state |= KeyStates.Toggled;
-
-        return state;
-      }
-
-      public static bool IsKeyDown(Keys key)
-      {
-        return GetKeyState(key).HasFlag(KeyStates.Down);
-      }
-
-      public static bool IsKeyToggled(Keys key)
-      {
-        return GetKeyState(key).HasFlag(KeyStates.Toggled);
-      }
-    }
-
-    public static Key MapSpecialKey(Keys keycode, bool alt, bool shift, bool control)
+    /// <summary>
+    /// Maps the key of a key down event to a MediaPortal key.
+    /// </summary>
+    /// <param name="keycode">The pressed key.</param>
+    /// <param name="alt">Alt is pressed.</param>
+    /// <param name="shift">Shift is pressed.</param>
+    /// <param name="control">Control is pressed.</param>
+    /// <param name="superPressed">The Windows/Super key is pressed. Enter is not mapped then, the operating system uses this combination.</param>
+    /// <returns>The mapped key or <see cref="Key.None"/>, if the key isn't a special key. Printable characters are mapped by
+    /// <see cref="MapPrintableKeys"/>.</returns>
+    public static Key MapSpecialKey(SilkKey keycode, bool alt, bool shift, bool control, bool superPressed)
     {
       if (alt && !(shift || control))
       {
         switch (keycode)
         {
-          case Keys.Add:
+          case SilkKey.KeypadAdd:
             return Key.VolumeUp;
-          case Keys.Subtract:
+          case SilkKey.KeypadSubtract:
             return Key.VolumeDown;
-          case Keys.Enter:
-            if (!Keyboard.IsKeyDown(Keys.LWin))
-            {
+          case SilkKey.Enter:
+          case SilkKey.KeypadEnter:
+            if (!superPressed)
               return Key.Fullscreen;
-            }
             break;
-          case Keys.F4:
+          case SilkKey.F4:
             return Key.Close;
         }
-      } else if (control && !(shift || alt))
+      }
+      else if (control && !(shift || alt))
       {
         switch (keycode)
         {
-          case Keys.X:
+          case SilkKey.X:
             return Key.Cut;
-          case Keys.C:
+          case SilkKey.C:
             return Key.Copy;
-          case Keys.V:
+          case SilkKey.V:
             return Key.Paste;
         }
-      } else if (shift && !(alt || control))
+      }
+      else if (shift && !(alt || control))
       {
         switch (keycode)
         {
-          case Keys.F10:
+          case SilkKey.F10:
             return Key.ContextMenu;
         }
-      } else if (!shift && !alt && !control)
+      }
+      else if (!shift && !alt && !control)
       {
         switch (keycode)
         {
-          case Keys.Cancel:
-            return Key.Escape;
-          case Keys.Clear:
-            return Key.Clear;
-          case Keys.Delete:
+          case SilkKey.Delete:
             return Key.Delete;
-          case Keys.Insert:
+          case SilkKey.Insert:
             return Key.Insert;
-          case Keys.Enter:
-            if (!Keyboard.IsKeyDown(Keys.LWin))
-            {
+          case SilkKey.Enter:
+          case SilkKey.KeypadEnter:
+            if (!superPressed)
               return Key.Ok;
-            }
             break;
-          case Keys.Back:
+          case SilkKey.Backspace:
             return Key.BackSpace;
-          case Keys.Escape:
+          case SilkKey.Escape:
             return Key.Escape;
 
-          case Keys.MediaNextTrack:
-            return Key.Next;
-          case Keys.MediaPlayPause:
-            return Key.PlayPause;
-          case Keys.MediaPreviousTrack:
-            return Key.Previous;
-          case Keys.MediaStop:
-            return Key.Stop;
-          case Keys.Pause:
+          case SilkKey.Pause:
             return Key.Pause;
-          case Keys.Play:
-            return Key.Play;
 
-          case Keys.VolumeMute:
-            return Key.Mute;
-          case Keys.VolumeDown:
-            return Key.VolumeDown;
-          case Keys.VolumeUp:
-            return Key.VolumeUp;
-
-          case Keys.Up:
+          case SilkKey.Up:
             return Key.Up;
-          case Keys.Down:
+          case SilkKey.Down:
             return Key.Down;
-          case Keys.Left:
+          case SilkKey.Left:
             return Key.Left;
-          case Keys.Right:
+          case SilkKey.Right:
             return Key.Right;
 
-          case Keys.PageUp:
+          case SilkKey.PageUp:
             return Key.PageUp;
-          case Keys.PageDown:
+          case SilkKey.PageDown:
             return Key.PageDown;
 
-          case Keys.Home:
+          case SilkKey.Home:
             return Key.Home;
-          case Keys.End:
+          case SilkKey.End:
             return Key.End;
 
-          case Keys.Apps:
+          case SilkKey.Menu:
             return Key.ContextMenu;
-          case Keys.Zoom:
-            return Key.ZoomMode;
 
-          case Keys.Sleep:
-            return Key.Power;
-
-          case Keys.F1:
+          case SilkKey.F1:
             return Key.F1;
-          case Keys.F2:
+          case SilkKey.F2:
             return Key.F2;
-          case Keys.F3:
+          case SilkKey.F3:
             return Key.F3;
-          case Keys.F4:
+          case SilkKey.F4:
             return Key.F4;
-          case Keys.F5:
+          case SilkKey.F5:
             return Key.F5;
-          case Keys.F6:
+          case SilkKey.F6:
             return Key.F6;
-          case Keys.F7:
+          case SilkKey.F7:
             return Key.F7;
-          case Keys.F8:
+          case SilkKey.F8:
             return Key.F8;
-          case Keys.F9:
+          case SilkKey.F9:
             return Key.F9;
-          case Keys.F10:
+          case SilkKey.F10:
             return Key.F10;
-          case Keys.F11:
+          case SilkKey.F11:
             return Key.F11;
-          case Keys.F12:
+          case SilkKey.F12:
             return Key.F12;
-          case Keys.F13:
+          case SilkKey.F13:
             return Key.F13;
-          case Keys.F14:
+          case SilkKey.F14:
             return Key.F14;
-          case Keys.F15:
+          case SilkKey.F15:
             return Key.F15;
-          case Keys.F16:
+          case SilkKey.F16:
             return Key.F16;
-          case Keys.F17:
+          case SilkKey.F17:
             return Key.F17;
-          case Keys.F18:
+          case SilkKey.F18:
             return Key.F18;
-          case Keys.F19:
+          case SilkKey.F19:
             return Key.F19;
-          case Keys.F20:
+          case SilkKey.F20:
             return Key.F20;
-          case Keys.F21:
+          case SilkKey.F21:
             return Key.F21;
-          case Keys.F22:
+          case SilkKey.F22:
             return Key.F22;
-          case Keys.F23:
+          case SilkKey.F23:
             return Key.F23;
-          case Keys.F24:
+          case SilkKey.F24:
             return Key.F24;
         }
       }
       return Key.None;
     }
 
+    /// <summary>
+    /// Maps the character of a key typed event to a MediaPortal key.
+    /// </summary>
     public static Key MapPrintableKeys(char keyChar)
     {
-      if (keyChar >= (char)32)
+      if (keyChar >= (char) 32)
         return new Key(keyChar);
       return Key.None;
     }

@@ -1,4 +1,4 @@
-#region Copyright (C) 2007-2021 Team MediaPortal
+﻿#region Copyright (C) 2007-2021 Team MediaPortal
 
 /*
     Copyright (C) 2007-2021 Team MediaPortal
@@ -24,65 +24,43 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using MediaPortal.Common;
-using MediaPortal.Common.Logging;
-using MediaPortal.Common.Services.Logging;
-using MediaPortal.UI.SkinEngine.DirectX;
-using SharpDX;
-using SharpDX.Direct3D9;
-using Tao.FreeType;
-using FontFamily = MediaPortal.UI.SkinEngine.Fonts.FontFamily;
-using Size = SharpDX.Size2;
-using SizeF = SharpDX.Size2F;
-using PointF = SharpDX.Vector2;
+using MediaPortal.UI.SkinEngine.Fonts;
+using SkiaSharp;
 
 namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
 {
   /// <summary>
-  /// Represents a font set (of glyphs).
+  /// Provides the metrics of a font of a specific size and creates the Skia fonts which are used to draw text.
   /// </summary>
-  public class FontAssetCore : TemporaryAssetCoreBase, IAssetCore, ITextureAsset
+  /// <remarks>
+  /// All metrics are measured with the "rendered size" of this asset and are scaled linearly for other font sizes, so layout is
+  /// independent of the size which is finally used to draw a text.
+  /// </remarks>
+  public class FontAssetCore : TemporaryAssetCoreBase, IAssetCore
   {
     public event AssetAllocationHandler AllocationChanged = delegate { };
 
-    protected const int MAX_WIDTH = 1024;
-    protected const int MAX_HEIGHT = 1024;
-    protected const int PAD = 1;
+    private struct CharMetrics
+    {
+      public float Advance;
+      public float Overhang; // Width of the glyph which exceeds its advance width
+      public float Descent; // Height of the glyph below the baseline
+    }
 
     protected FontFamily _family;
-    private readonly BitmapCharacterSet _charSet;
-    protected Texture _texture = null;
-
-    protected uint _resolution;
-    protected int _currentX = 0;
-    protected int _rowHeight = 0;
-    protected int _currentY = 0;
+    protected readonly int _renderedSize;
+    protected readonly uint _resolution;
+    protected float _ascender;
+    protected SKFont _measureFont;
+    private readonly Dictionary<char, CharMetrics> _charMetrics = new Dictionary<char, CharMetrics>();
 
     #region Ctor
 
-    /// <summary>
-    /// Creates a new font set.
-    /// </summary>
-    /// <param name="family">The font family.</param>
-    /// <param name="size">Size in pixels.</param>
-    /// <param name="resolution">Resolution in dpi.</param>
     public FontAssetCore(FontFamily family, int size, uint resolution)
     {
       _family = family;
       _resolution = resolution;
-
-      FT_FaceRec face = (FT_FaceRec)Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
-
-      _charSet = new BitmapCharacterSet(face.num_glyphs)
-      {
-        RenderedSize = size,
-        Width = MAX_WIDTH,
-        Height = MAX_HEIGHT
-      };
-      _charSet.Ascender = _charSet.RenderedSize * face.ascender / face.height;
+      _renderedSize = size;
     }
 
     #endregion
@@ -102,7 +80,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     /// </summary>
     public float Size
     {
-      get { return _charSet.RenderedSize; }
+      get { return _renderedSize; }
     }
 
     /// <summary>
@@ -110,14 +88,14 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     /// </summary>
     public float Ascender(float fontSize)
     {
-      return _charSet.Ascender * fontSize / _charSet.RenderedSize;
+      if (!IsAllocated)
+        Allocate();
+      return _ascender * fontSize / _renderedSize;
     }
 
     /// <summary>
     /// Gets the height of the <see cref="FontAssetCore"/> if scaled to a different size.
     /// </summary>
-    /// <param name="fontSize">The scale size.</param>
-    /// <returns>The height of the scaled font.</returns>
     public float LineHeight(float fontSize)
     {
       return fontSize;
@@ -126,87 +104,51 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     /// <summary>
     /// Gets the width of a string if rendered with this <see cref="FontAssetCore"/> as a particular size.
     /// </summary>
-    /// <param name="text">The string to measure.</param>
-    /// <param name="fontSize">The size of font to use for measurement.</param>
-    /// <param name="kerning">Whether kerning is used to improve font spacing.</param>
-    /// <returns>The width of the passed text.</returns>
     public float TextWidth(string text, float fontSize, bool kerning)
     {
       return PartialTextWidth(text, 0, text.Length - 1, fontSize, kerning) + CharWidthExtension(text, text.Length - 1, fontSize);
     }
 
-    /// <summary>
-    /// Gets the width of a sub-string if rendered with this <see cref="FontAssetCore"/> as a particular size.
-    /// </summary>
-    /// <param name="text">The string to measure.</param>
-    /// <param name="fromIndex">The index of the first character of the sub-string.</param>
-    /// <param name="toIndex">The index of the last character of the sub-string to measure.</param>
-    /// <param name="fontSize">The size of font to use for measurement.</param>
-    /// <param name="kerning">Whether kerning is used to improve font spacing.</param>
-    /// <returns>The width of the passed text.</returns>
     public float TextWidth(string text, int fromIndex, int toIndex, float fontSize, bool kerning)
     {
       return PartialTextWidth(text, fromIndex, toIndex, fontSize, kerning) + CharWidthExtension(text, toIndex, fontSize);
     }
 
-    /// <summary>
-    /// Gets the width of a sub-string if rendered with this <see cref="FontAssetCore"/> as a particular size, excluding the 
-    /// special additional width required for the last char.
-    /// </summary>
-    /// <param name="text">The string to measure.</param>
-    /// <param name="fromIndex">The index of the first character of the sub-string.</param>
-    /// <param name="toIndex">The index of the last character of the sub-string to measure.</param>
-    /// <param name="fontSize">The size of font to use for measurement.</param>
-    /// <param name="kerning">Whether kerning is used to improve font spacing.</param>
-    /// <returns>The width of the sub-string text.</returns>
     public float PartialTextWidth(string text, int fromIndex, int toIndex, float fontSize, bool kerning)
     {
       if (!IsAllocated)
         Allocate();
-
       float width = 0;
-      BitmapCharacter lastChar = null;
-
-      for (int i = fromIndex; i <= toIndex; i++)
-      {
-        BitmapCharacter c = Character(text[i]);
-        // Should never be the case as even characters not in range should be replaced by 0 index-char.
-        // But this check was added for a seldom NullReferenceException.
-        if (c == null)
-          continue;
-
-        width += c.XAdvance;
-        if (kerning && lastChar != null)
-          width += GetKerningAmount(lastChar, text[i]);
-        lastChar = c;
-      }
-      return width * (fontSize / _charSet.RenderedSize);
+      lock (_syncObj)
+        for (int i = fromIndex; i <= toIndex; i++)
+          width += Metrics(text[i]).Advance;
+      return width * (fontSize / _renderedSize);
     }
 
     /// <summary>
-    /// In order to accurately determine the length of a string the final character may need to have a small
-    /// additional width applied to compensate for the amount that it would normally over-hang the following 
-    /// character. This function returns the value of that extension for a given character in the passed string
+    /// Gets the width which the glyph of the character at the given index exceeds its advance width.
     /// </summary>
-    /// <param name="text">The string containing the character to measure.</param>
-    /// <param name="charIndex">The index of the character in the string.</param>
-    /// <param name="fontSize">The size of font to use for measurement.</param>
-    /// <returns>The additional width required for the specified character.</returns>
     public float CharWidthExtension(string text, int charIndex, float fontSize)
     {
-      if (charIndex < 0 || charIndex >= text.Length) return 0.0f;
-      BitmapCharacter c = Character(text[charIndex]);
-      return Math.Max(c.Width - c.XAdvance + c.XOffset, 0) * (fontSize / _charSet.RenderedSize);
+      if (charIndex < 0 || charIndex >= text.Length)
+        return 0.0f;
+      if (!IsAllocated)
+        Allocate();
+      lock (_syncObj)
+        return Metrics(text[charIndex]).Overhang * (fontSize / _renderedSize);
     }
 
     /// <summary>
-    /// Get the height of a text block containing the specified number of lines. In order to get correct vertical 
-    /// centering we add an additional value of the font face descender above the text to compensate for the space required
-    /// under the font's base line for the last text line.
+    /// Gets the height of the glyph of the given character below the baseline, at the rendered size of this font.
     /// </summary>
-    /// <param name="fontSize">The actual font size.</param>
-    /// <param name="lineCount">The number of lines.</param>
-    /// <returns>The height which is needed to draw the text.</returns>
+    public float CharDescent(char character)
+    {
+      if (!IsAllocated)
+        Allocate();
+      lock (_syncObj)
+        return Metrics(character).Descent;
+    }
+
     public float TextHeight(float fontSize, int lineCount)
     {
       // To center text which is one or more lines in height, we add the value of the font face descender to the expression <lineHeight * lineCount>.
@@ -214,26 +156,27 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       return LineHeight(fontSize) * (lineCount + 1) - Ascender(fontSize) + 1f;
     }
 
-    /// <summary>
-    /// Gets the texture containing all characters of this <see cref="FontAssetCore"/>.
-    /// </summary>
-    public Texture Texture
-    {
-      get
-      {
-        if (!IsAllocated)
-          Allocate();
-        KeepAlive();
-        return _texture;
-      }
-    }
-
     #endregion
 
-    #region Font map initialization
+    #region Font handling
 
     /// <summary>
-    /// Creates the font map texture.
+    /// Creates the Skia font to draw text with the given <paramref name="fontSize"/>. The returned font must be disposed by the caller.
+    /// </summary>
+    public SKFont CreateFont(float fontSize)
+    {
+      KeepAlive();
+      return new SKFont(_family.Typeface, fontSize)
+        {
+          Edging = SKFontEdging.Antialias,
+          Subpixel = true,
+          Hinting = SKFontHinting.None,
+          LinearMetrics = true
+        };
+    }
+
+    /// <summary>
+    /// Creates the font map. Must be called before any metrics are requested.
     /// </summary>
     public void Allocate()
     {
@@ -241,309 +184,35 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       {
         if (IsAllocated)
           return;
-        _texture = new Texture(GraphicsDevice.Device, MAX_WIDTH, MAX_HEIGHT, 1, Usage.Dynamic, Format.L8, Pool.Default);
-        // Add 'not defined' glyph
-        AddGlyph(0);
+        _measureFont = new SKFont(_family.Typeface, _renderedSize)
+          {
+            Edging = SKFontEdging.Antialias,
+            Subpixel = true,
+            Hinting = SKFontHinting.None,
+            LinearMetrics = true
+          };
+        SKFontMetrics metrics;
+        _measureFont.GetFontMetrics(out metrics);
+        float height = metrics.Descent - metrics.Ascent + metrics.Leading;
+        _ascender = height <= 0 ? _renderedSize * 0.8f : _renderedSize * -metrics.Ascent / height;
       }
-
       AllocationChanged(AllocationSize);
     }
 
-    /// <summary>
-    /// Adds a glyph to the font set by character code.
-    /// </summary>
-    /// <param name="character">The char to add.</param>
-    private bool AddChar(char character)
+    // Must be called with the lock held
+    private CharMetrics Metrics(char character)
     {
-      return AddGlyph(GlyphIndex(character));
-    }
-
-    /// <summary>Adds a glyph to the font set by glyph index.</summary>
-    /// <param name="glyphIndex">The index of the glyph to add.</param>
-    private bool AddGlyph(uint glyphIndex)
-    {
-      try
-      {
-        return AddGlyphInternal(glyphIndex);
-      }
-      catch (Exception ex)
-      {
-        ServiceRegistration.Get<ILogger>().Error("Error adding glyph, index: {0}", ex, glyphIndex);
-        return false;
-      }
-    }
-
-    private bool AddGlyphInternal(uint glyphIndex)
-    {
-      // FreeType measures font size in terms Of 1/64ths of a point.
-      // 1 point = 1/72th of an inch. Resolution is in dots (pixels) per inch.
-      // Locking is also required here to avoid accessing to texture when handling glyphs (can lead to AccessViolationException)
-      lock (_syncObj)
-      {
-        float pointSize = 64.0f * _charSet.RenderedSize * 72.0f / _resolution;
-        FT.FT_Set_Char_Size(_family.Face, (int)pointSize, 0, _resolution, 0);
-
-        // Font does not contain that glyph, the 'missing' glyph will be shown instead
-        if (glyphIndex == 0 && _charSet.GetCharacter(0) != null)
-          return false;
-
-        // Load the glyph for the current character.
-        if (FT.FT_Load_Glyph(_family.Face, glyphIndex, FT.FT_LOAD_DEFAULT) != 0)
-          return false;
-
-        FT_FaceRec face = (FT_FaceRec)Marshal.PtrToStructure(_family.Face, typeof(FT_FaceRec));
-
-        IntPtr glyphPtr;
-        // Load the glyph data into our local array.
-        if (FT.FT_Get_Glyph(face.glyph, out glyphPtr) != 0)
-          return false;
-
-        // Convert the glyph to bitmap form.
-        if (FT.FT_Glyph_To_Bitmap(ref glyphPtr, FT_Render_Mode.FT_RENDER_MODE_NORMAL, IntPtr.Zero, 1) != 0)
-          return false;
-
-        // Get the structure fron the intPtr
-        FT_BitmapGlyph glyph = (FT_BitmapGlyph)Marshal.PtrToStructure(glyphPtr, typeof(FT_BitmapGlyph));
-
-        // Width/height of char
-        int cwidth = glyph.bitmap.width;
-        int cheight = glyph.bitmap.rows;
-
-        // Width/height of char including padding
-        int pwidth = cwidth + 3 * PAD;
-        int pheight = cheight + 3 * PAD;
-
-        // Check glyph index is in the character set range.
-        if (!_charSet.IsInRange(glyphIndex))
-          return false;
-
-        // Check glyph fits in our texture
-        if (_currentX + pwidth > MAX_WIDTH)
-        {
-          _currentX = 0;
-          _currentY += _rowHeight;
-          _rowHeight = 0;
-        }
-        if (_currentY + pheight > MAX_HEIGHT)
-          return false;
-
-        // Create and store a BitmapCharacter for this glyph
-        _charSet.SetCharacter(glyphIndex, CreateCharacter(glyph));
-
-        // Copy the glyph bitmap to our local array
-        Byte[] bitmapBuffer = new Byte[cwidth * cheight];
-        if (glyph.bitmap.buffer != IntPtr.Zero)
-          Marshal.Copy(glyph.bitmap.buffer, bitmapBuffer, 0, cwidth * cheight);
-
-        // Write glyph bitmap to our texture
-        WriteGlyphToTexture(glyph, pwidth, pheight, bitmapBuffer);
-
-        _currentX += pwidth;
-        _rowHeight = Math.Max(_rowHeight, pheight);
-
-        // Free the glyph
-        FT.FT_Done_Glyph(glyphPtr);
-      }
-      return true;
-    }
-
-    private uint GlyphIndex(uint charIndex)
-    {
-      lock (_syncObj)
-        return FT.FT_Get_Char_Index(_family.Face, charIndex);
-    }
-
-    private BitmapCharacter CreateCharacter(FT_BitmapGlyph glyph)
-    {
-      lock (_syncObj)
-        return new BitmapCharacter
-        {
-          Width = glyph.bitmap.width + PAD * 2,
-          Height = glyph.bitmap.rows + PAD * 2,
-          X = _currentX,
-          Y = _currentY,
-          XOffset = glyph.left,
-          YOffset = _charSet.Ascender - glyph.top,
-          // Convert fixed point 16.16 to float by divison with 2^16
-          XAdvance = (int)(glyph.root.advance.x / 65536.0f)
-        };
-    }
-
-    private void WriteGlyphToTexture(FT_BitmapGlyph glyph, int pwidth, int pheight, Byte[] bitmapBuffer)
-    {
-      lock (_syncObj)
-      {
-        if (_texture == null)
-          return;
-        // Lock the the area we intend to update
-        Rectangle charArea = new Rectangle(_currentX, _currentY, pwidth, pheight);
-        DataStream dataStream;
-        _texture.LockRectangle(0, charArea, LockFlags.None, out dataStream);
-        using (dataStream)
-        {
-          // Copy FreeType glyph bitmap into our font texture.
-          Byte[] fontPixels = new Byte[pwidth];
-          Byte[] padPixels = new Byte[pwidth];
-
-          int pitch = Math.Abs(glyph.bitmap.pitch);
-
-          // Write the first padding row
-          dataStream.Write(padPixels, 0, pwidth);
-          dataStream.Seek(MAX_WIDTH - pwidth, SeekOrigin.Current);
-          // Write the glyph
-          for (int y = 0; y < glyph.bitmap.rows; y++)
-          {
-            for (int x = 0; x < glyph.bitmap.width; x++)
-              fontPixels[x + PAD] = bitmapBuffer[y * pitch + x];
-            dataStream.Write(fontPixels, 0, pwidth);
-            dataStream.Seek(MAX_WIDTH - pwidth, SeekOrigin.Current);
-          }
-          // Write the last padding row
-          dataStream.Write(padPixels, 0, pwidth);
-          dataStream.Seek(MAX_WIDTH - pwidth, SeekOrigin.Current);
-          _texture.UnlockRectangle(0);
-        }
-      }
-    }
-
-    #endregion
-
-    #region Text creation
-
-    /// <summary>
-    /// Creates an array of <see cref="PositionColoredTextured"/> objects representing the character positions of the
-    /// given <paramref name="text"/> for the given parameters in the underlying <see cref="Texture"/>.
-    /// </summary>
-    /// <param name="text">Text to render.</param>
-    /// <param name="size">Font size.</param>
-    /// <param name="kerning">True to use kerning, false otherwise.</param>
-    /// <param name="textSize">Output size of the created text.</param>
-    /// <param name="lineIndex">Output indices of the first vertex for of each line of text.</param>
-    /// <returns>An array of vertices representing a triangle list.</returns>
-    public PositionColoredTextured[] CreateText(string[] text, float size, bool kerning, out SizeF textSize, out int[] lineIndex)
-    {
-      if (!IsAllocated)
-        Allocate();
-
-      List<PositionColoredTextured> verts = new List<PositionColoredTextured>();
-      float[] lineWidth = new float[text.Length];
-
-      // We add the value of the descender to the top of the text to center the text around its ascender
-      int liney = _charSet.RenderedSize - _charSet.Ascender;
-      float sizeScale = size / _charSet.RenderedSize;
-
-      lineIndex = new int[text.Length];
-
-      for (int i = 0; i < text.Length; ++i)
-      {
-        int ix = verts.Count;
-
-        lineWidth[i] = CreateTextLine(text[i], liney, sizeScale, kerning, ref verts);
-        lineIndex[i] = ix;
-        liney += _charSet.RenderedSize;
-      }
-
-      textSize = new SizeF(0.0f, verts[verts.Count - 1].Y);
-
-      // Stores the line widths as the Z coordinate of the vertices. This means alignment
-      // can be performed by a vertex shader during rendering
-      PositionColoredTextured[] vertArray = verts.ToArray();
-      for (int i = 0; i < lineIndex.Length; ++i)
-      {
-        float width = lineWidth[i];
-        int end = (i < lineIndex.Length - 1) ? lineIndex[i + 1] : vertArray.Length;
-        for (int j = lineIndex[i]; j < end; ++j)
-          vertArray[j].Z = width;
-        textSize.Width = Math.Max(lineWidth[i], textSize.Width);
-      }
-
-      KeepAlive();
-      return vertArray;
-    }
-
-    protected float CreateTextLine(string line, float y, float sizeScale, bool kerning, ref List<PositionColoredTextured> verts)
-    {
-      lock (_syncObj)
-      {
-        int x = 0;
-
-        BitmapCharacter lastChar = null;
-        foreach (char character in line)
-        {
-          BitmapCharacter c = Character(character);
-          // Adjust for kerning
-          if (kerning && lastChar != null)
-            x += GetKerningAmount(lastChar, character);
-          lastChar = c;
-          if (!char.IsWhiteSpace(character))
-            CreateQuad(c, sizeScale, x, y, ref verts);
-          x += c.XAdvance;
-        }
-        // Make sure there is at least one character
-        if (verts.Count == 0)
-        {
-          BitmapCharacter c = Character(' ');
-          CreateQuad(c, sizeScale, c.XOffset, y, ref verts);
-        }
-        return x * sizeScale;
-      }
-    }
-
-    protected void CreateQuad(BitmapCharacter c, float sizeScale, float x, float y, ref List<PositionColoredTextured> verts)
-    {
-      x += c.XOffset;
-      y += c.YOffset;
-      PositionColoredTextured tl = new PositionColoredTextured(
-          x * sizeScale,
-          y * sizeScale,
-          1.0f,
-          (c.X + 0.5f) / _charSet.Width,
-          c.Y / (float)_charSet.Height,
-          Color.Transparent
-          );
-      PositionColoredTextured br = new PositionColoredTextured(
-          (x + c.Width) * sizeScale,
-          (y + c.Height) * sizeScale,
-          1.0f,
-          (c.X + c.Width) / (float)_charSet.Width,
-          (c.Y + c.Height - 0.5f) / _charSet.Height,
-          Color.Transparent
-          );
-      PositionColoredTextured bl = new PositionColoredTextured(tl.X, br.Y, 1.0f, tl.Tu1, br.Tv1, Color.Transparent);
-      PositionColoredTextured tr = new PositionColoredTextured(br.X, tl.Y, 1.0f, br.Tu1, tl.Tv1, Color.Transparent);
-
-      verts.Add(tl);
-      verts.Add(bl);
-      verts.Add(tr);
-
-      verts.Add(tr);
-      verts.Add(bl);
-      verts.Add(br);
-    }
-
-    protected BitmapCharacter Character(char character)
-    {
-      lock (_syncObj)
-      {
-        uint glyphIndex = GlyphIndex(character);
-        BitmapCharacter result = _charSet.GetCharacter(glyphIndex);
-        if (glyphIndex == 0)
-          result = null;
-        if (result == null)
-        {
-          if (!AddGlyph(glyphIndex))
-            return _charSet.GetCharacter(0);
-          return _charSet.GetCharacter(glyphIndex);
-        }
+      CharMetrics result;
+      if (_charMetrics.TryGetValue(character, out result))
         return result;
-      }
+      ushort[] glyphs = _family.Typeface.GetGlyphs(character.ToString());
+      SKRect bounds;
+      float advance = _measureFont.MeasureText(glyphs, out bounds);
+      result = new CharMetrics { Advance = advance, Overhang = Math.Max(bounds.Right - advance, 0), Descent = Math.Max(bounds.Bottom, 0) };
+      _charMetrics[character] = result;
+      return result;
     }
 
-    protected int GetKerningAmount(BitmapCharacter first, char second)
-    {
-      Kerning result = first.KerningList.FirstOrDefault(node => node.Second == second);
-      return result == null ? 0 : result.Amount;
-    }
     #endregion
 
     #region IAssetCore implementation
@@ -553,123 +222,31 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       get
       {
         lock (_syncObj)
-        {
-          return _texture != null;
-        }
+          return _measureFont != null;
       }
     }
 
     public void Free()
     {
-      Texture texture;
+      SKFont font;
       lock (_syncObj)
       {
-        texture = _texture;
-        _texture = null;
+        font = _measureFont;
+        _measureFont = null;
+        _charMetrics.Clear();
       }
-
-      if (texture != null)
+      if (font != null)
       {
-        AllocationChanged?.Invoke(-AllocationSize);
-        texture.Dispose();
-        _charSet.Clear();
-        _currentX = 0;
-        _rowHeight = 0;
-        _currentY = 0;
+        AllocationChanged(-AllocationSize);
+        font.Dispose();
       }
     }
 
     public int AllocationSize
     {
-      get { return IsAllocated ? MAX_WIDTH * MAX_HEIGHT * 1 : 0; }
+      get { return IsAllocated ? 64 * 1024 : 0; }
     }
 
     #endregion
-  }
-
-  /// <summary>
-  /// Represents the coordinates of all bitmap characters of a character set based on a texture containing all character glyphs.
-  /// </summary>
-  internal class BitmapCharacterSet
-  {
-    public int Ascender;
-    public int RenderedSize;
-    public int Width;
-    public int Height;
-    private BitmapCharacter[] _characters;
-
-    public BitmapCharacterSet(int numberOfGlyphs)
-    {
-      _characters = new BitmapCharacter[numberOfGlyphs];
-    }
-
-    public BitmapCharacter GetCharacter(uint index)
-    {
-      return IsInRange(index) ? _characters[index] : null;
-    }
-
-    public bool SetCharacter(uint index, BitmapCharacter character)
-    {
-      if (!IsInRange(index))
-        return false;
-      _characters[index] = character;
-      return true;
-    }
-
-    public bool IsInRange(uint index)
-    {
-      return index < _characters.Length;
-    }
-
-    public void Clear()
-    {
-      _characters = new BitmapCharacter[_characters.Length];
-    }
-  }
-
-  /// <summary>
-  /// Represents the coordinates of a single bitmap character based on a texture containing all character glyphs.
-  /// </summary>
-  public class BitmapCharacter : ICloneable
-  {
-    public int X;
-    public int Y;
-    public int Width;
-    public int Height;
-    public int XOffset;
-    public int YOffset;
-    public int XAdvance;
-    public int Page;
-    public List<Kerning> KerningList = new List<Kerning>();
-
-    /// <summary>
-    /// Clones the BitmapCharacter.
-    /// </summary>
-    /// <returns>Cloned BitmapCharacter.</returns>
-    public object Clone()
-    {
-      BitmapCharacter result = new BitmapCharacter
-      {
-        X = X,
-        Y = Y,
-        Width = Width,
-        Height = Height,
-        XOffset = XOffset,
-        YOffset = YOffset,
-        XAdvance = XAdvance
-      };
-      result.KerningList.AddRange(KerningList);
-      result.Page = Page;
-      return result;
-    }
-  }
-
-  /// <summary>
-  /// Represents kerning information for a character.
-  /// </summary>
-  public class Kerning
-  {
-    public int Second;
-    public int Amount;
   }
 }

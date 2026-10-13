@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -130,13 +130,10 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       for (int i = 0; i < _stops.Count - 1; i++)
         CreatePartialGradient(data, _stops[i], _stops[i + 1]);
 
-      DataStream dataStream;
-      _texture.Surface0.LockRectangle(LockFlags.None, out dataStream);
-      using (dataStream)
-      {
-        dataStream.Write(data, 0, 4 * GRADIENT_TEXTURE_WIDTH * GRADIENT_TEXTURE_HEIGHT);
-        _texture.Surface0.UnlockRectangle();
-      }
+      Texture texture = _texture.Texture;
+      SkiaSharp.SKPixmap pixels = texture.LockPixels();
+      System.Runtime.InteropServices.Marshal.Copy(data, 0, pixels.GetPixels(), Math.Min(data.Length, pixels.Info.BytesSize));
+      texture.UnlockPixels();
     }
 
     public bool IsAllocated

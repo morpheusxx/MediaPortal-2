@@ -34,7 +34,7 @@ using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.Rendering;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using SharpDX;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.Utilities.DeepCopy;
@@ -44,7 +44,7 @@ using SizeF = SharpDX.Size2F;
 namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 {
   /// <summary>
-  /// Brush which paints the video image of a player of type <see cref="ISharpDXVideoPlayer"/> provided by the <see cref="IPlayerManager"/>.
+  /// Brush which paints the video image of a player of type <see cref="IVideoFrameSource"/> provided by the <see cref="IPlayerManager"/>.
   /// </summary>
   public class VideoBrush : Brush
   {
@@ -105,8 +105,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
       public bool RefreshEffectParameters(IVideoPlayer player, Texture texture)
       {
-        ISharpDXVideoPlayer sdvPlayer = player as ISharpDXVideoPlayer;
-        if (sdvPlayer == null || texture == null || texture.IsDisposed)
+        IVideoFrameSource sdvPlayer = player as IVideoFrameSource;
+        if (sdvPlayer == null || texture == null || texture.Disposed)
           return false;
         SizeF aspectRatio = sdvPlayer.VideoAspectRatio.ToSize2F();
         Size playerSize = sdvPlayer.VideoSize.ToSize2();
@@ -261,7 +261,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       _geometryProperty = new SProperty(typeof(string), null);
       _borderColorProperty = new SProperty(typeof(Color), Color.Black);
 
-      ISharpDXVideoPlayer player;
+      IVideoFrameSource player;
 
       // Primary video texture
       BrushContext videoContext = CreateAndAddBrushContext();
@@ -284,7 +284,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       if (!GetPlayer(out player))
         return;
 
-      ISharpDXMultiTexturePlayer multiTexturePlayer = player as ISharpDXMultiTexturePlayer;
+      IVideoFrameOverlays multiTexturePlayer = player as IVideoFrameOverlays;
       if (multiTexturePlayer == null)
         return;
 
@@ -471,14 +471,14 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
       return result;
     }
 
-    protected virtual bool GetPlayer(out ISharpDXVideoPlayer player)
+    protected virtual bool GetPlayer(out IVideoFrameSource player)
     {
       player = null;
       IPlayerContextManager playerContextManager = ServiceRegistration.Get<IPlayerContextManager>(false);
       if (playerContextManager == null)
         return false;
 
-      player = playerContextManager[Stream] as ISharpDXVideoPlayer;
+      player = playerContextManager[Stream] as IVideoFrameSource;
       return player != null;
     }
 

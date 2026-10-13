@@ -26,10 +26,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SharpDX;
-using SharpDX.Direct3D9;
+using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.ContentManagement;
 using MediaPortal.UI.SkinEngine.DirectX;
 using MediaPortal.UI.SkinEngine.SkinManagement;
+using SkiaSharp;
 using Size = SharpDX.Size2;
 using SizeF = SharpDX.Size2F;
 using PointF = SharpDX.Vector2;
@@ -137,15 +138,6 @@ namespace MediaPortal.UI.SkinEngine.Rendering
   {
     #region Consts
 
-    protected const string EFFECT_FONT = "font";
-    protected const string EFFECT_FONT_FADE = "font_fade";
-
-    protected const string PARAM_SCROLL_POSITION = "g_scrollpos";
-    protected const string PARAM_TEXT_RECT = "g_textbox";
-    protected const string PARAM_COLOR = "g_color";
-    protected const string PARAM_ALIGNMENT = "g_alignment";
-    protected const string PARAM_FADE_BORDER = "g_fadeborder";
-
     protected const int FADE_SIZE = 15;
     protected const string ELLIPSIS = "...";
     #endregion
@@ -163,7 +155,8 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     protected bool _lastWrap;
     protected TextTrimming _lastTextTrimming;
     protected bool _kerning;
-    protected int[] _textLines;
+    protected string[] _lines;
+    protected float[] _lineWidths;
     // Rendering
     EffectAsset _effect;
     // Scrolling
@@ -171,9 +164,6 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     protected Vector2 _scrollWrapOffset;
     protected DateTime _lastTimeUsed;
     protected DateTime _scrollInitialized;
-    // Vertex buffer
-    protected PrimitiveBuffer _buffer = new PrimitiveBuffer();
-
     #endregion
 
     #region Ctor
@@ -280,7 +270,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
 
     public bool IsAllocated
     {
-      get { return _buffer.IsAllocated && _font != null && _font.IsAllocated; }
+      get { return _lines != null && _font != null && _font.IsAllocated; }
     }
 
     public override string ToString()
@@ -341,12 +331,9 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       if (_font == null)
         return;
 
-      // Get text quads
+      // Layout the text lines
       string[] lines = GetLines(boxWidth, boxHeight, wrap, textTrimming);
-      PositionColoredTextured[] verts = _font.CreateText(lines, _fontSize, true, out _lastTextSize, out _textLines);
-
-      // Re-use existing buffer if necessary
-      _buffer.Set(ref verts, PrimitiveType.TriangleList);
+      LayoutLines(lines);
 
       // Preserve state
       _lastTextBoxWidth = boxWidth;
@@ -549,21 +536,6 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       if (scrollMode != TextScrollEnum.None && _lastTimeUsed != DateTime.MinValue)
         actualScrollMode = UpdateScrollPosition(textBox, scrollMode, scrollSpeed, scrollDelay);
 
-      // Prepare horizontal alignment info for shader. X is position offset, Y is multiplyer for line width.
-      Vector4 alignParam;
-      switch (horzAlignment)
-      {
-        case HorizontalTextAlignEnum.Center:
-          alignParam = new Vector4(textBox.Width / 2.0f, -0.5f, zOrder, 1.0f);
-          break;
-        case HorizontalTextAlignEnum.Right:
-          alignParam = new Vector4(textBox.Width, -1.0f, zOrder, 1.0f);
-          break;
-        //case TextAlignEnum.Left:
-        default:
-          alignParam = new Vector4(0.0f, 0.0f, zOrder, 1.0f);
-          break;
-      }
       // Do vertical alignment by adjusting yPosition
       float yPosition = 0.0f;
       switch (vertAlignment)
@@ -579,36 +551,22 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       }
 
       // Do we need to add fading edges?
-      Vector4 fadeBorder;
-      if (fade && CalculateFadeBorder(actualScrollMode, textBox, horzAlignment, out fadeBorder))
-      {
-        _effect = ContentManager.Instance.GetEffect(EFFECT_FONT_FADE);
-        _effect.Parameters[PARAM_FADE_BORDER] = fadeBorder;
-      }
-      else
-        _effect = ContentManager.Instance.GetEffect(EFFECT_FONT);
+      Vector4? fadeBorder = null;
+      Vector4 border;
+      if (fade && CalculateFadeBorder(actualScrollMode, textBox, horzAlignment, out border))
+        fadeBorder = border;
 
       // Render
-      _effect.Parameters[PARAM_COLOR] = color;
-      _effect.Parameters[PARAM_ALIGNMENT] = alignParam;
-      _effect.Parameters[PARAM_SCROLL_POSITION] = new Vector4(_scrollPos.X, _scrollPos.Y + yPosition, 0.0f, 0.0f);
-      _effect.Parameters[PARAM_TEXT_RECT] = new Vector4(textBox.Left, textBox.Top, textBox.Width, textBox.Height);
-      DoRender(finalTransform);
+      DoRender(textBox, horzAlignment, _scrollPos.X, _scrollPos.Y + yPosition, color, fadeBorder, finalTransform);
 
-      // Because text wraps around before it is complete scrolled off the screen we may need to render a second copy 
+      // Because text wraps around before it is complete scrolled off the screen we may need to render a second copy
       // to create the desired wrapping effect
       if (scrollMode != TextScrollEnum.None)
       {
         if (!float.IsNaN(_scrollWrapOffset.X))
-        {
-          _effect.Parameters[PARAM_SCROLL_POSITION] = new Vector4(_scrollPos.X + _scrollWrapOffset.X, _scrollPos.Y, 0.0f, 0.0f);
-          DoRender(finalTransform);
-        }
+          DoRender(textBox, horzAlignment, _scrollPos.X + _scrollWrapOffset.X, _scrollPos.Y, color, fadeBorder, finalTransform);
         else if (!float.IsNaN(_scrollWrapOffset.Y))
-        {
-          _effect.Parameters[PARAM_SCROLL_POSITION] = new Vector4(_scrollPos.X, _scrollPos.Y + _scrollWrapOffset.Y, 0.0f, 0.0f);
-          DoRender(finalTransform);
-        }
+          DoRender(textBox, horzAlignment, _scrollPos.X, _scrollPos.Y + _scrollWrapOffset.Y, color, fadeBorder, finalTransform);
       }
       _lastTimeUsed = SkinContext.FrameRenderingStartTime;
     }
@@ -635,21 +593,6 @@ namespace MediaPortal.UI.SkinEngine.Rendering
           return;
       }
 
-      // Prepare horizontal alignment info for shader. X is position offset, Y is multiplyer for line width.
-      Vector4 alignParam;
-      switch (horzAlignment)
-      {
-        case HorizontalTextAlignEnum.Center:
-          alignParam = new Vector4(textBox.Width / 2.0f, -0.5f, zOrder, 1.0f);
-          break;
-        case HorizontalTextAlignEnum.Right:
-          alignParam = new Vector4(textBox.Width, -1.0f, zOrder, 1.0f);
-          break;
-        //case TextAlignEnum.Left:
-        default:
-          alignParam = new Vector4(0.0f, 0.0f, zOrder, 1.0f);
-          break;
-      }
       // Do vertical alignment by adjusting yPosition
       float yPosition = 0.0f;
       switch (vertAlignment)
@@ -664,15 +607,8 @@ namespace MediaPortal.UI.SkinEngine.Rendering
         // Do nothing
       }
 
-      // No fading
-      _effect = ContentManager.Instance.GetEffect(EFFECT_FONT);
-
-      // Render
-      _effect.Parameters[PARAM_COLOR] = color;
-      _effect.Parameters[PARAM_ALIGNMENT] = alignParam;
-      _effect.Parameters[PARAM_SCROLL_POSITION] = new Vector4(offsetX, yPosition, 0.0f, 0.0f);
-      _effect.Parameters[PARAM_TEXT_RECT] = new Vector4(textBox.Left, textBox.Top, textBox.Width, textBox.Height);
-      DoRender(finalTransform);
+      // Render without fading
+      DoRender(textBox, horzAlignment, offsetX, yPosition, color, null, finalTransform);
       _lastTimeUsed = SkinContext.FrameRenderingStartTime;
     }
 
@@ -680,11 +616,120 @@ namespace MediaPortal.UI.SkinEngine.Rendering
 
     #region Protected methods
 
-    protected void DoRender(Matrix finalTransform)
+    /// <summary>
+    /// Calculates the widths of the given text lines and the size of the text.
+    /// </summary>
+    protected void LayoutLines(string[] lines)
     {
-      _effect.StartRender(_font.Texture, finalTransform);
-      _buffer.Render(0);
-      _effect.EndRender();
+      _lines = lines;
+      _lineWidths = new float[lines.Length];
+      float maxWidth = 0;
+      for (int i = 0; i < lines.Length; i++)
+      {
+        string line = lines[i];
+        float width = line.Length == 0 ? 0f : _font.PartialTextWidth(line, 0, line.Length - 1, _fontSize, _kerning);
+        _lineWidths[i] = width;
+        maxWidth = Math.Max(maxWidth, width);
+      }
+      // Every line is _fontSize high. The first baseline is _fontSize below the top of the text. The text ends at the descent of the last
+      // glyph of the last line, plus a little padding.
+      float scale = _fontSize / _font.Size;
+      char lastChar = ' ';
+      for (int i = lines.Length - 1; i >= 0; i--)
+      {
+        string line = lines[i].TrimEnd();
+        if (line.Length > 0)
+        {
+          lastChar = line[line.Length - 1];
+          break;
+        }
+      }
+      float height = _fontSize * lines.Length + (_font.CharDescent(lastChar) + 2) * scale;
+      _lastTextSize = new SizeF(maxWidth, height);
+    }
+
+    protected void DoRender(RectangleF textBox, HorizontalTextAlignEnum horzAlignment, float scrollX, float scrollY, Color4 color,
+        Vector4? fadeBorder, Matrix finalTransform)
+    {
+      SKCanvas canvas = GraphicsDevice.Canvas;
+      if (canvas == null || _lines == null || _font == null)
+        return;
+      SKRect clip = SKRect.Create(textBox.Left, textBox.Top, textBox.Width, textBox.Height);
+      canvas.Save();
+      try
+      {
+        canvas.SetMatrix(GraphicsDevice.ToSkMatrix(finalTransform));
+        canvas.ClipRect(clip);
+        if (fadeBorder.HasValue)
+          canvas.SaveLayer(clip, null);
+        using (SKFont font = _font.CreateFont(_fontSize))
+        using (SKPaint paint = new SKPaint())
+        {
+          paint.IsAntialias = true;
+          paint.Color = new SKColor((byte) (color.Red * 255 + 0.5f), (byte) (color.Green * 255 + 0.5f), (byte) (color.Blue * 255 + 0.5f), (byte) (color.Alpha * 255 + 0.5f));
+          for (int i = 0; i < _lines.Length; i++)
+          {
+            string line = _lines[i];
+            if (line.Length == 0)
+              continue;
+            float x;
+            switch (horzAlignment)
+            {
+              case HorizontalTextAlignEnum.Center:
+                x = textBox.Width / 2.0f - 0.5f * _lineWidths[i];
+                break;
+              case HorizontalTextAlignEnum.Right:
+                x = textBox.Width - _lineWidths[i];
+                break;
+              default:
+                x = 0.0f;
+                break;
+            }
+            float baseline = _fontSize * (i + 1);
+            canvas.DrawText(line, textBox.Left + x + scrollX, textBox.Top + scrollY + baseline, font, paint);
+          }
+        }
+        if (fadeBorder.HasValue)
+        {
+          ApplyFade(canvas, clip, fadeBorder.Value);
+          canvas.Restore();
+        }
+      }
+      finally
+      {
+        canvas.Restore();
+      }
+      GraphicsDevice.RenderTargetChanged();
+    }
+
+    /// <summary>
+    /// Fades out the content of the current layer at the borders of the given <paramref name="box"/>.
+    /// </summary>
+    /// <param name="canvas">Canvas with a layer to modify.</param>
+    /// <param name="box">The text box.</param>
+    /// <param name="border">Width of the fading area at the left, top, right and bottom border. Values near zero mean no fading.</param>
+    private static void ApplyFade(SKCanvas canvas, SKRect box, Vector4 border)
+    {
+      using (SKPaint paint = new SKPaint())
+      {
+        paint.BlendMode = SKBlendMode.DstIn;
+        FadeEdge(canvas, paint, border.X, new SKRect(box.Left, box.Top, box.Left + border.X, box.Bottom), new SKPoint(box.Left, 0), new SKPoint(box.Left + border.X, 0));
+        FadeEdge(canvas, paint, border.Z, new SKRect(box.Right - border.Z, box.Top, box.Right, box.Bottom), new SKPoint(box.Right, 0), new SKPoint(box.Right - border.Z, 0));
+        FadeEdge(canvas, paint, border.Y, new SKRect(box.Left, box.Top, box.Right, box.Top + border.Y), new SKPoint(0, box.Top), new SKPoint(0, box.Top + border.Y));
+        FadeEdge(canvas, paint, border.W, new SKRect(box.Left, box.Bottom - border.W, box.Right, box.Bottom), new SKPoint(0, box.Bottom), new SKPoint(0, box.Bottom - border.W));
+      }
+    }
+
+    private static void FadeEdge(SKCanvas canvas, SKPaint paint, float size, SKRect area, SKPoint from, SKPoint to)
+    {
+      if (size < 1f)
+        return;
+      using (SKShader shader = SKShader.CreateLinearGradient(from, to, new[] { SKColors.Transparent, SKColors.White }, SKShaderTileMode.Clamp))
+      {
+        paint.Shader = shader;
+        canvas.DrawRect(area, paint);
+      }
+      paint.Shader = null;
     }
 
     protected TextScrollEnum UpdateScrollPosition(RectangleF textBox, TextScrollEnum mode, float speed, float scrollDelay)
@@ -698,7 +743,7 @@ namespace MediaPortal.UI.SkinEngine.Rendering
       {
         if (_lastWrap && _lastTextSize.Height > textBox.Height)
           mode = TextScrollEnum.Up;
-        else if (_textLines.Length == 1 && _lastTextSize.Width > textBox.Width)
+        else if (_lines.Length == 1 && _lastTextSize.Width > textBox.Width)
           mode = TextScrollEnum.Left;
         else
           return TextScrollEnum.None;
@@ -800,7 +845,8 @@ namespace MediaPortal.UI.SkinEngine.Rendering
 
     void DisposeBuffer()
     {
-      _buffer.Dispose();
+      _lines = null;
+      _lineWidths = null;
     }
 
     void DisposeFont()

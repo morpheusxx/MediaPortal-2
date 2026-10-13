@@ -1,0 +1,30 @@
+name: Linux server build
+
+# Builds the portable subset of the server solution on Linux (MediaPortal/Source/MP2-Server-Linux.slnf).
+# It guards the cross-platform rework: portable projects target plain net10.0 and CA1416 (Windows-only API use)
+# is an error for them, so a Windows-only call or project reference in the subset fails this job.
+on:
+  push:
+    branches: [ master, 'EXP_*', 'phase0-*' ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Solution filter is up to date
+        run: |
+          python3 MediaPortal/Build/generate_linux_slnf.py
+          git diff --exit-code -- MediaPortal/Source/MP2-Server-Linux.slnf
+
+      - name: Restore
+        run: dotnet restore MediaPortal/Source/MP2-Server-Linux.slnf
+
+      - name: Build
+        run: dotnet build MediaPortal/Source/MP2-Server-Linux.slnf --no-restore -c Release

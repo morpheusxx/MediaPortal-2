@@ -92,8 +92,21 @@ Output layout: `Directory.Build.props` sets `AppendTargetFrameworkToOutputPath=f
 `Bin\<solution>\<OutDir>`, which contained the TFM; with a mix of `net10.0` and `net10.0-windows` projects the plugins would have been split
 over two folders (the server exe only sees its own). Everything now lands in `Bin\<solution>in\<config>\`.
 
+## Linux server solution filter
+
+`MediaPortal/Source/MP2-Server-Linux.slnf` (59 projects) is generated from `MP2-Server.sln` by `MediaPortal/Build/generate_linux_slnf.py`:
+every project targeting plain `net10.0`. Re-run the script after retargeting projects. GitHub Actions (`.github/workflows/linux-server-build.yml`,
+`ubuntu-latest`) checks that the filter is current and builds it in Release. AppVeyor stays responsible for the Windows installer.
+
+Verified locally on Windows with `-p:EnableWindowsTargeting=false` (so no Windows-targeting packs/SDK parts are available): restore and Debug+Release
+build give 0 errors. **Not verified:** an actual Linux run (case-sensitive paths in csproj references and `build.targets` are the most likely CI surprises).
+
+Restore warnings NU1701 (packages built for .NET Framework only, used through compatibility): `BASS.NET` / `BassRegistration` (Windows-only
+`bass.dll` wrapper; Linux needs ManagedBass, see architecture decision 5), `DiscUtils 0.11.1` (ISO provider; managed, needs a runtime test),
+`MediaPortal.LogoManager` (TV logos).
+
 ## Next
 
 1. (`MP2Extended` -> `ImageUtilities` was deliberately skipped for now.)
-2. Linux server solution filter (`MP2-Server-Linux.slnf`) and a Linux CI job.
+2. (done) Linux server solution filter and CI job.
 3. Server host without WinForms/Windows service (Phase 1).

@@ -118,6 +118,10 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
       RID `win7-*` → `win-*` (Client), `BinaryFormatter` removed (unused `BinaryCacheProvider` deleted,
       `DiskCachedDictionary` → System.Text.Json), `#if NET6_0` → `NET6_0_OR_GREATER`, BASS.NET NU1107 (direct reference).
       Not yet run: tests, the client/server themselves.
-- [ ] Phase 0b: split portable (`net10.0`) vs Windows-only (`net10.0-windows`); CA1416 inventory; Linux server solution filter + CI
+- [~] Phase 0b (in progress): `MediaPortal.Utilities`, `MediaPortal.Common` and `UPnP` are now plain `net10.0`.
+      WinForms/GDI-only code moved to new `MediaPortal.Utilities.Windows` (`net10.0-windows`, in `MP2-Client.sln`;
+      referenced by Client, ClientLauncher, ServiceMonitor, Server, SkinEngine). CA1416 inventory: see `PHASE0_INVENTORY.md`.
+      `VersionInfo.cs` no longer stamps `SupportedOSPlatform("windows")` on every assembly (it hid all CA1416 warnings).
+      Still to do: clear the CA1416/P-Invoke list in Utilities/Common, split further projects, Linux server solution filter + CI.
 - [ ] Phase 0c: Setup/WiX/AppVeyor/.bat migration; remove dead `.NETFramework`-conditional ItemGroups/build.targets branches;
       Tests retargeted but not run

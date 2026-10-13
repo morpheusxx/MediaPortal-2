@@ -16,9 +16,10 @@ using System.Runtime.Versioning;
 // Note: This line will be filled by AssemblyInfoHelper in build process.
 [assembly: AssemblyInformationalVersion("origin/EXP-Net6-70a151")]
 
-#if NET5_0_OR_GREATER
+#if MP2_WINDOWS_TFM
 // To avoid warnings about platform specific code on multi-platform versions of .net
-// an assembly can specify the supported platforms, in our case only Windows for now.
+// an assembly can specify the supported platforms. MP2_WINDOWS_TFM is defined by Directory.Build.targets
+// for projects targeting a *-windows TFM; portable projects must not carry the attribute.
 // If an assembly auto-generates its AssemblyInfo then the platform can be specified in
 // the TFM, e.g. net6.0-windows. However most MP2 projects have a manually generated
 // AssemblyInfo file, so that this version file can be included in the AssemblyInfo at build

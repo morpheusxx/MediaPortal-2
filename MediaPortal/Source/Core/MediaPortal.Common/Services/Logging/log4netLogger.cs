@@ -26,7 +26,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Windows.Forms;
 using System.Xml;
 using log4net;
 using log4net.Core;
@@ -47,7 +46,7 @@ namespace MediaPortal.Common.Services.Logging
     {
       XmlDocument xmlDoc = new XmlDocument();
       // Fallback "app.dll.config" for .NET 5
-      var configs = new[] { Application.ExecutablePath + ".config", Path.ChangeExtension( Application.ExecutablePath, ".dll") + ".config" };
+      var configs = new[] { Environment.ProcessPath + ".config", Path.ChangeExtension( Environment.ProcessPath, ".dll") + ".config" };
       var config = configs.FirstOrDefault(c => File.Exists(c));
       using (Stream stream = new FileStream(config, FileMode.Open, FileAccess.Read))
         xmlDoc.Load(stream);

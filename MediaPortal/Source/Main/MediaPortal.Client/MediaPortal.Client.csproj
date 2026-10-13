@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.UI\MediaPortal.UI.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+    <ProjectReference Include="..\..\Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="MP2.ico" />

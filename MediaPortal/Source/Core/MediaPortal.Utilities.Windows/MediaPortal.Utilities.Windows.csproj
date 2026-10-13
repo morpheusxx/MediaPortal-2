@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <OutputType>Library</OutputType>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <RootNamespace>MediaPortal.Utilities</RootNamespace>
+    <AssemblyName>MediaPortal.Utilities.Windows</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MediaPortal.Common\MediaPortal.Common.csproj" />
+    <ProjectReference Include="..\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+  </ItemGroup>
+</Project>

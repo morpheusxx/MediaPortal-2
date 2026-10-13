@@ -11,6 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <StartupObject>MediaPortal.ServiceMonitor.App</StartupObject>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -211,6 +212,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+    <ProjectReference Include="..\..\Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser">

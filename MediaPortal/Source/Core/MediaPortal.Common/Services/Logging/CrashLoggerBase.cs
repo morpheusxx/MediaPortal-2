@@ -25,7 +25,6 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Windows.Forms;
 using System.Management;
 using Microsoft.Win32;
 
@@ -94,7 +93,7 @@ namespace MediaPortal.Common.Services.Logging
       systemInfo.AppendLine("== Software");
       systemInfo.AppendLine("  OS Version:\t\t" + Environment.OSVersion);
       systemInfo.AppendLine("  Hostname:\t\t" + Environment.MachineName);
-      systemInfo.AppendLine("  Network attached?\t" + SystemInformation.Network);
+      systemInfo.AppendLine("  Network attached?\t" + System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable());
 
       systemInfo.AppendLine();
       systemInfo.AppendLine("== Hardware");

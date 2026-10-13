@@ -12,8 +12,6 @@
 
     <Launch Condition="Installed OR VersionNT &gt;= 601" Message="!(loc.LC_OS)" />
 
-    <PropertyRef Id="NETFRAMEWORK45" />
-    <Launch Condition="Installed OR (NETFRAMEWORK45 &gt;= &quot;#378675&quot;)" Message="!(loc.LC_NET)" />
     <Launch Condition="Privileged" Message="!(loc.LC_ADMIN)" />
 
     <Launch Condition="Installed OR DOKAN" Message="!(loc.LC_DOKAN)" />

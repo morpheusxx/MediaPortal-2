@@ -1,31 +1,22 @@
 <Project>
 
-  <PropertyGroup Condition=" '$(ReferencedTargetFramework.TrimEnd(`0123456789`))' == 'net' ">
-    <IsNetCore>false</IsNetCore>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(ReferencedTargetFramework.TrimEnd(`0123456789`))' != 'net' ">
-    <IsNetCore>true</IsNetCore>
-  </PropertyGroup>
-  
   <PropertyGroup>
     <!-- 
     Base directory for each of the MP2 application outputs
     -->
-    <ClientBaseDirectory>$(SolutionDir)..\Bin\MP2-Client\bin\$(Configuration)\$(ReferencedTargetFramework)</ClientBaseDirectory>
-    <ServerBaseDirectory>$(SolutionDir)..\Bin\MP2-Server\bin\$(Configuration)\$(ReferencedTargetFramework)</ServerBaseDirectory>
-    <ServiceMonitorBaseDirectory>$(SolutionDir)..\Bin\MP2-ServiceMonitor\bin\$(Configuration)\$(ReferencedTargetFramework)</ServiceMonitorBaseDirectory>
-    <LogCollectorBaseDirectory>$(SolutionDir)..\Bin\MP2-LogCollector\bin\$(Configuration)\$(ReferencedTargetFramework)</LogCollectorBaseDirectory>
+    <ClientBaseDirectory>$(SolutionDir)..\Bin\MP2-Client\bin\$(Configuration)</ClientBaseDirectory>
+    <ServerBaseDirectory>$(SolutionDir)..\Bin\MP2-Server\bin\$(Configuration)</ServerBaseDirectory>
+    <ServiceMonitorBaseDirectory>$(SolutionDir)..\Bin\MP2-ServiceMonitor\bin\$(Configuration)</ServiceMonitorBaseDirectory>
+    <LogCollectorBaseDirectory>$(SolutionDir)..\Bin\MP2-LogCollector\bin\$(Configuration)</LogCollectorBaseDirectory>
   </PropertyGroup>
     
   <PropertyGroup>
     <!-- Sets the MSBuild properties above as preprocessor variables so they can be referenced in wix project files and tools -->
     <DefineConstants>
       $(DefineConstants);
-      IsNetCore=$(IsNetCore);
       SlimTv.Client.TargetDir=$(ClientBaseDirectory)\Plugins\SlimTv.Client;
       SlimTv.NativeProvider.TargetDir=$(ClientBaseDirectory)\Plugins\SlimTv.NativeProvider;
       SlimTv.TvMosaicProvider.TargetDir=$(ClientBaseDirectory)\Plugins\SlimTv.TvMosaicProvider;
-      SlimTv.Service3.TargetDir=$(ServerBaseDirectory)\Plugins\SlimTv.Service3;
       SlimTv.Service35.TargetDir=$(ServerBaseDirectory)\Plugins\SlimTv.Service35
     </DefineConstants>
   </PropertyGroup>
@@ -96,19 +87,10 @@
     </HarvestDirectory>
 	</ItemGroup>
 
-  <ItemGroup Condition="'$(IsNetCore)' == 'true'">
+  <ItemGroup>
     <HarvestDirectory Include="$(ServerBaseDirectory)\Plugins\SlimTv.Service35">
       <PreprocessorVariable>var.SlimTv.Service35.TargetDir</PreprocessorVariable>
       <ComponentGroupName>SlimTv.Service35.Heat</ComponentGroupName>
-      <DirectoryRefId>SERVER_PLUGINS_FOLDER</DirectoryRefId>
-      <SuppressRootDirectory>false</SuppressRootDirectory>
-    </HarvestDirectory>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(IsNetCore)' != 'true'">
-    <HarvestDirectory Include="$(ServerBaseDirectory)\Plugins\SlimTv.Service3">
-      <PreprocessorVariable>var.SlimTv.Service3.TargetDir</PreprocessorVariable>
-      <ComponentGroupName>SlimTv.Service3.Heat</ComponentGroupName>
       <DirectoryRefId>SERVER_PLUGINS_FOLDER</DirectoryRefId>
       <SuppressRootDirectory>false</SuppressRootDirectory>
     </HarvestDirectory>

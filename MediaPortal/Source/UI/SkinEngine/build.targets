@@ -20,9 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ReferencesX86 Include="$(TargetDir)References\x86\*.*" />
       <ReferencesX64 Include="$(TargetDir)References\x64\*.*" />
-      <ReferencesX86 Include="$(TargetDir)x86\*.*" />
       <ReferencesX64 Include="$(TargetDir)x64\*.*" />
       <References Include="$(TargetDir)SharpDX.dll" />
       <References Include="$(TargetDir)SharpDX.Direct3D9.dll" />
@@ -33,7 +31,6 @@
     <Copy SourceFiles="@(LanguageFiles)" DestinationFolder="$(PluginDestination)Language\" />
     <Copy SourceFiles="@(SkinFiles)" DestinationFiles="@(SkinFiles->'$(PluginDestination)Skin\%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(References)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(ReferencesX86)" DestinationFolder="$(PluginDestination)\x86" />
     <Copy SourceFiles="@(ReferencesX64)" DestinationFolder="$(PluginDestination)\x64" />
   </Target>
 

@@ -26,22 +26,8 @@
   </Fragment>
   
   <Fragment>
-    <BootstrapperApplication Id="BootstrapperNetFx">
-      <bal:WixManagedBootstrapperApplicationHost />
-      <Payload SourceFile="$(MP2BootstrapperApp.TargetDir)MP2BootstrapperApp.dll" />
-      <Payload SourceFile="$(MP2BootstrapperApp.TargetDir)WixToolset.Mba.Host.config" />
-      <PayloadGroupRef Id="BootstrapperPayloadCommon"/>
-    </BootstrapperApplication>
-
-    <PackageGroup Id="BootstrapperNetFxPackages">
-      <PackageGroupRef Id="NetFx48WebAsPrereq" />
-      <PackageGroupRef Id="BundleChainPackagesCommon"/>
-    </PackageGroup>
-  </Fragment>
-  
-  <Fragment>
-    <WixVariable Id="DesktopNetCoreRuntime6016Redistx64InstallCondition" Value="VersionNT64" />
-    <WixVariable Id="AspNetCoreRuntime6016Redistx64InstallCondition" Value="VersionNT64" />
+    <WixVariable Id="DesktopNetCoreRuntime10012Redistx64InstallCondition" Value="VersionNT64" />
+    <WixVariable Id="AspNetCoreRuntime10012Redistx64InstallCondition" Value="VersionNT64" />
     
     <BootstrapperApplication Id="BootstrapperNetCore">
       <bal:WixDotNetCoreBootstrapperApplicationHost />
@@ -52,10 +38,8 @@
     </BootstrapperApplication>
       
     <PackageGroup Id="BootstrapperNetCorePackages">
-      <PackageGroupRef Id="DesktopNetCoreRuntime6016Redist_x86AsPrereq" />
-      <PackageGroupRef Id="AspNetCoreRuntime6016Redist_x86AsAdditionalPrereq" />
-      <PackageGroupRef Id="DesktopNetCoreRuntime6016Redist_x64AsAdditionalPrereq" />
-      <PackageGroupRef Id="AspNetCoreRuntime6016Redist_x64AsAdditionalPrereq" />
+      <PackageGroupRef Id="DesktopNetCoreRuntime10012Redist_x64AsPrereq" />
+      <PackageGroupRef Id="AspNetCoreRuntime10012Redist_x64AsAdditionalPrereq" />
       <PackageGroupRef Id="BundleChainPackagesCommon"/>
     </PackageGroup>
   </Fragment>

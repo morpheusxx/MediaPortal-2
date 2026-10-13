@@ -1,15 +1,9 @@
 ﻿<Project Sdk="WixToolset.Sdk/4.0.4">
   <PropertyGroup>
-    <!--
-    Wix projects don't have a TargetFramework nor a concept of multi-targeting, but the project references
-    are multi-targeted and wix needs to know which target's output to include in the installer.
-    The custom property $(ReferencedTargetFramework) is used to specify which target to use and additionally
-    used to simulate appending the TFM to the output paths
-    -->
-    <ReferencedTargetFramework Condition="$(ReferencedTargetFramework) == ''">net48</ReferencedTargetFramework>
-    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Platform)\$(Configuration)\$(ReferencedTargetFramework)</IntermediateOutputPath>
-    <OutputPath>bin\$(Platform)\$(Configuration)\$(ReferencedTargetFramework)</OutputPath>
-    <Platforms>x86</Platforms>
+    <!-- MediaPortal 2 on Windows is x64 only, the application outputs have no TFM folder (AppendTargetFrameworkToOutputPath=false) -->
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Platform)\$(Configuration)</IntermediateOutputPath>
+    <OutputPath>bin\$(Platform)\$(Configuration)</OutputPath>
+    <Platforms>x64</Platforms>
     <DefaultItemExcludes>$(DefaultItemExcludes);obj\**</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -39,18 +33,10 @@
     <PackageReference Include="WixToolset.UI.wixext" Version="4.0.4" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\Main\MediaPortal.Client\MediaPortal.Client.csproj">
-      <SetTargetFramework>TargetFramework=$(ReferencedTargetFramework)</SetTargetFramework>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Source\Main\MediaPortal.Server\MediaPortal.Server.csproj">
-      <SetTargetFramework>TargetFramework=$(ReferencedTargetFramework)</SetTargetFramework>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Source\Main\MediaPortal.ServiceMonitor\MediaPortal.ServiceMonitor.csproj">
-      <SetTargetFramework>TargetFramework=$(ReferencedTargetFramework)</SetTargetFramework>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Tools\LogCollector\MediaPortal.LogCollector.csproj">
-      <SetTargetFramework>TargetFramework=$(ReferencedTargetFramework)</SetTargetFramework>
-    </ProjectReference>
+    <ProjectReference Include="..\..\Source\Main\MediaPortal.Client\MediaPortal.Client.csproj" />
+    <ProjectReference Include="..\..\Source\Main\MediaPortal.Server\MediaPortal.Server.csproj" />
+    <ProjectReference Include="..\..\Source\Main\MediaPortal.ServiceMonitor\MediaPortal.ServiceMonitor.csproj" />
+    <ProjectReference Include="..\..\Tools\LogCollector\MediaPortal.LogCollector.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="build.targets" />

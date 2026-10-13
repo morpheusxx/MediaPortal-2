@@ -3,8 +3,5 @@
 
     <Property Id="PropertiesFile" Value="1" />
 
-    <!-- .NET Framework -->
-    <PropertyRef Id="NETFRAMEWORK45" />
-
   </Fragment>
 </Wix>

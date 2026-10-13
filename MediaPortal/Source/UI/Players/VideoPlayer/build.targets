@@ -18,8 +18,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ReferencesX86 Include="$(TargetDir)x86\*.*" />
-      <ReferencesX86 Include="$(SolutionDir)\Ui\Players\EVRPresenter\Release\Win32\EVRPresenter.dll" />
     </ItemGroup>
 
     <ItemGroup>
@@ -29,7 +27,6 @@
 
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
     <Copy SourceFiles="@(LanguageFiles)" DestinationFolder="$(PluginDestination)Language\" />
-    <Copy SourceFiles="@(ReferencesX86)" DestinationFolder="$(PluginDestination)\x86" />
     <Copy SourceFiles="@(ReferencesX64)" DestinationFolder="$(PluginDestination)\x64" />
   </Target>
 

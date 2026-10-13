@@ -1,0 +1,95 @@
+<!-- Copyright (c) .NET Foundation and contributors. All rights reserved. Licensed under the Microsoft Reciprocal License. See LICENSE.TXT file in the project root for full license information. -->
+
+<!--
+This file was adapted from the original here https://github.com/wixtoolset/wix/blob/d180bc6df297422f189ffd08a0dd558bfbeba1ca/src/test/burn/TestData/TestBA/TestBAWixlib_x64/NetCore_x64.wxs.
+
+Changes:
+- Updated .NET version to 10.0.12 including associated download links and hashes
+- Added additional *AsAdditionalPrereq package groups that set the bal:PrereqPackage attribute on the exe package so more than one package can be used as a bootstrapper prereq simultaneously.
+  
+This file generates package groups in the form:
+- [Runtime][Version]Redist_[Platform], e.g. DesktopNetCoreRuntime6016Redist_x64, for use as a standard package
+- [Runtime][Version]Redist_[Platform]AsPreReq, e.g. DesktopNetCoreRuntime6016Redist_x64AsPrereq, for use as a primary bootstrapper prerequisite package that includes the prerequisite license url
+- [Runtime][Version]Redist_[Platform]AsAdditionalPreReq, e.g. DesktopNetCoreRuntime6016Redist_x64AsAdditionalPrereq, for use as additional bundle prerequisites for use alongside the primary prerequisite package 
+
+When used as MBA prerequisites a single "primary" prerequisite package is required to be referenced using the [Package]AsPrereq group (defined by NetCore6_Platform.wxi) as this also includes the license url,
+then additional prerequisites should be referenced using the [Package]AsAdditionalPrereq groups defined here.
+
+If the .NET version is to be updated in future then it is necessary to update the version related defines below, the RedistLinks, and generate new hashes for the ExePackagePayloads.
+-->
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal"
+     xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+
+  <?define NetCorePlatform = x64?>
+  <?define NetCoreIdVersion = 10012?>
+  <?define NetCoreVersion = 10.0.12?>
+  <?include NetCore6_Platform.wxi?>
+
+  <?define AspNetCoreRedistLink = https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.12/aspnetcore-runtime-10.0.12-win-x64.exe?>
+  <?define DesktopNetCoreRedistLink = https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.12/windowsdesktop-runtime-10.0.12-win-x64.exe?>
+
+  <Fragment>
+    <netfx:DotNetCoreSearch Id="$(var.AspNetCoreId)" RuntimeType="aspnet" Platform="$(var.NetCorePlatform)" MajorVersion="10" Variable="$(var.AspNetCoreId)" />
+
+    <WixVariable Id="AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition" Value="$(var.AspNetCoreId)" Overridable="yes" />
+    <WixVariable Id="AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition" Value="" Overridable="yes" />
+    <WixVariable Id="AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory" Value="redist\" Overridable="yes" />
+    <WixVariable Id="AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)RepairArguments" Value="" Overridable="yes" />
+  </Fragment>
+
+  <!-- ASP.NET Core package without the bal:PrereqPackage attribute -->
+  <Fragment>
+    <netfx:DotNetCoreSearchRef Id="$(var.AspNetCoreId)" />
+
+    <PackageGroup Id="$(var.AspNetCoreRedistId)">
+      <ExePackage InstallArguments="$(var.AspNetCoreRedistInstallArguments)" PerMachine="yes" DetectCondition="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition)" InstallCondition="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition)" Id="$(var.AspNetCoreRedistId)" Vital="yes" Permanent="yes" Protocol="burn" LogPathVariable="$(var.AspNetCoreRedistLog)" Cache="remove">
+        <ExePackagePayload Name="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory)aspnetcore-runtime-$(var.NetCoreVersion)-win-$(var.NetCorePlatform).exe" DownloadUrl="$(var.AspNetCoreRedistLink)" ProductName="Microsoft ASP.NET Core 10.0.12 - Shared Framework (x64)" Description="Microsoft ASP.NET Core 10.0.12 - Shared Framework (x64)" Hash="1BD1CF3CC23A05611BF266046281C7BFB6C3231A9690482DDC31EA74EDE62EADED12517C362983976AA7E20C57108812DCD04F67884957B85A6829CD56CEAAC5" Size="11262864" />
+      </ExePackage>
+    </PackageGroup>
+  </Fragment>
+
+  <!-- ASP.NET Core package with the bal:PrereqPackage attribute -->
+  <Fragment>
+    <netfx:DotNetCoreSearchRef Id="$(var.AspNetCoreId)" />
+
+    <PackageGroup Id="$(var.AspNetCoreRedistId)AsAdditionalPrereq">
+      <ExePackage bal:PrereqPackage="yes" InstallArguments="$(var.AspNetCoreRedistInstallArguments)" PerMachine="yes" DetectCondition="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition)" InstallCondition="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition)" Id="$(var.AspNetCoreRedistId)AsAdditionalPrereq" Vital="yes" Permanent="yes" Protocol="burn" LogPathVariable="$(var.AspNetCoreRedistLog)" Cache="remove">
+        <ExePackagePayload Name="!(wix.AspNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory)aspnetcore-runtime-$(var.NetCoreVersion)-win-$(var.NetCorePlatform).exe" DownloadUrl="$(var.AspNetCoreRedistLink)" ProductName="Microsoft ASP.NET Core 10.0.12 - Shared Framework (x64)" Description="Microsoft ASP.NET Core 10.0.12 - Shared Framework (x64)" Hash="1BD1CF3CC23A05611BF266046281C7BFB6C3231A9690482DDC31EA74EDE62EADED12517C362983976AA7E20C57108812DCD04F67884957B85A6829CD56CEAAC5" Size="11262864" />
+      </ExePackage>
+    </PackageGroup>
+  </Fragment>
+
+  <Fragment>
+    <netfx:DotNetCoreSearch Id="$(var.DesktopNetCoreId)" RuntimeType="desktop" Platform="$(var.NetCorePlatform)" MajorVersion="10" Variable="$(var.DesktopNetCoreId)" />
+
+    <WixVariable Id="DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition" Value="$(var.DesktopNetCoreId)" Overridable="yes" />
+    <WixVariable Id="DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition" Value="" Overridable="yes" />
+    <WixVariable Id="DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory" Value="redist\" Overridable="yes" />
+    <WixVariable Id="DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)RepairArguments" Value="" Overridable="yes" />    
+  </Fragment>
+
+  <!-- Desktop runtime package without the bal:PrereqPackage attribute -->
+  <Fragment>
+    <netfx:DotNetCoreSearchRef Id="$(var.DesktopNetCoreId)" />
+
+    <PackageGroup Id="$(var.DesktopNetCoreRedistId)">
+      <ExePackage InstallArguments="$(var.DesktopNetCoreRedistInstallArguments)" PerMachine="yes" DetectCondition="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition)" InstallCondition="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition)" Id="$(var.DesktopNetCoreRedistId)" Vital="yes" Permanent="yes" Protocol="burn" LogPathVariable="$(var.DesktopNetCoreRedistLog)" Cache="remove">
+        <ExePackagePayload Name="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory)windowsdesktop-runtime-$(var.NetCoreVersion)-win-$(var.NetCorePlatform).exe" DownloadUrl="$(var.DesktopNetCoreRedistLink)" ProductName="Microsoft Windows Desktop Runtime - 10.0.12 (x64)" Description="Microsoft Windows Desktop Runtime - 10.0.12 (x64)" Hash="0B907E9312867172A4EB82F4B5AB3F7C2D25E27D8349546D77EEB5D5B8CBECAB9EBEBFED189B13E9669DC578D892756C548366DA539D47B3DDAC5EFCB7AE72FE" Size="60032984" />
+      </ExePackage>
+    </PackageGroup>
+  </Fragment>
+
+  <!-- Desktop runtime package with the bal:PrereqPackage attribute -->
+  <Fragment>
+    <netfx:DotNetCoreSearchRef Id="$(var.DesktopNetCoreId)" />
+
+    <PackageGroup Id="$(var.DesktopNetCoreRedistId)AsAdditionalPrereq">
+      <ExePackage bal:PrereqPackage="yes" InstallArguments="$(var.DesktopNetCoreRedistInstallArguments)" PerMachine="yes" DetectCondition="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)DetectCondition)" InstallCondition="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)InstallCondition)" Id="$(var.DesktopNetCoreRedistId)AsAdditionalPrereq" Vital="yes" Permanent="yes" Protocol="burn" LogPathVariable="$(var.DesktopNetCoreRedistLog)" Cache="remove">
+        <ExePackagePayload Name="!(wix.DesktopNetCoreRuntime$(var.NetCoreIdVersion)Redist$(var.NetCorePlatform)PackageDirectory)windowsdesktop-runtime-$(var.NetCoreVersion)-win-$(var.NetCorePlatform).exe" DownloadUrl="$(var.DesktopNetCoreRedistLink)" ProductName="Microsoft Windows Desktop Runtime - 10.0.12 (x64)" Description="Microsoft Windows Desktop Runtime - 10.0.12 (x64)" Hash="0B907E9312867172A4EB82F4B5AB3F7C2D25E27D8349546D77EEB5D5B8CBECAB9EBEBFED189B13E9669DC578D892756C548366DA539D47B3DDAC5EFCB7AE72FE" Size="60032984" />
+      </ExePackage>
+    </PackageGroup>
+  </Fragment>
+
+</Wix>

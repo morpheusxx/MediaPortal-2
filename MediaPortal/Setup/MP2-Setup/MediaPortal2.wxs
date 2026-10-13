@@ -4,7 +4,7 @@
 
   <?include Includes.wxi?>
 
-  <Package Name="$(var.Product)" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" Language="!(loc.ProductLanguage)" Codepage="0" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="405" Scope="perMachine">
+  <Package Name="$(var.Product)" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" Language="!(loc.ProductLanguage)" Codepage="0" UpgradeCode="$(var.UpgradeCode)" InstallerVersion="500" Scope="perMachine">
     <SummaryInformation Keywords="Installer" Description="MediaPortal 2 Installer" Codepage="!(loc.SummaryCodepage)" />
 
     <PropertyRef Id="UpgradesFile" />
@@ -88,7 +88,7 @@
 
     <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="You cannot downgrade to [ProductName]" Schedule="afterInstallInitialize" />
 
-    <StandardDirectory Id="ProgramFilesFolder">
+    <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLDIR" Name="$(var.Manufacturer)">
         <Component Id="Product.Registry.InstallDir" Guid="463A7F64-BFB8-4BE1-85F4-D98724884FAF">
           <RegistryKey Root="HKLM" Key="$(var.RegKeyRoot)">

@@ -13,14 +13,11 @@
 
     <!-- This position is required to capture newly copied package references -->
     <ItemGroup>
-      <ReferencesX86 Include="$(TargetDir)x86\*.*" />
       <ReferencesX64 Include="$(TargetDir)x64\*.*" />
       <Fonts Include="$(TargetDir)fonts\**\*.*" />
     </ItemGroup>
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(ReferencesX86)" DestinationFolder="$(PluginDestination)\x86" />
     <Copy SourceFiles="@(ReferencesX64)" DestinationFolder="$(PluginDestination)\x64" />
-    <Copy SourceFiles="@(Fonts)" DestinationFiles="@(Fonts->'$(PluginDestination)\x86\fonts\%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(Fonts)" DestinationFiles="@(Fonts->'$(PluginDestination)\x64\fonts\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 

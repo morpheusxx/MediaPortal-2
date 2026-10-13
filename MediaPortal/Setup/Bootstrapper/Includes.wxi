@@ -2,10 +2,6 @@
 
   <?include ..\MP2-Setup\Includes.wxi?>
 
-  <?if $(IsNetCore) ~= true ?>
-  <?define MainPackageTargetPath = "$(MP2_Setup_NetCore.TargetPath)" ?>
-  <?else?>
   <?define MainPackageTargetPath = "$(MP2_Setup.TargetPath)" ?>
-  <?endif?>
   
 </Include>

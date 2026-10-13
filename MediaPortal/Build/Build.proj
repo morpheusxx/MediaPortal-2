@@ -68,16 +68,13 @@
 
   <!-- This item group holds the MP2 solutions that should actually being built. -->
   <ItemGroup>
-    <!-- AnyCPU solutions -->
+    <!-- AnyCPU solutions. The Windows executables are built as x64 via PlatformTarget (x86 is no longer supported) -->
     <ProjectsToBuild Include="$(ProjectRoot)\Source\MP2-Client.sln" Condition="$(BuildClient) == 'true'" />
     <ProjectsToBuild Include="$(ProjectRoot)\Source\MP2-Server.sln" Condition="$(BuildServer) == 'true'" />
     <ProjectsToBuild Include="$(ProjectRoot)\Source\MP2-ServiceMonitor.sln" Condition="$(BuildServiceMonitor) == 'true'" />
     <ProjectsToBuild Include="$(ProjectRoot)\..\OnlineVideos\OnlineVideos.MediaPortal2.sln" Condition="$(BuildOnlineVideos) == 'true'" />
-    <!-- x64 solutions -->
-    <ProjectsToBuild Include="$(ProjectRoot)\Source\MP2-Client.sln" Condition="$(BuildClient) == 'true'" AdditionalProperties="Platform=x64" />
-    <ProjectsToBuild Include="$(ProjectRoot)\..\OnlineVideos\OnlineVideos.MediaPortal2.sln" Condition="$(BuildOnlineVideos) == 'true'" AdditionalProperties="Platform=x64" />
     <!-- Setup needs to be built as last -->
-    <ProjectsToBuild Include="$(ProjectRoot)\Setup\MP2-Setup.sln" Condition="$(BuildSetup) == 'true'" AdditionalProperties="Platform=x86" />
+    <ProjectsToBuild Include="$(ProjectRoot)\Setup\MP2-Setup.sln" Condition="$(BuildSetup) == 'true'" AdditionalProperties="Platform=x64" />
   </ItemGroup>
 
 

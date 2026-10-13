@@ -4,21 +4,10 @@
 
   <Bundle Name="MediaPortal 2" Version="!(bind.packageVersion.MediaPortal2)" Manufacturer="Team MediaPortal" UpgradeCode="$(var.UpgradeCode)" Compressed="no" IconSourceFile="Resources\Setup.ico" HelpUrl="http://wiki.team-mediaportal.com/2_MEDIAPORTAL_2" UpdateUrl="http://www.team-mediaportal.com/" AboutUrl="http://www.team-mediaportal.com/about-the-project/behind-the-project">
 
-    <?if $(IsNetCore) ~= true ?>
-
     <BootstrapperApplicationRef Id="BootstrapperNetCore" />
     <Chain>
       <PackageGroupRef Id="BootstrapperNetCorePackages" />
     </Chain>
-    
-    <?else?>
-
-    <BootstrapperApplicationRef Id="BootstrapperNetFx" />
-    <Chain>
-      <PackageGroupRef Id="BootstrapperNetFxPackages" />
-    </Chain>
-    
-    <?endif?>
 
   </Bundle>
 </Wix>

@@ -23,7 +23,6 @@
 
     <!-- Platform specifc, bass.dll and all plugins -->
     <ItemGroup>
-      <ReferencesX86 Include="$(TargetDir)\x86\**\*.*" />
     </ItemGroup>
     <ItemGroup>
       <ReferencesX64 Include="$(TargetDir)\x64\**\*.*" />
@@ -31,7 +30,6 @@
 
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
     <Copy SourceFiles="@(References)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(ReferencesX86)" DestinationFiles="@(ReferencesX86->'$(PluginDestination)\x86\%(RecursiveDir)%(Filename)%(Extension)')" />
     <Copy SourceFiles="@(ReferencesX64)" DestinationFiles="@(ReferencesX64->'$(PluginDestination)\x64\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 

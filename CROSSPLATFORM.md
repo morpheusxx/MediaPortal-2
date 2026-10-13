@@ -116,7 +116,7 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
   systemd `Type=notify`, Windows service, Docker; see `Main/MediaPortal.Server.Host/Deployment`).
 - `SQLiteDatabase` plugin moved from System.Data.SQLite (Windows-only natives) to Microsoft.Data.Sqlite; natives for all RIDs are copied into the plugin folder and
   resolved by `SQLiteNativeLibrary`. GUIDs are still stored as 16 byte blobs; PRAGMAs replace the former connection string options.
-- `PathManager`: path patterns (`<DATA>Config`) are converted to the platform separator; `COMMON_APPLICATION_DATA` is the per-user data folder off Windows.
+- `PathManager`: path patterns (for example `<DATA>\Config`) are converted to the platform separator; `COMMON_APPLICATION_DATA` is the per-user data folder off Windows.
 - Verified on Windows: new host starts, creates the database schema, loads plugins, reaches `Running`, shuts down cleanly via IPC; `MP2-Server.exe -c` still reaches `Running`.
   **Not run on Linux.**
 - Open for Phase 1: local file system / `ResourcePath` handling for POSIX paths (share import), native libraries per RID (MediaInfo, FreeImage, OpenCV, FFmpeg), skipping

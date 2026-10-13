@@ -167,7 +167,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
         if (image.Size.Width > resizeWidth || image.Size.Height > resizeHeight)
         {
           var oldImage = image;
-          image = ImageUtilities.ResizeImage(image, resizeWidth, resizeHeight);
+          image = GdiImageUtilities.ResizeImage(image, resizeWidth, resizeHeight);
           oldImage.Dispose();
         }
 

@@ -30,8 +30,8 @@ using MediaPortal.Common.Services.ResourceAccess;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
+using MediaPortal.Utilities.Graphics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -324,9 +324,7 @@ namespace MediaPortal.Common.FanArt
       {
         if (File.Exists(savePath))
           return Task.FromResult(false);
-        using (MemoryStream ms = new MemoryStream(imageData))
-        using (Image img = Image.FromStream(ms, true, true))
-          img.Save(savePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+        ImageUtilities.SaveAsJpeg(imageData, savePath);
         return Task.FromResult(true);
       }
       catch (Exception ex)

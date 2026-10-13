@@ -122,6 +122,6 @@ The PoC source lives in `poc/MpvSkiaPoc/` as a reference implementation.
       WinForms/GDI-only code moved to new `MediaPortal.Utilities.Windows` (`net10.0-windows`, in `MP2-Client.sln`;
       referenced by Client, ClientLauncher, ServiceMonitor, Server, SkinEngine). CA1416 inventory: see `PHASE0_INVENTORY.md`.
       `VersionInfo.cs` no longer stamps `SupportedOSPlatform("windows")` on every assembly (it hid all CA1416 warnings).
-      Still to do: clear the CA1416/P-Invoke list in Utilities/Common, split further projects, Linux server solution filter + CI.
+      `ImageUtilities` is now SkiaSharp-based (old API -> `GdiImageUtilities`). Still to do: clear the remaining CA1416/P-Invoke list, split further projects, Linux server solution filter + CI.
 - [ ] Phase 0c: Setup/WiX/AppVeyor/.bat migration; remove dead `.NETFramework`-conditional ItemGroups/build.targets branches;
       Tests retargeted but not run

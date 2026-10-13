@@ -80,7 +80,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.GDIThumbnailProvider
           var pixelFormat = fullsizeImage.PixelFormat;
 
           fullsizeImage.ExifAutoRotate();
-          using (Image newImage = ImageUtilities.ResizeImage(fullsizeImage, width, height))
+          using (Image newImage = GdiImageUtilities.ResizeImage(fullsizeImage, width, height))
           {
             //Check whether the image has an alpha channel to determine whether to save it as a png or jpg
             //Must be done before resizing as resizing disposes the fullsizeImage
@@ -90,13 +90,13 @@ namespace MediaPortal.Extensions.MetadataExtractors.GDIThumbnailProvider
             {
               //Image supports an alpha channel, save as a png and add the appropriate extension
               imageType = ImageType.Png;
-              ImageUtilities.SavePng(resizedStream, newImage);
+              GdiImageUtilities.SavePng(resizedStream, newImage);
             }
             else
             {
               //No alpha channel, save as a jpg and add the appropriate extension
               imageType = ImageType.Jpeg;
-              ImageUtilities.SaveJpeg(resizedStream, newImage, 95);
+              GdiImageUtilities.SaveJpeg(resizedStream, newImage, 95);
             }
             imageData = resizedStream.ToArray();
           }

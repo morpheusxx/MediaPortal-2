@@ -31,7 +31,6 @@ using MediaPortal.UI.Players.Video;
 using MediaPortal.Utilities.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -163,7 +162,7 @@ namespace MediaPortal.Media.MetadataExtractors
                     try
                     {
                       using (FileStream fileStream = new FileStream(thumbnail.FullName, FileMode.Open, FileAccess.Read))
-                      using (MemoryStream resized = (MemoryStream)ImageUtilities.ResizeImage(fileStream, ImageFormat.Jpeg, MAX_COVER_WIDTH, MAX_COVER_HEIGHT))
+                      using (MemoryStream resized = (MemoryStream)ImageUtilities.ResizeImage(fileStream, ImageOutputFormat.Jpeg, MAX_COVER_WIDTH, MAX_COVER_HEIGHT))
                       {
                         MediaItemAspect.SetAttribute(extractedAspectData, ThumbnailLargeAspect.ATTR_THUMBNAIL, resized.ToArray());
                       }

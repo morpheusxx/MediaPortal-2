@@ -283,7 +283,7 @@ namespace MediaPortal.Utilities.Screens
         Bounds = preferredScreen.Bounds;
         if (ScaleToFullscreen)
         {
-          backgroundImage = ImageUtilities.ResizeImageUniformToFill(backgroundImage, screen.Width, screen.Height);
+          backgroundImage = GdiImageUtilities.ResizeImageUniformToFill(backgroundImage, screen.Width, screen.Height);
         }
         picture.Visible = true;
         picture.Image = backgroundImage;
@@ -292,7 +292,7 @@ namespace MediaPortal.Utilities.Screens
       else
       {
         if (ScaleToFullscreen && (screen.Width != backgroundImage.Width || screen.Height != backgroundImage.Height))
-          backgroundImage = ImageUtilities.ResizeImageExact(backgroundImage, screen.Width, screen.Height);
+          backgroundImage = GdiImageUtilities.ResizeImageExact(backgroundImage, screen.Width, screen.Height);
 
         BackgroundImage = backgroundImage;
         Location = screenBounds.Location;

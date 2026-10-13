@@ -46,7 +46,6 @@ using MediaPortal.UiComponents.Login.Settings;
 using MediaPortal.Utilities.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -374,7 +373,7 @@ namespace MediaPortal.UiComponents.Login.Models
         if (File.Exists(value))
         {
           using (FileStream stream = new FileStream(value, FileMode.Open))
-          using (MemoryStream resized = (MemoryStream)ImageUtilities.ResizeImage(stream, ImageFormat.Png, MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT))
+          using (MemoryStream resized = (MemoryStream)ImageUtilities.ResizeImage(stream, ImageOutputFormat.Png, MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT))
           {
             if (resized != null)
             {

@@ -74,9 +74,11 @@
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="2.88.8" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.8" />
     <PackageReference Include="CommandLineParser">
       <Version>2.9.1</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="build.targets" />
-</Project>
+</Project>

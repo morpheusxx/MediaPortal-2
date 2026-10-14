@@ -210,6 +210,24 @@ namespace MediaPortal.UI.SkinEngine.Gpu
       get { return _height; }
     }
 
+    /// <summary>
+    /// Creates an independent copy of this texture, which has to be disposed separately. Can be called from any thread.
+    /// </summary>
+    public Texture Clone()
+    {
+      lock (_syncObj)
+      {
+        if (_disposed)
+          return null;
+        if (_bitmap != null)
+          return FromBitmap(_bitmap.Copy());
+        SKImage image = Image;
+        // GPU data: copy of the current content
+        SKImage copy = image == null ? null : image.ToRasterImage(true);
+        return copy == null ? null : FromImage(copy);
+      }
+    }
+
     public Format Format
     {
       get { return _format; }

@@ -236,9 +236,7 @@ namespace MediaPortal.UI.SkinEngine.Controls.ImageSources
       }
       SurfaceDescription desc = sourceTexture.GetLevelDescription(0);
       textureSize = new SizeF(desc.Width, desc.Height);
-      Texture result = new Texture(desc.Width, desc.Height, Usage.RenderTarget, Format.A8R8G8B8);
-      GraphicsDevice.StretchRectangle(sourceTexture.GetSurfaceLevel(0), result.GetSurfaceLevel(0));
-      return result;
+      return sourceTexture.Clone();
     }
 
     protected override void FreeData()

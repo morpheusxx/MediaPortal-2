@@ -117,6 +117,11 @@ namespace MediaPortal.UI.SkinEngine.Gpu
   /// </remarks>
   public class Texture : IDisposable
   {
+    /// <summary>
+    /// Bilinear filtering, used for all textures (the default of Skia would be nearest neighbor, which leads to aliasing).
+    /// </summary>
+    protected static readonly SKSamplingOptions LinearSampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
+
     protected readonly object _syncObj = new object();
     protected readonly int _width;
     protected readonly int _height;
@@ -311,7 +316,7 @@ namespace MediaPortal.UI.SkinEngine.Gpu
       SKImage image = Image;
       if (image == null)
         return null;
-      return image.ToShader(addressU.ToTileMode(), addressV.ToTileMode(), SKMatrix.CreateScale(1f / _width, 1f / _height));
+      return image.ToShader(addressU.ToTileMode(), addressV.ToTileMode(), LinearSampling, SKMatrix.CreateScale(1f / _width, 1f / _height));
     }
 
     /// <summary>
@@ -322,7 +327,7 @@ namespace MediaPortal.UI.SkinEngine.Gpu
       SKImage image = Image;
       if (image == null)
         return null;
-      return image.ToShader(addressU.ToTileMode(), addressV.ToTileMode());
+      return image.ToShader(addressU.ToTileMode(), addressV.ToTileMode(), LinearSampling);
     }
 
     public virtual void Dispose()

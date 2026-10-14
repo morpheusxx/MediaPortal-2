@@ -90,7 +90,8 @@ namespace MediaPortal.UI.SkinEngine.Controls.Brushes
 
       public void Dispose()
       {
-        TryDispose(ref _texture);
+        // The texture is owned by the video player, it must not be disposed here
+        _texture = null;
       }
 
       public void Refresh()

@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices;
 using System.Net;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
@@ -37,6 +38,7 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
   /// <see cref="INeighborhoodBrowser"/> implementation that uses the <see cref="DirectoryEntry"/> class
   /// to enumerate the computers in the NetworkNeighborhood
   /// </summary>
+  [SupportedOSPlatform("windows")]
   class DirectoryEntryNeighborhoodBrowser : INeighborhoodBrowser
   {
     #region Constants

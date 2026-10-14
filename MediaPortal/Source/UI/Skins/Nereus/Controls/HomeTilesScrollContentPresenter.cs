@@ -24,7 +24,6 @@
 
 using MediaPortal.UI.SkinEngine.Controls.Visuals;
 using MediaPortal.UI.SkinEngine.MpfElements.Input;
-using System.Windows.Forms;
 
 namespace MediaPortal.UiComponents.Nereus.Controls
 {
@@ -39,7 +38,7 @@ namespace MediaPortal.UiComponents.Nereus.Controls
 
     public void OnMouseWheel(object sender, MouseWheelEventArgs e)
     {
-      int scrollByLines = SystemInformation.MouseWheelScrollLines; // Use the system setting as default.
+      int scrollByLines = MediaPortal.UI.SkinEngine.Utils.SystemSettings.MouseWheelScrollLines; // Use the system setting as default.
 
       if (NumberOfVisibleLines != 0) // If ScrollControl can shown less items, use this as limit.
         scrollByLines = NumberOfVisibleLines;

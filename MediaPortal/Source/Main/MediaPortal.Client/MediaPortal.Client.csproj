@@ -1,15 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Set -p:MP2WindowsBuild=false to build the portable variant on Windows -->
+    <MP2WindowsBuild Condition="'$(MP2WindowsBuild)' == '' And $([MSBuild]::IsOSPlatform('Windows'))">true</MP2WindowsBuild>
+    <!-- The Windows build uses WinForms for the splash screen and the error dialog; other platforms build the portable variant -->
+    <TargetFramework Condition="'$(MP2WindowsBuild)' == 'true'">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(MP2WindowsBuild)' != 'true'">net10.0</TargetFramework>
+    <UseWindowsForms Condition="'$(MP2WindowsBuild)' == 'true'">true</UseWindowsForms>
     <OutputType>WinExe</OutputType>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget Condition="'$(MP2WindowsBuild)' == 'true'">x64</PlatformTarget>
     <AssemblyName>MP2-Client</AssemblyName>
     <ApplicationIcon>MP2.ico</ApplicationIcon>
     <StartupObject>MediaPortal.Client.ApplicationLauncher</StartupObject>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>true</UseWindowsForms>
     <LargeAddressAware>true</LargeAddressAware>
-        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifiers Condition="'$(MP2WindowsBuild)' == 'true'">win-x64</RuntimeIdentifiers>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <OutputPath>..\..\..\Bin\MP2-Client\bin\Debug\</OutputPath>
@@ -26,6 +30,8 @@
     <ProjectReference Include="..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.UI\MediaPortal.UI.csproj" />
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MP2WindowsBuild)' == 'true'">
     <ProjectReference Include="..\..\Core\MediaPortal.Utilities.Windows\MediaPortal.Utilities.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>

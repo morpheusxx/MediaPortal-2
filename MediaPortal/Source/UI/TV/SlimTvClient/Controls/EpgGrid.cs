@@ -816,7 +816,7 @@ namespace MediaPortal.Plugins.SlimTv.Client.Controls
       // - no need to check if mouse is over
       // - no need to call base class
 
-      int scrollByLines = System.Windows.Forms.SystemInformation.MouseWheelScrollLines; // Use the system setting as default.
+      int scrollByLines = MediaPortal.UI.SkinEngine.Utils.SystemSettings.MouseWheelScrollLines; // Use the system setting as default.
 
       int numLines = e.NumDetents * scrollByLines;
 

@@ -52,7 +52,7 @@ namespace MediaPortal.Extensions.ResourceProviders.NetworkNeighborhoodResourcePr
 
       if (browserSettings.UseWNetEnumNeighborhoodBrowser)
         RegisterBrowser(new WNetEnumNeighborhoodBrowser());
-      if (browserSettings.UseDirectoryEntryNeighborhoodBrowser)
+      if (browserSettings.UseDirectoryEntryNeighborhoodBrowser && OperatingSystem.IsWindows())
         RegisterBrowser(new DirectoryEntryNeighborhoodBrowser());
       if (browserSettings.UseNetbiosNameServiceNeighborhoodBrowser)
         RegisterBrowser(new NetbiosNameServiceNeighborhoodBrowser());

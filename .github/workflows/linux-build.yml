@@ -1,6 +1,6 @@
-name: Linux server build
+name: Linux build
 
-# Builds the portable subset of the server solution on Linux (MediaPortal/Source/MP2-Server-Linux.slnf).
+# Builds the portable subsets of the server and client solutions on Linux (MediaPortal/Source/MP2-*-Linux.slnf).
 # It guards the cross-platform rework: portable projects target plain net10.0 and CA1416 (Windows-only API use)
 # is an error for them, so a Windows-only call or project reference in the subset fails this job.
 on:
@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  server:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,13 +18,36 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Solution filter is up to date
+      - name: Solution filters are up to date
         run: |
           python3 MediaPortal/Build/generate_linux_slnf.py
-          git diff --exit-code -- MediaPortal/Source/MP2-Server-Linux.slnf
+          git diff --exit-code -- MediaPortal/Source/MP2-Server-Linux.slnf MediaPortal/Source/MP2-Client-Linux.slnf
 
       - name: Restore
         run: dotnet restore MediaPortal/Source/MP2-Server-Linux.slnf
 
       - name: Build
         run: dotnet build MediaPortal/Source/MP2-Server-Linux.slnf --no-restore -c Release
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore MediaPortal/Source/MP2-Client-Linux.slnf
+
+      - name: Build
+        run: dotnet build MediaPortal/Source/MP2-Client-Linux.slnf --no-restore -c Release
+
+      # Can be downloaded to try the client on a Linux machine (needs libmpv2, OpenGL and X11/Wayland libraries, see CROSSPLATFORM.md)
+      - name: Upload client
+        uses: actions/upload-artifact@v4
+        with:
+          name: mp2-client-linux
+          path: MediaPortal/Bin/MP2-Client/bin/Release
+          if-no-files-found: error

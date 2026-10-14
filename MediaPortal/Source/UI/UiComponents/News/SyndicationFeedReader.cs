@@ -97,8 +97,11 @@ namespace MediaPortal.UiComponents.News
               {
                 using (var imageData = client.OpenRead(url))
                 {
-                  System.Drawing.Image image = System.Drawing.Image.FromStream(imageData, true, true);
-                  image.Save(fileName, System.Drawing.Imaging.ImageFormat.Png);
+                  using (SkiaSharp.SKBitmap bitmap = SkiaSharp.SKBitmap.Decode(imageData))
+                  using (SkiaSharp.SKImage image = SkiaSharp.SKImage.FromBitmap(bitmap))
+                  using (SkiaSharp.SKData data = image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100))
+                  using (System.IO.FileStream output = System.IO.File.Create(fileName))
+                    data.SaveTo(output);
                 }
               }
             }

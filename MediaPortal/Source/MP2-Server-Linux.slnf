@@ -50,6 +50,7 @@
       "Extensions\\MetadataExtractors\\VideoThumbnailer\\VideoThumbnailer.csproj",
       "Extensions\\ResourceProviders\\AudioCDResourceProvider\\AudioCDResourceProvider.csproj",
       "Extensions\\ResourceProviders\\IsoResourceProvider\\IsoResourceProvider.csproj",
+      "Extensions\\ResourceProviders\\NetworkNeighborhoodResourceProvider\\NetworkNeighborhoodResourceProvider.csproj",
       "Extensions\\ResourceProviders\\ZipResourceProvider\\ZipResourceProvider.csproj",
       "Main\\MediaPortal.Server.Host\\MediaPortal.Server.Host.csproj",
       "Main\\MediaPortal.Server.Hosting\\MediaPortal.Server.Hosting.csproj",

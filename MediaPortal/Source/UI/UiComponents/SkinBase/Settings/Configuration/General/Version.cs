@@ -30,7 +30,6 @@ using MediaPortal.UI.ServerCommunication.Settings;
 using System;
 using System.ComponentModel;
 using System.Threading;
-using System.Windows.Forms;
 
 
 namespace MediaPortal.UiComponents.SkinBase.Settings.Configuration.General

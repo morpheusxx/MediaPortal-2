@@ -39,7 +39,7 @@ namespace MediaPortal.Utilities.Process
     /// Ideally this field should be kept within it's parent application, not within <see cref="MediaPortal.Utilities"/>.
     /// It has been added here to keep <c>MediaPortal.Client</c> and <c>SkinEngine</c> projects independent from each other.
     /// </remarks>
-    public static readonly uint SHOW_MP2_CLIENT_MESSAGE = WindowsAPI.RegisterWindowMessage("SHOW_MP2_CLIENT_MESSAGE");
+    public static readonly uint SHOW_MP2_CLIENT_MESSAGE = OperatingSystem.IsWindows() ? WindowsAPI.RegisterWindowMessage("SHOW_MP2_CLIENT_MESSAGE") : 0;
 
     /// <summary>
     /// Windows message id to bring MP2-ServiceMonitor to front.
@@ -48,7 +48,7 @@ namespace MediaPortal.Utilities.Process
     /// Ideally this field should be kept within it's parent application, not within <see cref="MediaPortal.Utilities"/>.
     /// It has been added here to be consistent to <c>MediaPortal.Client</c>.
     /// </remarks>
-    public static readonly uint SHOW_MP2_SERVICEMONITOR_MESSAGE = WindowsAPI.RegisterWindowMessage("SHOW_MP2_SERVICEMONITOR_MESSAGE");
+    public static readonly uint SHOW_MP2_SERVICEMONITOR_MESSAGE = OperatingSystem.IsWindows() ? WindowsAPI.RegisterWindowMessage("SHOW_MP2_SERVICEMONITOR_MESSAGE") : 0;
 
     /// <summary>
     /// Check if an application is running or not
@@ -91,7 +91,9 @@ namespace MediaPortal.Utilities.Process
     {
       // Send our Win32 message to make the currently running instance
       // Jump on top of all the other windows
-      WindowsAPI.PostMessage((IntPtr)WindowsAPI.HWND_BROADCAST, messageId, IntPtr.Zero, IntPtr.Zero);
+      // TODO: Other platforms need another mechanism (for example the IPC channel of the client)
+      if (OperatingSystem.IsWindows())
+        WindowsAPI.PostMessage((IntPtr)WindowsAPI.HWND_BROADCAST, messageId, IntPtr.Zero, IntPtr.Zero);
     }
   }
 }

@@ -44,7 +44,7 @@ using MediaPortal.Utilities.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
+using MediaPortal.UI.Control.InputManager;
 
 namespace MediaPortal.UiComponents.WMCSkin.Models
 {

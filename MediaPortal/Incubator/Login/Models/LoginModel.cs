@@ -434,7 +434,7 @@ namespace MediaPortal.UiComponents.Login.Models
         if (userProfileDataManagement?.UserProfileDataManagement != null)
           await userProfileDataManagement.UserProfileDataManagement.LoginProfileAsync(userProfile.ProfileId);
         _lastActivity = DateTime.Now;
-        IsUserLoggedIn = !userProfile.Name.Equals(System.Windows.Forms.SystemInformation.ComputerName, StringComparison.InvariantCultureIgnoreCase) ||
+        IsUserLoggedIn = !userProfile.Name.Equals(Environment.MachineName, StringComparison.InvariantCultureIgnoreCase) ||
           userProfile.ProfileType != UserProfileType.ClientProfile;
       }
       else

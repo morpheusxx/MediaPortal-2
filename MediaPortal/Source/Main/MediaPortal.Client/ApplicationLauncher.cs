@@ -27,7 +27,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+#if WINDOWS
 using System.Windows.Forms;
+#endif
 using MediaPortal.Common.Exceptions;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.ResourceAccess;
@@ -40,7 +42,7 @@ using MediaPortal.UI.Presentation.Workflow;
 using System.IO;
 using CommandLine;
 using MediaPortal.Common.PathManager;
-#if !DEBUG
+#if !DEBUG && WINDOWS
 using System.Drawing;
 using System.Text.RegularExpressions;
 using MediaPortal.Common.Settings;
@@ -53,7 +55,9 @@ using MediaPortal.Common.Services.Runtime;
 using MediaPortal.Common.Logging;
 using MediaPortal.Utilities.Events;
 using MediaPortal.Utilities.Process;
+#if WINDOWS
 using MediaPortal.Utilities.Screens;
+#endif
 
 [assembly: CLSCompliant(true)]
 
@@ -80,7 +84,7 @@ namespace MediaPortal.Client
 
     #endregion
 
-#if !DEBUG
+#if !DEBUG && WINDOWS
     private static SplashScreen CreateSplashScreen()
     {
       StartupSettings startupSettings = ServiceRegistration.Get<ISettingsManager>().Load<StartupSettings>();
@@ -160,11 +164,14 @@ namespace MediaPortal.Client
         Environment.Exit(2);
       }
 
-      string logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Team MediaPortal\MP2-Client\Log");
+      string logPath = Path.Combine(Environment.GetFolderPath(OperatingSystem.IsWindows() ?
+          Environment.SpecialFolder.CommonApplicationData : Environment.SpecialFolder.LocalApplicationData), "Team MediaPortal", "MP2-Client", "Log");
+#if WINDOWS
       LauncherExceptionHandling.LogPath = logPath;
       Application.ThreadException += LauncherExceptionHandling.Application_ThreadException;
       AppDomain.CurrentDomain.UnhandledException += LauncherExceptionHandling.CurrentDomain_UnhandledException;
       TaskScheduler.UnobservedTaskException += LauncherExceptionHandling.TaskScheduler_UnobservedTaskException;
+#endif
 
       SystemStateService systemStateService = new SystemStateService();
       ServiceRegistration.Set<ISystemStateService>(systemStateService);
@@ -172,7 +179,7 @@ namespace MediaPortal.Client
 
       try
       {
-#if !DEBUG
+#if !DEBUG && WINDOWS
         SplashScreen splashScreen = null;
 #endif
         ILogger logger = null;
@@ -181,7 +188,7 @@ namespace MediaPortal.Client
           // Check if user wants to override the default Application Data location.
           ApplicationCore.RegisterVitalCoreServices(true, mpOptions.DataDirectory);
 
-#if !DEBUG
+#if !DEBUG && WINDOWS
           splashScreen = CreateSplashScreen();
           splashScreen.ShowSplashScreen();
 #endif
@@ -192,7 +199,9 @@ namespace MediaPortal.Client
 
           IPathManager pathManager = ServiceRegistration.Get<IPathManager>();
           logPath = pathManager.GetPath("<LOG>");
+#if WINDOWS
           LauncherExceptionHandling.LogPath = logPath;
+#endif
 
           UiExtension.RegisterUiServices();
         }
@@ -235,7 +244,7 @@ namespace MediaPortal.Client
           skinEngine.Initialize(); // 1)
           workflowManager.Initialize(); // 2)
 
-#if !DEBUG
+#if !DEBUG && WINDOWS
           splashScreen.CloseSplashScreen(); // 3)
 #endif
 
@@ -303,7 +312,7 @@ namespace MediaPortal.Client
       }
       catch (Exception ex)
       {
-#if DEBUG
+#if DEBUG || !WINDOWS
         ConsoleLogger log = new ConsoleLogger(LogLevel.All, false);
         log.Error(ex);
 #else
@@ -316,7 +325,9 @@ namespace MediaPortal.Client
         if (_mutex != null)
           _mutex.ReleaseMutex();
 
+#if WINDOWS
         Application.Exit();
+#endif
       }
     }
 

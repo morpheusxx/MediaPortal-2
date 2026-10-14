@@ -270,7 +270,7 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
         return null;
       }
       CheckResourcesInitialized();
-      string key = resourceName.ToLowerInvariant();
+      string key = NormalizeResourceName(resourceName);
       string result;
       if (_localResourceFilePaths.TryGetValue(key, out result))
       {
@@ -536,6 +536,14 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
       _pendingStyleResources = null;
     }
 
+    /// <summary>
+    /// Skin resources are addressed by their relative path with backslashes as separator, independent of the platform, and without regard to case.
+    /// </summary>
+    protected static string NormalizeResourceName(string resourceName)
+    {
+      return resourceName.Replace('/', '\\').ToLowerInvariant();
+    }
+
     protected virtual void LoadDirectory(string rootDirectoryPath)
     {
       ILogger logger = ServiceRegistration.Get<ILogger>();
@@ -544,7 +552,7 @@ namespace MediaPortal.UI.SkinEngine.SkinManagement
       int directoryNameLength = FileUtils.CheckTrailingPathDelimiter(rootDirectoryPath).Length;
       foreach (string resourceFilePath in FileUtils.GetAllFilesRecursively(rootDirectoryPath))
       {
-        string resourceName = resourceFilePath.Substring(directoryNameLength).ToLowerInvariant();
+        string resourceName = NormalizeResourceName(resourceFilePath.Substring(directoryNameLength));
         if (_localResourceFilePaths.ContainsKey(resourceName))
           logger.Warn("SkinResources: Duplicate skin resource '{0}', using resource from '{1}'",
               resourceName, _localResourceFilePaths[resourceName]);

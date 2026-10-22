@@ -433,7 +433,6 @@ namespace MediaPortal.Extensions.OnlineLibraries.Wrappers
           }
           if (seriesDetail == null) return false;
 
-          bool isFirstEpisode = true;
           foreach (int episodeNumber in episode.EpisodeNumbers)
           {
             episodeDetail = seriesDetail.Episodes.Where(e => e.EpisodeNumber == episodeNumber &&
@@ -475,7 +474,6 @@ namespace MediaPortal.Extensions.OnlineLibraries.Wrappers
             //  info.Thumbnail = await episodeDetail.Banner.LoadImageDataAsync().ConfigureAwait(false);
             
             episodeDetails.Add(info);
-            isFirstEpisode = false;
           }
         }
 

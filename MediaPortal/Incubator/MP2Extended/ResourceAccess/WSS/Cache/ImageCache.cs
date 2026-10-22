@@ -109,7 +109,7 @@ namespace MediaPortal.Plugins.MP2Extended.ResourceAccess.WSS.Cache
 
         FileStream stream = File.OpenRead(GetFilePath(identifier));
         data = new byte[Convert.ToInt32(stream.Length)];
-        stream.Read(data, 0, Convert.ToInt32(stream.Length));
+        stream.ReadExactly(data, 0, data.Length);
         stream.Close();
         return true;
       }

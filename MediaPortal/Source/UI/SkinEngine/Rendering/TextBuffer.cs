@@ -157,8 +157,6 @@ namespace MediaPortal.UI.SkinEngine.Rendering
     protected bool _kerning;
     protected string[] _lines;
     protected float[] _lineWidths;
-    // Rendering
-    EffectAsset _effect;
     // Scrolling
     protected Vector2 _scrollPos;
     protected Vector2 _scrollWrapOffset;

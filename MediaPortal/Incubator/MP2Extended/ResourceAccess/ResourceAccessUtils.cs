@@ -236,7 +236,6 @@ namespace MediaPortal.Plugins.MP2Extended.ResourceAccess
     internal static IList<WebArtwork> GetWebArtwork(WebMediaType mediaType, Guid mediaItemId)
     {
       string fileType = FanArtMediaTypes.Undefined;
-      string type;
       if (mediaType == WebMediaType.Movie)
         fileType = FanArtMediaTypes.Movie;
       else if (mediaType == WebMediaType.MusicAlbum)

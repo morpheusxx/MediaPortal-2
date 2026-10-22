@@ -590,7 +590,7 @@ namespace MediaPortal.Backend.Services.MediaLibrary.QueryEngine
       catch (Exception e)
       {
         logger.Error("Unable to query", e);
-        throw e;
+        throw;
       }
     }
 

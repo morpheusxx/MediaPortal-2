@@ -722,7 +722,6 @@ namespace MediaPortal.Extensions.TranscodingService.Service.Transcoders.FFMpeg
     {
       FFMpegTranscodeThreadData data = (FFMpegTranscodeThreadData)args;
       bool isStream = data.Context.Live && !data.Context.Segmented;
-      bool isFile = true;
       bool isSlimTv = false;
 
       try
@@ -778,8 +777,6 @@ namespace MediaPortal.Extensions.TranscodingService.Service.Transcoders.FFMpeg
         using (var mediaAccessor = data.TranscodeData.GetFirstResourceAccessor())
         {
           firstPath = mediaAccessor.CanonicalLocalResourcePath;
-          if (mediaAccessor is INetworkResourceAccessor)
-            isFile = false;
         }
 
         if (runProcess)

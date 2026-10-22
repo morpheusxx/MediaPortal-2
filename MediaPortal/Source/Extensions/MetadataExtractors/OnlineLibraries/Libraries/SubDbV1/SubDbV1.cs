@@ -132,12 +132,12 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.SubDbV1
       List<byte> data = new List<byte>();
 
       file.Position = 0;
-      file.Read(array, 0, readSize);
+      file.ReadAtLeast(new System.Span<byte>(array, 0, readSize), readSize, false);
       data.AddRange(array);
 
       long endPos = file.Length - readSize;
       file.Position = endPos;
-      file.Read(array, 0, readSize);
+      file.ReadAtLeast(new System.Span<byte>(array, 0, readSize), readSize, false);
       data.AddRange(array);
 
       return new MD5CryptoServiceProvider().ComputeHash(data.ToArray());

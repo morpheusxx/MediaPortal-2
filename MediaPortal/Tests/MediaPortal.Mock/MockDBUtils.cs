@@ -43,7 +43,7 @@ namespace MediaPortal.Mock
     private static readonly IDictionary<string, IList<MockReader>> READERS = new Dictionary<string, IList<MockReader>>();
     private static IList<MockCommand> COMMANDS = new List<MockCommand>();
     private static MockReader ALIASES_READER = null;
-    private static SQLiteConnection CONNECTION;
+    private static SQLiteConnection CONNECTION = null;
 
     static MockDBUtils()
     {

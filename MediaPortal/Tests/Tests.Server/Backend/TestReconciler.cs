@@ -81,7 +81,7 @@ namespace Tests.Server.Backend
     public void TestReconcileMediaItem()
     {
       //TODO: Update below code to work with ML changes
-      return;
+      Assert.Ignore("The test has to be updated for the changes of the media library");
 
       MockCore.SetupLibrary(true);
 

@@ -28,7 +28,7 @@ namespace MediaPortal.Plugins.MP2Extended.Attributes
 {
   class ApiHandlerDescription : Attribute
   {
-    public string Summary;
-    public string FriendlyName;
+    public string Summary { get; set; }
+    public string FriendlyName { get; set; }
   }
 }

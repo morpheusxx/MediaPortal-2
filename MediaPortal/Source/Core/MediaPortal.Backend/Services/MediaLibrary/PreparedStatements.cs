@@ -44,7 +44,6 @@ namespace MediaPortal.Backend.Services.MediaLibrary
     private string _updateSetsForIdSQL;
     private string _updateUserPlayDataFromIdSQL;
     private string _insertUserPlayDataForIdSQL;
-    private string _selectMediaItemUserDataFromIdsSQL;
 
     public PreparedStatements(MIA_Management miaManagement)
     {

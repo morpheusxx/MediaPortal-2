@@ -1167,9 +1167,9 @@ namespace MediaPortal.Utilities.SystemAPI
       {
         // read binary data from stream, maximum 256 bytes.
         if (fs.Length >= 256)
-          fs.Read(buffer, 0, 256);
+          fs.ReadExactly(buffer, 0, 256);
         else
-          fs.Read(buffer, 0, (int)fs.Length);
+          fs.ReadExactly(buffer, 0, (int)fs.Length);
 
         FindMimeFromData(IntPtr.Zero, null, buffer, 256, null, 0, out var mimeTypePtr, 0);
         string mime = Marshal.PtrToStringUni(mimeTypePtr);

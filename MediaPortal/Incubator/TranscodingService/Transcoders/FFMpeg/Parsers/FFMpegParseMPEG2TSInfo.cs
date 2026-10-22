@@ -49,7 +49,7 @@ namespace MediaPortal.Extensions.TranscodingService.Service.Transcoders.FFMpeg.P
           {
             raf = File.Open(fileRes.LocalFileSystemPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             byte[] packetBuffer = new byte[193];
-            raf.Read(packetBuffer, 0, packetBuffer.Length);
+            raf.ReadAtLeast(packetBuffer, packetBuffer.Length, false);
             if (packetBuffer[0] == 0x47) //Sync byte (Standard MPEG2 TS)
             {
               info.Video[Editions.DEFAULT_EDITION].TimestampType = Timestamp.None;

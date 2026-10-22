@@ -116,7 +116,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
         Stream inputStream = _accessor.OpenRead();
         int length = (int)inputStream.Length;
         byte[] audioData = new byte[length];
-        inputStream.Read(audioData, 0, length);
+        inputStream.ReadExactly(audioData, 0, length);
         handle = Bass.MusicLoad(audioData, 0, length, flags, 0);
       }
       else

@@ -225,7 +225,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.NfoMetadataExtractors.NfoRea
           var nfoDocument = GetFixedNfoDocument();
           return await TryReadNfoDocumentAsync(nfoDocument, nfoFsra).ConfigureAwait(false);
         }
-        catch (Exception exception)
+        catch (Exception)
         {
           // ReSharper disable once AssignNullToNotNullAttribute
           // TryReadNfoFileAsync makes sure that _nfoBytes is not null

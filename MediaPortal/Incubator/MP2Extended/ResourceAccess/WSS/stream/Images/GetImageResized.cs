@@ -91,7 +91,7 @@ namespace MediaPortal.Plugins.MP2Extended.ResourceAccess.WSS.stream.Images
         using (var resourceStream = fsra.OpenRead())
         {
           byte[] buffer = new byte[resourceStream.Length];
-          resourceStream.Read(buffer, 0, Convert.ToInt32(resourceStream.Length));
+          resourceStream.ReadExactly(buffer, 0, buffer.Length);
           resizedImage = Plugins.MP2Extended.WSS.Images.ResizeImage(buffer, maxWidth, maxHeight, borders);
         }
 

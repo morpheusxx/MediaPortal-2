@@ -104,6 +104,12 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data
     /// </summary>
     /// <param name="compare">object to compare with</param>
     /// <returns>True if the two language objects are the same, false otherwise</returns>
+    public override int GetHashCode()
+    {
+      // The equality is based on the abbreviation only
+      return Abbriviation == null ? 0 : Abbriviation.GetHashCode();
+    }
+
     public override bool Equals(object compare)
     {
       if (compare != null && compare.GetType() == typeof(TvdbLanguage) &&

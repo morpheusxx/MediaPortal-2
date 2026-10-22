@@ -59,6 +59,14 @@ namespace MediaPortal.Backend.Services.MediaLibrary
       return _name + "=" + _value;
     }
 
+    public override int GetHashCode()
+    {
+      unchecked
+      {
+        return (_name == null ? 0 : _name.GetHashCode()) * 31 + (_value == null ? 0 : _value.GetHashCode());
+      }
+    }
+
     public override bool Equals(object obj)
     {
         if (!(obj is BindVar))

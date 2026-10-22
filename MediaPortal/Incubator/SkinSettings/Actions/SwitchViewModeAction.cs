@@ -33,7 +33,9 @@ namespace SkinSettings.Actions
   {
     #region IWorkflowContributor implementation
 
+#pragma warning disable CS0067 // Required by the interface, the state of this contributor never changes
     public event ContributorStateChangeDelegate StateChanged;
+#pragma warning restore CS0067
 
     public IResourceString DisplayTitle
     {

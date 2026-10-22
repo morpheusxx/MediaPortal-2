@@ -138,7 +138,6 @@ namespace Test.TranscodingService
       private long? _vidBitRate;
       private int _audioStreamCount;
       private int _subStreamCount;
-      private long _fileSize;
       private List<string> _vidCodecs = new List<string>();
       private List<int?> _audStreamIds = new List<int?>();
       private List<string> _audCodecs = new List<string>();

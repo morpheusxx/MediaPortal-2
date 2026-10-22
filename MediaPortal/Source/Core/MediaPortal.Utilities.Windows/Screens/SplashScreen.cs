@@ -61,7 +61,6 @@ namespace MediaPortal.Utilities.Screens
     private Label _programInfoLabel;
     private Label _statusLabel;
     private Timer _splashTimer;
-    private IContainer _components;
     private IContainer components;
     private PictureBox picture;
     private Image _backgroundImage;

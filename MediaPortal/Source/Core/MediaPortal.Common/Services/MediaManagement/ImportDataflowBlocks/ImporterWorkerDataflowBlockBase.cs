@@ -287,7 +287,7 @@ namespace MediaPortal.Common.Services.MediaManagement.ImportDataflowBlocks
 
     private async Task MedialibraryDisconnectedSuspend()
     {
-      if (_ct != null && _ct.IsCancellationRequested)
+      if (_ct.IsCancellationRequested)
       {
         ServiceRegistration.Get<ILogger>().Debug("ImporterWorker.{0}.{1}: Suspension was requested although it is already being canceled", ParentImportJobController, _blockName);
         throw new TaskCanceledException("ImporterWorker: Import was canceled");

@@ -57,10 +57,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
       get { return ttl; }
       set
       {
-        if (value == null)
-          ttl = TimeSpan.Zero;
-        else
-          ttl = value;
+        ttl = value;
       }
     }
     private TimeSpan ttl = new TimeSpan(0, 60, 0);

@@ -336,13 +336,13 @@ namespace MediaPortal.Extensions.OnlineLibraries
 
     public void Dispose()
     {
-      foreach (IDisposable result in AUDIO_MATCHERS.OfType<IDisposable>())
+      foreach (IDisposable result in AUDIO_MATCHERS.Values.SelectMany(matchers => matchers).OfType<IDisposable>())
         result.Dispose();
-      foreach (IDisposable result in MOVIE_MATCHERS.OfType<IDisposable>())
+      foreach (IDisposable result in MOVIE_MATCHERS.Values.SelectMany(matchers => matchers).OfType<IDisposable>())
         result.Dispose();
-      foreach (IDisposable result in SERIES_MATCHERS.OfType<IDisposable>())
+      foreach (IDisposable result in SERIES_MATCHERS.Values.SelectMany(matchers => matchers).OfType<IDisposable>())
         result.Dispose();
-      foreach (IDisposable result in SUBTITLE_MATCHERS.OfType<IDisposable>())
+      foreach (IDisposable result in SUBTITLE_MATCHERS.Values.SelectMany(matchers => matchers).OfType<IDisposable>())
         result.Dispose();
     }
 

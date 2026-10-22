@@ -71,7 +71,6 @@ namespace MediaPortal.Plugins.AppLauncher.Models
     private PathBrowserCloseWatcher _pathBrowserCloseWatcher = null;
     private Apps _apps = new Apps();
     private ProcessWindowStyle _windowStyle = ProcessWindowStyle.Maximized;
-    private string _fallback = "no-icon.png";
 
     #endregion
 

@@ -91,7 +91,6 @@ namespace MediaPortal.UI.SkinEngine.DirectX
 
     #endregion
 
-    public static Matrix TransformWorld;
     public static Matrix TransformView;
     public static Matrix TransformProjection;
     public static Matrix FinalTransform = Matrix.Identity;

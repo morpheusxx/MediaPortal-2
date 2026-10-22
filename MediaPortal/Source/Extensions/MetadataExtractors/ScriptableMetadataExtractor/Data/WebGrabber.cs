@@ -40,7 +40,9 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
     #region Private variables
 
     private static ILogger Logger => ServiceRegistration.Get<ILogger>();
+#if !NET5_0_OR_GREATER
     private static int unsafeHeaderUserCount;
+#endif
     private static object lockingObj;
     private string requestUrl;
 
@@ -50,7 +52,9 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
 
     static WebGrabber()
     {
+#if !NET5_0_OR_GREATER
       unsafeHeaderUserCount = 0;
+#endif
       lockingObj = new object();
     }
 

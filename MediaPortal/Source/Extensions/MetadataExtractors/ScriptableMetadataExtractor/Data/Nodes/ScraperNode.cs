@@ -270,7 +270,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
       catch (Exception e)
       {
         if (e.GetType() == typeof(ThreadAbortException))
-          throw e;
+          throw;
 
         Logger.Error("ScriptableScraperProvider: Error instantiating Modifier based on: {0}", modifier, e);
         return null;
@@ -326,7 +326,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
       catch (Exception e)
       {
         if (e.GetType() == typeof(ThreadAbortException))
-          throw e;
+          throw;
 
         Logger.Error("ScriptableScraperProvider: Error instantiating ScraperNode based on: {0}", xmlNode.OuterXml, e);
         return null;

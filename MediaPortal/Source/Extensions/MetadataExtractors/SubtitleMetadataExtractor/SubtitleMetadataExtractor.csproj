@@ -30,7 +30,6 @@
     <ProjectReference Include="..\OnlineLibraries\OnlineLibraries.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Ude.NetStandard" Version="1.2.0" />
   </ItemGroup>
   <Import Project="build.targets" />

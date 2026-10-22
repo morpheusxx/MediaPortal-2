@@ -41,7 +41,6 @@
 
   <ItemGroup>
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf.NetCore" Version="1.0.18" />
-    <PackageReference Include="System.Resources.Extensions" Version="6.0.0" PrivateAssets="All" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="SharpLibHid" Version="1.5.1" />
   </ItemGroup>

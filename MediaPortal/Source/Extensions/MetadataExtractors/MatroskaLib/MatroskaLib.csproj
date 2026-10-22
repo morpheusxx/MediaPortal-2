@@ -30,7 +30,6 @@
     <ProjectReference Include="..\..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="mkvextract">
       <Version>21.0.0</Version>
     </PackageReference>

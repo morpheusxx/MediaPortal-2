@@ -28,7 +28,7 @@ using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using CommandLine;
-using Ionic.Zip;
+using System.IO.Compression;
 
 namespace MediaPortal.LogCollector
 {
@@ -82,7 +82,7 @@ namespace MediaPortal.LogCollector
       if (File.Exists(targetFile))
         File.Delete(targetFile);
 
-      ZipFile archive = new ZipFile(targetFile);
+      ZipArchive archive = ZipFile.Open(targetFile, ZipArchiveMode.Create);
       foreach (var product in products)
       {
         string sourceFolder = Path.Combine(dataPath, @"Team MediaPortal", product, "Log");
@@ -94,7 +94,7 @@ namespace MediaPortal.LogCollector
         Console.WriteLine("Adding folder {0}", sourceFolder);
         try
         {
-          archive.AddDirectory(sourceFolder, product);
+          AddDirectory(archive, sourceFolder, product);
         }
         catch (Exception ex)
         {
@@ -105,16 +105,15 @@ namespace MediaPortal.LogCollector
       try
       {
         string applicationEventLog = CollectEventLog(outputPath, "Application");
-        archive.AddFile(applicationEventLog, "Windows Logs");
+        archive.CreateEntryFromFile(applicationEventLog, "Windows Logs/" + Path.GetFileName(applicationEventLog));
         string systemEventLog = CollectEventLog(outputPath, "System");
-        archive.AddFile(systemEventLog, "Windows Logs");
+        archive.CreateEntryFromFile(systemEventLog, "Windows Logs/" + Path.GetFileName(systemEventLog));
       }
       catch (Exception ex)
       {
         Console.WriteLine("Error collecting event log files {0}.", ex);
       }
 
-      archive.Save();
       archive.Dispose();
       Console.WriteLine("Successful created log archive: {0}", targetFile);
 
@@ -122,6 +121,18 @@ namespace MediaPortal.LogCollector
 
       var psi = new ProcessStartInfo { FileName = outputPath, UseShellExecute = true };
       Process.Start(psi); // Opens output folder
+    }
+
+    /// <summary>
+    /// Adds all files of the given folder (including the sub folders) to the archive below the entry folder <paramref name="entryFolder"/>.
+    /// </summary>
+    private static void AddDirectory(ZipArchive archive, string sourceFolder, string entryFolder)
+    {
+      foreach (string file in Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories))
+      {
+        string relative = Path.GetRelativePath(sourceFolder, file).Replace('\\', '/');
+        archive.CreateEntryFromFile(file, entryFolder + "/" + relative);
+      }
     }
 
     private static string CollectEventLog(string pathToFile, string logType)

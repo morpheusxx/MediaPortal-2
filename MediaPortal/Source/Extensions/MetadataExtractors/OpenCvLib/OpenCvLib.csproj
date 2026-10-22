@@ -9,7 +9,6 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="OpenCvSharp4.Windows">
       <Version>4.8.0.20230708</Version>
     </PackageReference>

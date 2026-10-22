@@ -11,9 +11,6 @@
     <Compile Include="..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs" Link="Properties\VersionInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\..\Core\MediaPortal.Backend\MediaPortal.Backend.csproj" />
     <ProjectReference Include="..\..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />
     <ProjectReference Include="..\..\..\Core\UPnP\UPnP.csproj" />

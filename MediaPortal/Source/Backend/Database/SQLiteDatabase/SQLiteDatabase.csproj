@@ -39,6 +39,8 @@
   <ItemGroup>
     <!-- Microsoft.Data.Sqlite brings SQLitePCLRaw with native SQLite builds for Windows, Linux and macOS. -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />
+    <!-- Newer native SQLite build than the one of Microsoft.Data.Sqlite 9.0.0 (known vulnerability in e_sqlite3 2.1.10) -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.14" />
   </ItemGroup>
   <Import Project="build.targets" />
 </Project>

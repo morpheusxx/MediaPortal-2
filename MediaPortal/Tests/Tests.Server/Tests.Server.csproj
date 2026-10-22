@@ -5,7 +5,6 @@
     <RootNamespace>Tests.Server</RootNamespace>
     <AssemblyName>Tests.Server</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="NfoMetadataExtractor\TestData\MovieNfo\movie.nfo" />

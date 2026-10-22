@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Packs the native libmpv binaries which build-package.py has prepared in "staging" as NuGet package MediaPortal.Native.Mpv. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>MediaPortal.Native.Mpv</PackageId>
+    <Version Condition="'$(Version)' == ''">0.0.0</Version>
+    <Authors>Team MediaPortal</Authors>
+    <Description>Native libmpv binaries (https://mpv.io) for MediaPortal 2. Repackaged build of https://github.com/shinchiro/mpv-winbuild-cmake, see NOTICE.txt.</Description>
+    <PackageProjectUrl>https://github.com/MediaPortal/MediaPortal-2</PackageProjectUrl>
+    <PackageLicenseFile>NOTICE.txt</PackageLicenseFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;CS2008</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="staging\runtimes\**\*" Pack="true" PackagePath="runtimes" />
+    <None Include="staging\NOTICE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

@@ -23,9 +23,12 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using MediaPortal.Common;
+using MediaPortal.Common.Logging;
 
 namespace MediaPortal.UI.Players.Mpv.Interop
 {
@@ -35,6 +38,11 @@ namespace MediaPortal.UI.Players.Mpv.Interop
   internal static unsafe class LibMpv
   {
     public const string LIB = "mpv";
+
+    /// <summary>
+    /// Name of the environment variable which can contain the full path of the libmpv library to use.
+    /// </summary>
+    public const string ENV_LIBRARY_PATH = "MP2_LIBMPV";
 
     // mpv_format
     public const int FORMAT_FLAG = 3;
@@ -67,6 +75,8 @@ namespace MediaPortal.UI.Players.Mpv.Interop
     public const int END_FILE_REASON_ERROR = 4;
 
     private static bool _resolverInstalled;
+    private static readonly object _syncObj = new object();
+    private static IntPtr _libraryHandle;
 
     /// <summary>
     /// Maps the logical library name "mpv" to the platform specific libmpv binary. Looks into <c>runtimes\&lt;rid&gt;\native</c> of the
@@ -99,26 +109,72 @@ namespace MediaPortal.UI.Players.Mpv.Interop
     {
       if (name != LIB)
         return IntPtr.Zero;
+      lock (_syncObj)
+      {
+        // The resolver is called for each imported function
+        if (_libraryHandle == IntPtr.Zero)
+          _libraryHandle = Load(assembly, searchPath);
+        return _libraryHandle;
+      }
+    }
+
+    private static IntPtr Load(Assembly assembly, DllImportSearchPath? searchPath)
+    {
 
       string[] candidates =
           OperatingSystem.IsWindows() ? new[] { "libmpv-2.dll", "mpv-2.dll", "mpv-1.dll" } :
           OperatingSystem.IsMacOS() ? new[] { "libmpv.2.dylib", "libmpv.dylib" } :
           new[] { "libmpv.so.2", "libmpv.so.1", "libmpv.so" };
 
+      List<string> tried = new List<string>();
+
+      // 1) Explicit path, for example to try a newer libmpv build without touching the installation
+      string explicitPath = Environment.GetEnvironmentVariable(ENV_LIBRARY_PATH);
+      if (!string.IsNullOrEmpty(explicitPath))
+      {
+        tried.Add(explicitPath);
+        if (File.Exists(explicitPath) && NativeLibrary.TryLoad(explicitPath, out IntPtr explicitHandle))
+          return Loaded(explicitHandle, explicitPath);
+      }
+
+      // 2) The library of the NuGet package MediaPortal.Native.Mpv in the plugin folder (Windows), 3) system wide installation (Linux: libmpv2 package)
       string baseDirectory = Path.GetDirectoryName(assembly.Location) ?? AppContext.BaseDirectory;
       foreach (string candidate in candidates)
       {
         foreach (string directory in new[] { Path.Combine(baseDirectory, "runtimes", CurrentRid, "native"), baseDirectory, AppContext.BaseDirectory })
         {
           string path = Path.Combine(directory, candidate);
+          tried.Add(path);
           if (File.Exists(path) && NativeLibrary.TryLoad(path, out IntPtr handle))
-            return handle;
+            return Loaded(handle, path);
         }
-        // System wide installation
+        tried.Add(candidate + " (system)");
         if (NativeLibrary.TryLoad(candidate, assembly, searchPath, out IntPtr systemHandle))
-          return systemHandle;
+          return Loaded(systemHandle, candidate + " (system)");
       }
+
+      string hint = OperatingSystem.IsWindows() ? "The package MediaPortal.Native.Mpv delivers it (runtimes\\win-x64\\native\\libmpv-2.dll)." :
+          OperatingSystem.IsMacOS() ? "Install it with 'brew install mpv'." : "Install the package libmpv2 (Debian/Ubuntu), mpv-libs (Fedora) or mpv (Arch).";
+      ServiceRegistration.Get<ILogger>().Error("MpvPlayer: libmpv was not found. {0} Set the environment variable {1} to the full path of the library to use another one. Tried: {2}",
+          hint, ENV_LIBRARY_PATH, string.Join("; ", tried));
       return IntPtr.Zero;
+    }
+
+    private static IntPtr Loaded(IntPtr handle, string path)
+    {
+      string version = "unknown";
+      try
+      {
+        if (NativeLibrary.TryGetExport(handle, "mpv_client_api_version", out IntPtr export))
+        {
+          ulong api = ((delegate* unmanaged[Cdecl]<ulong>) export)();
+          version = (api >> 16) + "." + (api & 0xFFFF);
+        }
+      }
+      catch (Exception)
+      { }
+      ServiceRegistration.Get<ILogger>().Info("MpvPlayer: Using libmpv '{0}', client API version {1}", path, version);
+      return handle;
     }
 
     #region Client API

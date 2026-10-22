@@ -3,3 +3,5 @@ References
 /MediaPortal/Tools/Transifex/Cache_MP2/Force_Update_Done.DO_NOT_COMMIT
 /poc/MpvSkiaPoc/native/
 /MediaPortal/Source/UI/Players/MpvPlayer/native/
+/MediaPortal/Build/native/mpv/feed/
+/MediaPortal/Build/native/mpv/staging/

@@ -23,5 +23,16 @@
     <ProjectReference Include="..\..\..\Core\MediaPortal.Utilities\MediaPortal.Utilities.csproj" />
     <ProjectReference Include="..\..\SkinEngine\SkinEngine.csproj" />
   </ItemGroup>
+  <PropertyGroup>
+    <!-- Version of the native libmpv package (Build\native\mpv). Until the package is published on the Team MediaPortal feed it can be created locally
+         with build-package.py; it is then found in the folder "feed". Set -p:UseMpvNativePackage=true to require it (CI). -->
+    <MpvNativeVersion>2026.10.21</MpvNativeVersion>
+    <MpvPackageFeed>$(MSBuildThisFileDirectory)..\..\..\..\Build\native\mpv\feed</MpvPackageFeed>
+    <UseMpvNativePackage Condition="'$(UseMpvNativePackage)' == '' And Exists('$(MpvPackageFeed)\MediaPortal.Native.Mpv.$(MpvNativeVersion).nupkg')">true</UseMpvNativePackage>
+    <RestoreAdditionalProjectSources Condition="Exists('$(MpvPackageFeed)')">$(RestoreAdditionalProjectSources);$(MpvPackageFeed)</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseMpvNativePackage)' == 'true'">
+    <PackageReference Include="MediaPortal.Native.Mpv" Version="$(MpvNativeVersion)" GeneratePathProperty="true" ExcludeAssets="native;runtime;compile" PrivateAssets="all" />
+  </ItemGroup>
   <Import Project="build.targets" />
 </Project>

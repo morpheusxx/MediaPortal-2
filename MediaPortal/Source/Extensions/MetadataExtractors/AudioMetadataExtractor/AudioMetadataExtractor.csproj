@@ -26,9 +26,6 @@
     <Content Include="plugin.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BASS.NET">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
     <PackageReference Include="MediaPortal.TagLib">
       <Version>2.3.1</Version>
     </PackageReference>

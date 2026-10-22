@@ -23,7 +23,7 @@
 #endregion
 
 using System;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.Extensions.BassLibraries
 {
@@ -44,10 +44,10 @@ namespace MediaPortal.Extensions.BassLibraries
   {
     #region Public members
 
-    public BassLibraryException(string bassFunction) : this(bassFunction, Bass.BASS_ErrorGetCode()) { }
+    public BassLibraryException(string bassFunction) : this(bassFunction, Bass.LastError) { }
 
-    public BassLibraryException(string bassFunction, BASSError errorCode) :
-        base(string.Format("Error calling function {0}(): {1}", bassFunction, Enum.GetName(typeof(BASSError), errorCode))) { }
+    public BassLibraryException(string bassFunction, Errors errorCode) :
+        base(string.Format("Error calling function {0}(): {1}", bassFunction, Enum.GetName(typeof(Errors), errorCode))) { }
 
     #endregion
   }

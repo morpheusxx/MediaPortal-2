@@ -31,7 +31,6 @@ using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.PlayerComponents;
 using MediaPortal.UI.Presentation.Players;
-using Un4seen.Bass.AddOn.Tags;
 
 namespace MediaPortal.UI.Players.BassPlayer
 {
@@ -133,7 +132,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// Gets tags from current source, which contain information about artist and title. This is mainly important for streams where this information will
     /// change regulary.
     /// </summary>
-    public TAG_INFO Tags
+    public TagInfo Tags
     {
       get
       {

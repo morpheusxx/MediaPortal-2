@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer
 {
@@ -54,7 +54,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     #region Fields
 
     private int _handle;
-    private BASS_CHANNELINFO _info;
+    private ChannelInfo _info;
     private StreamContentType _streamContentType = StreamContentType.Unknown;
     private TimeSpan _length;
     private readonly IList<int> _syncProcHandles = new List<int>();
@@ -76,7 +76,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// </summary>
     public int Channels
     {
-      get { return _info.chans; }
+      get { return _info.Channels; }
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// </summary>
     public int SampleRate
     {
-      get { return _info.freq; }
+      get { return _info.Frequency; }
     }
 
     /// <summary>
@@ -96,9 +96,9 @@ namespace MediaPortal.UI.Players.BassPlayer
     }
 
     /// <summary>
-    /// Gets the underlaying BASS_CHANNELINFO object for the stream.
+    /// Gets the underlaying ChannelInfo object for the stream.
     /// </summary>
-    public BASS_CHANNELINFO BassInfo
+    public ChannelInfo BassInfo
     {
       get { return _info; }
     }
@@ -129,7 +129,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     }
 
     /// <summary>
-    /// Gets a list of SyncProcHandles. If a caller creates a sync procedure by <see cref="Bass.BASS_ChannelSetSync"/>, the returned handle must be added to this list.
+    /// Gets a list of SyncProcHandles. If a caller creates a sync procedure by <see cref="Bass.ChannelSetSync"/>, the returned handle must be added to this list.
     /// </summary>
     public IList<int> SyncProcHandles
     {
@@ -154,7 +154,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns></returns>
     public int Read(float[] buffer, int length)
     {
-      int bytesRead = Bass.BASS_ChannelGetData(_handle, buffer, length * BassConstants.FloatBytes);
+      int bytesRead = Bass.ChannelGetData(_handle, buffer, length * BassConstants.FloatBytes);
 
       if (bytesRead == -1)
       {
@@ -172,7 +172,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns>The number of bytes read or -1 when the end of the stream is reached.</returns>
     public int Read(IntPtr buffer, int length)
     {
-      int bytesRead = Bass.BASS_ChannelGetData(_handle, buffer, length);
+      int bytesRead = Bass.ChannelGetData(_handle, buffer, length);
 
       if (bytesRead == -1)
       {
@@ -188,7 +188,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns></returns>
     public long GetSamplePosition()
     {
-      long bytes = Bass.BASS_ChannelGetPosition(Handle);
+      long bytes = Bass.ChannelGetPosition(Handle);
 
       if (bytes == -1)
       {
@@ -205,7 +205,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <param name="position">Number of samples to set the current position to.</param>
     public void SetSamplePosition(long position)
     {
-      if (!Bass.BASS_ChannelSetPosition(Handle, position * BassConstants.FloatBytes))
+      if (!Bass.ChannelSetPosition(Handle, position * BassConstants.FloatBytes))
         CheckException("BASS_ChannelSetPosition");
     }
 
@@ -215,7 +215,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns></returns>
     public TimeSpan GetPosition()
     {
-      long bytes = Bass.BASS_ChannelGetPosition(Handle);
+      long bytes = Bass.ChannelGetPosition(Handle);
 
       if (bytes == -1)
       {
@@ -223,7 +223,7 @@ namespace MediaPortal.UI.Players.BassPlayer
         return TimeSpan.Zero;
       }
 
-      double seconds = Bass.BASS_ChannelBytes2Seconds(Handle, bytes);
+      double seconds = Bass.ChannelBytes2Seconds(Handle, bytes);
       return TimeSpan.FromSeconds(seconds);
     }
 
@@ -235,7 +235,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     {
       double seconds = position.TotalSeconds;
 
-      if (!Bass.BASS_ChannelSetPosition(Handle, seconds))
+      if (!Bass.ChannelSetPosition(Handle, Bass.ChannelSeconds2Bytes(Handle, seconds)))
         CheckException("BASS_ChannelSetPosition");
     }
 
@@ -301,8 +301,8 @@ namespace MediaPortal.UI.Players.BassPlayer
     {
       // Ignore BASS_ERROR_ENDED and BASS_ERROR_HANDLE - can occur if stream ended or if the stream was disposed while still playing
       // Ignore BASS_ERROR_NOTAVAIL which happens for URL streams that don't offer length information
-      BASSError error = Bass.BASS_ErrorGetCode();
-      if (error != BASSError.BASS_ERROR_ENDED && error != BASSError.BASS_ERROR_HANDLE && error != BASSError.BASS_ERROR_NOTAVAIL)
+      Errors error = Bass.LastError;
+      if (error != Errors.Ended && error != Errors.Handle && error != Errors.NotAvailable)
         throw new BassLibraryException(bassFunction);
     }
 
@@ -311,11 +311,11 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// </summary>
     private void Initialize()
     {
-      _info = Bass.BASS_ChannelGetInfo(_handle);
-      Log.Debug("Stream type: {0}", _info.ctype);
+      _info = Bass.ChannelGetInfo(_handle);
+      Log.Debug("Stream type: {0}", _info.ChannelType);
 
-      if (_info.ctype != BASSChannelType.BASS_CTYPE_STREAM &&
-          _info.ctype != BASSChannelType.BASS_CTYPE_STREAM_MIXER)
+      if (_info.ChannelType != ChannelType.Stream &&
+          _info.ChannelType != ChannelType.Mixer)
       {
         Log.Info("Stream info: {0}", _info.ToString());
 
@@ -332,12 +332,12 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns></returns>
     private TimeSpan GetLength()
     {
-      long bytes = Bass.BASS_ChannelGetLength(Handle);
+      long bytes = Bass.ChannelGetLength(Handle);
 
       if (bytes == -1)
         CheckException("BASS_ChannelGetLength");
 
-      double seconds = Bass.BASS_ChannelBytes2Seconds(Handle, bytes);
+      double seconds = Bass.ChannelBytes2Seconds(Handle, bytes);
       return TimeSpan.FromSeconds(seconds);
     }
 
@@ -347,7 +347,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <returns></returns>
     private long GetSampleLength()
     {
-      long bytes = Bass.BASS_ChannelGetLength(Handle);
+      long bytes = Bass.ChannelGetLength(Handle);
 
       if (bytes == -1)
         CheckException("BASS_ChannelGetLength");
@@ -428,13 +428,13 @@ namespace MediaPortal.UI.Players.BassPlayer
       const int bytesPerWord = 2;
       const int channelCount = 2;
 
-      long streamLength = Bass.BASS_ChannelGetLength(_handle);
+      long streamLength = Bass.ChannelGetLength(_handle);
       long currentPosition = 0;
       if (streamLength > 0)
       {
-        currentPosition = Bass.BASS_ChannelGetPosition(_handle);
+        currentPosition = Bass.ChannelGetPosition(_handle);
         if (currentPosition != 0)
-          Bass.BASS_ChannelSetPosition(_handle, 0);
+          Bass.ChannelSetPosition(_handle, 0);
       }
 
       SyncFifoBuffer syncFifoBuffer = new SyncFifoBuffer(syncWord);
@@ -450,7 +450,7 @@ namespace MediaPortal.UI.Players.BassPlayer
 
       while (!result && sampleIndex < maxSampleIndex)
       {
-        int bytesRead = Bass.BASS_ChannelGetData(_handle, readBuffer, readBuffer.Length * bytesPerSample);
+        int bytesRead = Bass.ChannelGetData(_handle, readBuffer, readBuffer.Length * bytesPerSample);
         if (bytesRead <= 0)
           // End of stream
           break;
@@ -488,7 +488,7 @@ namespace MediaPortal.UI.Players.BassPlayer
       }
 
       if (streamLength > 0)
-        Bass.BASS_ChannelSetPosition(_handle, currentPosition);
+        Bass.ChannelSetPosition(_handle, currentPosition);
 
       return result;
     }
@@ -504,10 +504,10 @@ namespace MediaPortal.UI.Players.BassPlayer
       const int bytesPerWord = 2;
       const int channelCount = 2;
 
-      long streamLength = Bass.BASS_ChannelGetLength(_handle);
+      long streamLength = Bass.ChannelGetLength(_handle);
       long currentPosition = 0;
       if (streamLength > 0)
-        currentPosition = Bass.BASS_ChannelGetPosition(_handle);
+        currentPosition = Bass.ChannelGetPosition(_handle);
 
       SyncFifoBuffer syncFifoBuffer = new SyncFifoBuffer(syncWord);
       float[] readBuffer = new float[channelCount];
@@ -519,7 +519,7 @@ namespace MediaPortal.UI.Players.BassPlayer
       while (!success && sampleIndex < maxSampleIndex)
       {
         // For float streams we get one float value for each 16bit word
-        int bytesRead = Bass.BASS_ChannelGetData(_handle, readBuffer, readBuffer.Length * bytesPerSample);
+        int bytesRead = Bass.ChannelGetData(_handle, readBuffer, readBuffer.Length * bytesPerSample);
         if (bytesRead <= 0)
           // End of stream
           break;
@@ -537,7 +537,7 @@ namespace MediaPortal.UI.Players.BassPlayer
           if (syncFifoBuffer.IsMatch())
           {
             long pos = currentPosition + (sampleIndex - syncWord.WordLength + 1) * bytesPerWord;
-            Bass.BASS_ChannelSetPosition(_handle, pos);
+            Bass.ChannelSetPosition(_handle, pos);
             success = true;
           }
           sampleIndex++;
@@ -546,7 +546,7 @@ namespace MediaPortal.UI.Players.BassPlayer
       }
 
       if (!success && streamLength > 0)
-        Bass.BASS_ChannelSetPosition(_handle, currentPosition);
+        Bass.ChannelSetPosition(_handle, currentPosition);
     }
 
     /// <summary>
@@ -555,7 +555,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     /// <param name="volume">Volume to set. 0 = silent, 1 = full.</param>
     private void SetVolume(float volume)
     {
-      if (!Bass.BASS_ChannelSetAttribute(_handle, BASSAttribute.BASS_ATTRIB_VOL, volume))
+      if (!Bass.ChannelSetAttribute(_handle, ChannelAttribute.Volume, volume))
         CheckException("BASS_ChannelSetAttribute");
 
     }
@@ -567,7 +567,7 @@ namespace MediaPortal.UI.Players.BassPlayer
     private float GetVolume()
     {
       float value = 0.0f;
-      if (!Bass.BASS_ChannelGetAttribute(_handle, BASSAttribute.BASS_ATTRIB_VOL, ref value))
+      if (!Bass.ChannelGetAttribute(_handle, ChannelAttribute.Volume, out value))
         CheckException("BASS_ChannelGetAttribute");
 
       return value;
@@ -590,12 +590,12 @@ namespace MediaPortal.UI.Players.BassPlayer
 
         // Free sync procs first
         foreach (int syncProcHandle in _syncProcHandles)
-          Bass.BASS_ChannelRemoveSync(h, syncProcHandle);
+          Bass.ChannelRemoveSync(h, syncProcHandle);
 
         _syncProcHandles.Clear();
 
         // Ignore error
-        Bass.BASS_StreamFree(h);
+        Bass.StreamFree(h);
       }
       catch (Exception ex)
       {

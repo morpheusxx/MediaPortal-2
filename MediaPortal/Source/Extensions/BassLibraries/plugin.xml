@@ -17,7 +17,9 @@
 
   <Runtime>
     <Assembly FileName="BassLibraries.dll"/>
-    <Assembly FileName="Bass.Net.dll"/>
-    <Assembly FileName="BassRegistration.dll"/>
+    <Assembly FileName="ManagedBass.dll"/>
+    <Assembly FileName="ManagedBass.Mix.dll"/>
+    <Assembly FileName="ManagedBass.Wasapi.dll"/>
+    <Assembly FileName="ManagedBass.Cd.dll"/>
   </Runtime>
 </Plugin>

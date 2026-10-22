@@ -26,8 +26,7 @@ using System;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Tags;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.InputSources
 {
@@ -55,7 +54,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     #region Fields
 
     private readonly string _url;
-    private readonly TAG_INFO _tagInfo;
+    private readonly TagInfo _tagInfo;
     private int _handle;
     private BassStream _bassStream;
 
@@ -69,12 +68,12 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     /// <summary>
     /// Tries to get tags from current stream. Note: the information is retrieved from BASS library in each access to this property.
     /// </summary>
-    public TAG_INFO Tags
+    public TagInfo Tags
     {
       get
       {
         // Update the tags
-        BassTags.BASS_TAG_GetFromURL(_handle, _tagInfo);
+        _tagInfo.UpdateFromStream(_handle);
         return _tagInfo;
       }
     }
@@ -117,7 +116,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     private BassWebStreamInputSource(string url)
     {
       _url = url;
-      _tagInfo = new TAG_INFO(_url);
+      _tagInfo = new TagInfo(_url);
     }
 
     /// <summary>
@@ -127,9 +126,9 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     {
       Log.Debug("BassWebStreamInputSource.Initialize()");
 
-      const BASSFlag flags = BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT;
+      const BassFlags flags = BassFlags.Decode | BassFlags.Float;
 
-      _handle = Bass.BASS_StreamCreateURL(_url, 0, flags, null, new IntPtr());
+      _handle = Bass.CreateStream(_url, 0, flags, null, new IntPtr());
 
       if (_handle == BassConstants.BassInvalidHandle)
         throw new BassLibraryException("BASS_StreamCreateURL");

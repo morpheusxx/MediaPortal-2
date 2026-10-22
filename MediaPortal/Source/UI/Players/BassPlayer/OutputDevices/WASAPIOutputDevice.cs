@@ -27,9 +27,9 @@ using System.Linq;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Utils;
 using MediaPortal.UI.Presentation.Players;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Mix;
-using Un4seen.BassWasapi;
+using ManagedBass;
+using ManagedBass.Mix;
+using ManagedBass.Wasapi;
 
 namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 {
@@ -40,15 +40,15 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
   {
     #region Fields
 
-    protected const BASSFlag MIXER_FLAGS = BASSFlag.BASS_MIXER_NONSTOP | BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_STREAM_DECODE;
+    protected const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerNoRampin | BassFlags.Decode;
 
-    protected readonly WASAPIPROC _streamWriteProcDelegate;
-    protected readonly SYNCPROC _onPlaybackEndDelegate;
-    protected BASSWASAPIInit _flags;
+    protected readonly WasapiProcedure _streamWriteProcDelegate;
+    protected readonly SyncProcedure _onPlaybackEndDelegate;
+    protected WasapiInitFlags _flags;
     protected BassStream _mixer;
     protected int _mixerHandle;
-    protected readonly int _maxFFT = (int)(BASSData.BASS_DATA_AVAILABLE | BASSData.BASS_DATA_FFT4096);
-    BASSWASAPIVolume _bassWASAPIVolScope = BASSWASAPIVolume.BASS_WASAPI_VOL_SESSION;
+    protected readonly int _maxFFT = (int)(DataFlags.Available | DataFlags.FFT4096);
+    WasapiVolumeTypes _bassWASAPIVolScope = WasapiVolumeTypes.Session;
 
     #endregion
 
@@ -76,10 +76,10 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       Log.Debug("Resetting global Bass environment");
 
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0))
+      if (!Bass.Configure(Configuration.UpdatePeriod, 0))
         throw new BassLibraryException("BASS_SetConfig");
 
-      if (!BassWasapi.BASS_WASAPI_Free())
+      if (!BassWasapi.Free())
         throw new BassLibraryException("BASS_WASAPI_Free");
     }
 
@@ -101,20 +101,20 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
         throw new BassPlayerException("Device state is not 'DeviceState.Stopped'");
 
       _inputStream = stream;
-      _flags = BASSWASAPIInit.BASS_WASAPI_AUTOFORMAT | BASSWASAPIInit.BASS_WASAPI_BUFFER;
+      _flags = WasapiInitFlags.AutoFormat | WasapiInitFlags.Buffer;
 
       // If Exclusive mode is used, check, if that would be supported, otherwise init in shared mode
       bool isExclusive = Controller.GetSettings().WASAPIExclusiveMode;
 
       if (isExclusive)
       {
-        _flags |= BASSWASAPIInit.BASS_WASAPI_EXCLUSIVE;
+        _flags |= WasapiInitFlags.Exclusive;
 
-        BASSWASAPIFormat wasapiFormat = BassWasapi.BASS_WASAPI_CheckFormat(_deviceNo,
+        WasapiFormat wasapiFormat = BassWasapi.CheckFormat(_deviceNo,
                                                                            _inputStream.SampleRate,
                                                                            _inputStream.Channels,
-                                                                           BASSWASAPIInit.BASS_WASAPI_EXCLUSIVE);
-        if (wasapiFormat == BASSWASAPIFormat.BASS_WASAPI_FORMAT_UNKNOWN)
+                                                                           WasapiInitFlags.Exclusive);
+        if (wasapiFormat == WasapiFormat.Unknown)
         {
           Log.Info("BASS: WASAPI exclusive mode not directly supported for samplerate of {0} and {1} channels", _inputStream.SampleRate, _inputStream.Channels);
           isExclusive = false;
@@ -125,8 +125,8 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       if (!isExclusive)
       {
         Log.Debug("BASS: Init WASAPI shared mode with Event driven system enabled.");
-        _flags &= ~BASSWASAPIInit.BASS_WASAPI_EXCLUSIVE;
-        _flags |= BASSWASAPIInit.BASS_WASAPI_SHARED | BASSWASAPIInit.BASS_WASAPI_EVENT;
+        _flags &= ~WasapiInitFlags.Exclusive;
+        _flags |= WasapiInitFlags.Shared | WasapiInitFlags.EventDriven;
       }
 
       Log.Debug("BASS: Try to init WASAPI with a samplerate of {0} and {1} channels", _inputStream.SampleRate, _inputStream.Channels);
@@ -134,15 +134,16 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       
       float buffer = (float)Controller.GetSettings().PlaybackBufferSizeMilliSecs / 1000;
 
-      bool result = BassWasapi.BASS_WASAPI_Init(_deviceNo, _inputStream.SampleRate, _inputStream.Channels, _flags, buffer, 0f, _streamWriteProcDelegate, IntPtr.Zero);
+      bool result = BassWasapi.Init(_deviceNo, _inputStream.SampleRate, _inputStream.Channels, _flags, buffer, 0f, _streamWriteProcDelegate, IntPtr.Zero);
 
-      BASSError? bassInitErrorCode = result ? null : new BASSError?(Bass.BASS_ErrorGetCode());
+      Errors? bassInitErrorCode = result ? null : new Errors?(Bass.LastError);
 
       if (bassInitErrorCode.HasValue)
       {
-        if (bassInitErrorCode.Value == BASSError.BASS_ERROR_ALREADY)
+        if (bassInitErrorCode.Value == Errors.Already)
         {
-          if (!BassWasapi.BASS_WASAPI_SetDevice(_deviceNo))
+          BassWasapi.CurrentDevice = _deviceNo;
+          if (Bass.LastError != Errors.OK)
             throw new BassLibraryException("BASS_WASAPI_SetDevice");
         }
         else if (isExclusive)
@@ -158,17 +159,17 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       // If the GetDeviceNo() method returned BassConstants.BassDefaultDevice, we must request the actual device number
       // of the choosen default device
-      _deviceNo = BassWasapi.BASS_WASAPI_GetDevice();
+      _deviceNo = BassWasapi.CurrentDevice;
 
       CollectDeviceInfo(_deviceNo);
-      BASS_WASAPI_INFO wasapiInfo = BassWasapi.BASS_WASAPI_GetInfo();
+      WasapiInfo wasapiInfo = BassWasapi.Info;
 
       Log.Debug("BASS: ---------------------------------------------");
-      Log.Debug("BASS: Buffer Length: {0}", wasapiInfo.buflen);
-      Log.Debug("BASS: Channels: {0}", wasapiInfo.chans);
-      Log.Debug("BASS: Frequency: {0}", wasapiInfo.freq);
-      Log.Debug("BASS: Format: {0}", wasapiInfo.format.ToString());
-      Log.Debug("BASS: InitFlags: {0}", wasapiInfo.initflags.ToString());
+      Log.Debug("BASS: Buffer Length: {0}", wasapiInfo.BufferLength);
+      Log.Debug("BASS: Channels: {0}", wasapiInfo.Channels);
+      Log.Debug("BASS: Frequency: {0}", wasapiInfo.Frequency);
+      Log.Debug("BASS: Format: {0}", wasapiInfo.Format.ToString());
+      Log.Debug("BASS: InitFlags: {0}", wasapiInfo.InitFlags.ToString());
       Log.Debug("BASS: Exclusive: {0}", wasapiInfo.IsExclusive.ToString());
       Log.Debug("BASS: ---------------------------------------------");
       Log.Info("BASS: WASAPI Device successfully initialised");
@@ -177,8 +178,8 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       if (!wasapiInfo.IsExclusive)
       {
         // Recreate Mixer with new value
-        Log.Debug("BASS: Creating new {0} channel mixer for frequency {1}", wasapiInfo.chans, wasapiInfo.freq);
-        _mixerHandle = BassMix.BASS_Mixer_StreamCreate(wasapiInfo.freq, wasapiInfo.chans, MIXER_FLAGS);
+        Log.Debug("BASS: Creating new {0} channel mixer for frequency {1}", wasapiInfo.Channels, wasapiInfo.Frequency);
+        _mixerHandle = BassMix.CreateMixerStream(wasapiInfo.Frequency, wasapiInfo.Channels, MIXER_FLAGS);
         if (_mixerHandle == BassConstants.BassInvalidHandle)
           throw new BassLibraryException("BASS_Mixer_StreamCreate");
         _mixer = BassStream.Create(_mixerHandle);
@@ -187,18 +188,18 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       int ms = Convert.ToInt32(Controller.GetSettings().DirectSoundBufferSizeMilliSecs);
 
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_BUFFER, ms))
+      if (!Bass.Configure(Configuration.PlaybackBufferLength, ms))
         throw new BassLibraryException("BASS_SetConfig");
 
       // Enable update thread while the output device is active
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, ms / 4))
+      if (!Bass.Configure(Configuration.UpdatePeriod, ms / 4))
         throw new BassLibraryException("BASS_SetConfig");
 
       if (passThrough)
         _fader = new BassStreamFader(_inputStream, TimeSpan.FromMilliseconds(Controller.GetSettings().FadeDurationMilliSecs));
 
       // Init volume/mute mode
-      _bassWASAPIVolScope = isExclusive? BASSWASAPIVolume.BASS_WASAPI_VOL_DEVICE : BASSWASAPIVolume.BASS_WASAPI_VOL_SESSION;
+      _bassWASAPIVolScope = isExclusive ? WasapiVolumeTypes.Device : WasapiVolumeTypes.Session;
 
       ResetState();
     }
@@ -211,14 +212,14 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     {
       try
       {
-        Bass.BASS_ChannelLock(_mixerHandle, true);
+        Bass.ChannelLock(_mixerHandle, true);
 
         RegisterStreamFreedEvent(_inputStream);
 
-        bool result = BassMix.BASS_Mixer_StreamAddChannel(_mixerHandle, _inputStream.Handle,
-                                          BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_MIXER_BUFFER |
-                                          BASSFlag.BASS_MIXER_MATRIX | BASSFlag.BASS_MIXER_DOWNMIX |
-                                          BASSFlag.BASS_STREAM_AUTOFREE
+        bool result = BassMix.MixerAddChannel(_mixerHandle, _inputStream.Handle,
+                                          BassFlags.MixerNoRampin | BassFlags.MixerBuffer |
+                                          BassFlags.MixerMatrix | BassFlags.MixerDownMix |
+                                          BassFlags.AutoFree
                                           );
         if (!result)
           throw new BassLibraryException("BASS_Mixer_StreamAddChannel");
@@ -227,7 +228,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       }
       finally
       {
-        Bass.BASS_ChannelLock(_mixerHandle, false);
+        Bass.ChannelLock(_mixerHandle, false);
       }
     }
 
@@ -237,10 +238,10 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     /// <returns></returns>
     private void RegisterStreamFreedEvent(BassStream stream)
     {
-      int syncHandle = Bass.BASS_ChannelSetSync(stream.Handle, BASSSync.BASS_SYNC_FREE | BASSSync.BASS_SYNC_MIXTIME, 0, _onPlaybackEndDelegate, IntPtr.Zero);
+      int syncHandle = Bass.ChannelSetSync(stream.Handle, SyncFlags.Free | SyncFlags.Mixtime, 0, _onPlaybackEndDelegate, IntPtr.Zero);
 
       if (syncHandle == 0)
-        Log.Debug("BASS: RegisterStreamFreedEvent of stream {0} failed with error {1}", stream.Handle, Enum.GetName(typeof(BASSError), Bass.BASS_ErrorGetCode()));
+        Log.Debug("BASS: RegisterStreamFreedEvent of stream {0} failed with error {1}", stream.Handle, Enum.GetName(typeof(Errors), Bass.LastError));
       else
         stream.SyncProcHandles.Add(syncHandle);
     }
@@ -261,15 +262,15 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       deviceInfo.MaxRate = sampleRates.First();
       deviceInfo.MinRate = sampleRates.Last();
-      foreach (BASSWASAPIInit init in new[] { BASSWASAPIInit.BASS_WASAPI_EXCLUSIVE, BASSWASAPIInit.BASS_WASAPI_SHARED })
+      foreach (WasapiInitFlags init in new[] { WasapiInitFlags.Exclusive, WasapiInitFlags.Shared })
       {
         Log.Debug("Check {0} mode", init);
         foreach (var sampleRate in sampleRates)
         {
           foreach (var channel in channels)
           {
-            BASSWASAPIFormat format = BassWasapi.BASS_WASAPI_CheckFormat(deviceNo, sampleRate, channel, init);
-            if (format != BASSWASAPIFormat.BASS_WASAPI_FORMAT_UNKNOWN)
+            WasapiFormat format = BassWasapi.CheckFormat(deviceNo, sampleRate, channel, init);
+            if (format != WasapiFormat.Unknown)
             {
               Log.Debug("- {0,-6} Hz / {1} ch: {2}", sampleRate, channel, format);
               if (channel > deviceInfo.Channels)
@@ -292,7 +293,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       Log.Debug("Starting output");
       _deviceState = DeviceState.Started;
 
-      if (!BassWasapi.BASS_WASAPI_Start())
+      if (!BassWasapi.Start())
         throw new BassLibraryException("BASS_WASAPI_Start");
     }
 
@@ -304,7 +305,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       Log.Debug("Stopping output");
       _deviceState = DeviceState.Stopped;
 
-      if (!BassWasapi.BASS_WASAPI_Stop(true))
+      if (!BassWasapi.Stop(true))
         throw new BassLibraryException("BASS_WASAPI_Stop");
     }
 
@@ -320,7 +321,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
         // value is from 0 to 100 in a linear scale, internal _volume is from 0.0 to 1.0 in a linear scale
         _volume = value;
         var bassVolume = _volume / 100f;
-        BassWasapi.BASS_WASAPI_SetVolume(BASSWASAPIVolume.BASS_WASAPI_CURVE_LINEAR, bassVolume);
+        BassWasapi.SetVolume(WasapiVolumeTypes.LinearCurve, bassVolume);
       }
     }
 
@@ -328,15 +329,15 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     {
       get
       {
-        return BassWasapi.BASS_WASAPI_GetMute(_bassWASAPIVolScope);
+        return BassWasapi.GetMute(_bassWASAPIVolScope);
       }
       set
       {
-        BassWasapi.BASS_WASAPI_SetMute(_bassWASAPIVolScope, value);
+        BassWasapi.SetMute(_bassWASAPIVolScope, value);
         if (!value)
         {
           var bassVolume = _volume / 100f;
-          BassWasapi.BASS_WASAPI_SetVolume(BASSWASAPIVolume.BASS_WASAPI_CURVE_LINEAR, bassVolume);
+          BassWasapi.SetVolume(WasapiVolumeTypes.LinearCurve, bassVolume);
         }
         _isMuted = value;
       }
@@ -357,21 +358,21 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       {
         Log.Debug("Collecting device info");
 
-        BASS_WASAPI_DEVICEINFO bassDeviceInfo = BassWasapi.BASS_WASAPI_GetDeviceInfo(deviceNo);
-        if (bassDeviceInfo == null)
+        WasapiDeviceInfo bassDeviceInfo;
+        if (!BassWasapi.GetDeviceInfo(deviceNo, out bassDeviceInfo))
           throw new BassLibraryException("BASS_WASAPI_GetDeviceInfo");
 
-        BASS_WASAPI_INFO bassInfo = BassWasapi.BASS_WASAPI_GetInfo();
-        if (bassInfo == null)
+        WasapiInfo bassInfo;
+        if (!BassWasapi.GetInfo(out bassInfo))
           throw new BassLibraryException("BASS_WASAPI_GetInfo");
 
         DeviceInfo deviceInfo = new DeviceInfo
           {
-            Name = bassDeviceInfo.name,
+            Name = bassDeviceInfo.Name,
             Driver = "WASAPI",
-            Channels = bassInfo.chans,
-            MinRate = bassInfo.freq,
-            MaxRate = bassInfo.freq,
+            Channels = bassInfo.Channels,
+            MinRate = bassInfo.Frequency,
+            MaxRate = bassInfo.Frequency,
           };
 
         GetDeviceFormats(deviceNo, deviceInfo);
@@ -386,9 +387,9 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     /// </summary>
     /// <param name="deviceInfo">Device info</param>
     /// <returns><c>true</c> if valid.</returns>
-    public static bool IsValidDevice(BASS_WASAPI_DEVICEINFO deviceInfo)
+    public static bool IsValidDevice(WasapiDeviceInfo deviceInfo)
     {
-      return !(deviceInfo.IsDisabled || deviceInfo.IsUnplugged || deviceInfo.IsInput || deviceInfo.IsLoopback || deviceInfo.flags == BASSWASAPIDeviceInfo.BASS_DEVICE_UNKNOWN);
+      return !(deviceInfo.IsDisabled || deviceInfo.IsUnplugged || deviceInfo.IsInput || deviceInfo.IsLoopback);
     }
 
     /// <summary>
@@ -400,21 +401,22 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       string deviceName = Controller.GetSettings().WASAPIDevice;
       int deviceNo = BassConstants.BassDefaultDevice;
 
-      if (String.IsNullOrEmpty(deviceName) || deviceName == Controller.GetSettings().WASAPIDevice)
+      if (String.IsNullOrEmpty(deviceName))
         Log.Info("Initializing default WASAPI device");
       else
       {
         bool found = false;
-        BASS_WASAPI_DEVICEINFO[] deviceDescriptions = BassWasapi.BASS_WASAPI_GetDeviceInfos();
-        for (int i = 0; i < deviceDescriptions.Length; i++)
+        for (int i = 0; i < BassWasapi.DeviceCount; i++)
         {
-          var deviceInfo = deviceDescriptions[i];
+          WasapiDeviceInfo deviceInfo;
+          if (!BassWasapi.GetDeviceInfo(i, out deviceInfo))
+            continue;
 
           // Skip input devices, they have same name as output devices.
           if (!IsValidDevice(deviceInfo))
             continue;
 
-          if (deviceInfo.name == deviceName)
+          if (deviceInfo.Name == deviceName)
           {
             deviceNo = i;
             found = true;
@@ -448,17 +450,17 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     public bool GetWaveData32(int length, out float[] waveData32)
     {
       waveData32 = null;
-      if (!BassWasapi.BASS_WASAPI_IsStarted())
+      if (!BassWasapi.IsStarted)
         return false;
       waveData32 = new float[length];
-      return BassWasapi.BASS_WASAPI_GetData(waveData32, length) == (int)BASSError.BASS_OK;
+      return BassWasapi.GetData(waveData32, length) == (int)Errors.OK;
     }
 
     public bool GetFFTData(float[] fftDataBuffer)
     {
-      if (!BassWasapi.BASS_WASAPI_IsStarted())
+      if (!BassWasapi.IsStarted)
         return false;
-      return BassWasapi.BASS_WASAPI_GetData(fftDataBuffer, _maxFFT) > 0;
+      return BassWasapi.GetData(fftDataBuffer, _maxFFT) > 0;
     }
 
     public bool GetFFTFrequencyIndex(int frequency, out int frequencyIndex)
@@ -466,7 +468,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       frequencyIndex = 0;
       if (_inputStream == null)
         return false;
-      frequencyIndex = Un4seen.Bass.Utils.FFTFrequency2Index(frequency, 4096, _inputStream.SampleRate);
+      frequencyIndex = BassMath.FFTFrequency2Index(frequency, 4096, _inputStream.SampleRate);
       return true;
     }
 
@@ -474,11 +476,11 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     {
       dbLevelL = 0f;
       dbLevelR = 0f;
-      if (!BassWasapi.BASS_WASAPI_IsStarted())
+      if (!BassWasapi.IsStarted)
         return false;
-      int level = BassWasapi.BASS_WASAPI_GetLevel();
-      dbLevelL = Un4seen.Bass.Utils.LevelToDB(Un4seen.Bass.Utils.LowWord32(level), 65535); // the left level
-      dbLevelR = Un4seen.Bass.Utils.LevelToDB(Un4seen.Bass.Utils.HighWord32(level), 65535); // the right level
+      int level = BassWasapi.GetLevel();
+      dbLevelL = BassMath.LevelToDB(BassMath.LowWord32(level), 65535); // the left level
+      dbLevelR = BassMath.LevelToDB(BassMath.HighWord32(level), 65535); // the right level
       return true;
     }
 

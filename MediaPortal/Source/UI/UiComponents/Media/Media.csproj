@@ -121,9 +121,6 @@
     <Content Include="Skin\default\screens\SeriesFilterByYear.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BASS.NET">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="build.targets" />
 </Project>

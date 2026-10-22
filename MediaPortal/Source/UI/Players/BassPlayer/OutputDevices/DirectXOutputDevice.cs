@@ -23,10 +23,14 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using MediaPortal.Common;
+using MediaPortal.Common.Settings;
+using MediaPortal.UI.Settings;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 {
@@ -37,7 +41,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
   {
     #region Fields
 
-    private readonly STREAMPROC _streamWriteProcDelegate;
+    private readonly StreamProcedure _streamWriteProcDelegate;
     private BassStream _outputStream = null;
 
     #endregion
@@ -49,30 +53,31 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       _deviceNo = GetDeviceNo();
 
       // TODO: move to SetStream?
-      BASSInit flags = BASSInit.BASS_DEVICE_DEFAULT;
+      DeviceInitFlags flags = DeviceInitFlags.Default;
 
       // Because all deviceinfo is saved in a static dictionary,
       // we need to determine the latency only once.
       if (!_deviceInfos.ContainsKey(_deviceNo))
-        flags |= BASSInit.BASS_DEVICE_LATENCY;
+        flags |= DeviceInitFlags.Latency;
 
-      bool result = Bass.BASS_Init(
+      bool result = Bass.Init(
           _deviceNo,
           44100, //Only relevant for -> pre-XP (VxD drivers)
           flags,
           IntPtr.Zero);
 
-      BASSError? bassInitErrorCode = result ? null : new BASSError?(Bass.BASS_ErrorGetCode());
+      Errors? bassInitErrorCode = result ? null : new Errors?(Bass.LastError);
 
       // If the GetDeviceNo() method returned BassConstants.BassDefaultDevice, we must request the actual device number
       // of the choosen default device
-      _deviceNo = Bass.BASS_GetDevice();
+      _deviceNo = Bass.CurrentDevice;
 
       if (bassInitErrorCode.HasValue)
       {
-        if (bassInitErrorCode.Value == BASSError.BASS_ERROR_ALREADY)
+        if (bassInitErrorCode.Value == Errors.Already)
         {
-          if (!Bass.BASS_SetDevice(_deviceNo))
+          Bass.CurrentDevice = _deviceNo;
+          if (Bass.LastError != Errors.OK)
             throw new BassLibraryException("BASS_SetDevice");
           bassInitErrorCode = null;
         }
@@ -85,11 +90,11 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       int ms = Convert.ToInt32(Controller.GetSettings().DirectSoundBufferSizeMilliSecs);
 
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_BUFFER, ms))
+      if (!Bass.Configure(Configuration.PlaybackBufferLength, ms))
         throw new BassLibraryException("BASS_SetConfig");
 
       // Enable update thread while the output device is active
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, ms / 4))
+      if (!Bass.Configure(Configuration.UpdatePeriod, ms / 4))
         throw new BassLibraryException("BASS_SetConfig");
     }
 
@@ -106,16 +111,18 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       Log.Debug("Resetting global Bass environment");
 
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0))
+      if (!Bass.Configure(Configuration.UpdatePeriod, 0))
         throw new BassLibraryException("BASS_SetConfig");
 
-      if (!Bass.BASS_SetDevice(_deviceNo))
+      Bass.CurrentDevice = _deviceNo;
+      if (Bass.LastError != Errors.OK)
         throw new BassLibraryException("BASS_SetDevice");
 
-      if (!Bass.BASS_Free())
+      if (!Bass.Free())
         throw new BassLibraryException("BASS_Free");
 
-      if (!Bass.BASS_SetDevice(BassConstants.BassNoSoundDevice))
+      Bass.CurrentDevice = BassConstants.BassNoSoundDevice;
+      if (Bass.LastError != Errors.OK)
         throw new BassLibraryException("BASS_SetDevice");
     }
 
@@ -132,8 +139,8 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 
       Log.Debug("Creating output stream");
 
-      const BASSFlag flags = BASSFlag.BASS_SAMPLE_FLOAT;
-      int handle = Bass.BASS_StreamCreate(
+      const BassFlags flags = BassFlags.Float;
+      int handle = Bass.CreateStream(
           _inputStream.SampleRate,
           _inputStream.Channels,
           flags,
@@ -159,7 +166,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       Log.Debug("Starting output");
       _deviceState = DeviceState.Started;
 
-      if (!Bass.BASS_ChannelPlay(_outputStream.Handle, false))
+      if (!Bass.ChannelPlay(_outputStream.Handle, false))
         throw new BassLibraryException("BASS_ChannelPlay");
     }
 
@@ -171,13 +178,13 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       Log.Debug("Stopping output");
       _deviceState = DeviceState.Stopped;
 
-      if (!Bass.BASS_ChannelStop(_outputStream.Handle))
+      if (!Bass.ChannelStop(_outputStream.Handle))
         throw new BassLibraryException("BASS_ChannelStop");
     }
 
     public override void ClearBuffers()
     {
-      Bass.BASS_ChannelSetPosition(_outputStream.Handle, 0L);
+      Bass.ChannelSetPosition(_outputStream.Handle, 0L);
     }
 
     public override int Volume
@@ -191,9 +198,9 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
         // value is from 0 to 100 in a linear scale, internal _volume is from 0 to 10000 in a linear scale
         _volume = value;
         var bassVolume = _volume * 100;
-        Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_MUSIC, bassVolume);
-        Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_SAMPLE, bassVolume);
-        Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_STREAM, bassVolume);
+        Bass.Configure(Configuration.GlobalMusicVolume, bassVolume);
+        Bass.Configure(Configuration.GlobalSampleVolume, bassVolume);
+        Bass.Configure(Configuration.GlobalStreamVolume, bassVolume);
       }
     }
 
@@ -204,16 +211,16 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       {
         if (value)
         {
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_MUSIC, 0);
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_SAMPLE, 0);
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_STREAM, 0);
+          Bass.Configure(Configuration.GlobalMusicVolume, 0);
+          Bass.Configure(Configuration.GlobalSampleVolume, 0);
+          Bass.Configure(Configuration.GlobalStreamVolume, 0);
         }
         else
         {
           var bassVolume = _volume * 100;
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_MUSIC, bassVolume);
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_SAMPLE, bassVolume);
-          Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_GVOL_STREAM, bassVolume);
+          Bass.Configure(Configuration.GlobalMusicVolume, bassVolume);
+          Bass.Configure(Configuration.GlobalSampleVolume, bassVolume);
+          Bass.Configure(Configuration.GlobalStreamVolume, bassVolume);
         }
         _isMuted = value;
       }
@@ -234,22 +241,22 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       {
         Log.Debug("Collecting device info");
 
-        BASS_DEVICEINFO bassDeviceInfo = Bass.BASS_GetDeviceInfo(deviceNo);
-        if (bassDeviceInfo == null)
+        ManagedBass.DeviceInfo bassDeviceInfo;
+        if (!Bass.GetDeviceInfo(deviceNo, out bassDeviceInfo))
           throw new BassLibraryException("BASS_GetDeviceInfo");
 
-        BASS_INFO bassInfo = Bass.BASS_GetInfo();
-        if (bassInfo == null)
+        BassInfo bassInfo;
+        if (!Bass.GetInfo(out bassInfo))
           throw new BassLibraryException("BASS_GetInfo");
 
         DeviceInfo deviceInfo = new DeviceInfo
         {
-          Name = bassDeviceInfo.name,
-          Driver = bassDeviceInfo.driver,
-          Channels = bassInfo.speakers,
-          MinRate = bassInfo.minrate,
-          MaxRate = bassInfo.maxrate,
-          Latency = TimeSpan.FromMilliseconds(bassInfo.latency)
+          Name = bassDeviceInfo.Name,
+          Driver = bassDeviceInfo.Driver,
+          Channels = bassInfo.SpeakerCount,
+          MinRate = bassInfo.MinSampleRate,
+          MaxRate = bassInfo.MaxSampleRate,
+          Latency = TimeSpan.FromMilliseconds(bassInfo.Latency)
         };
 
         lock (_deviceInfos)
@@ -264,28 +271,36 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     /// <returns>Number of the device to be used for the BASS player.</returns>
     private static int GetDeviceNo()
     {
-      string deviceName = Controller.GetSettings().DirectSoundDevice;
+      // On Windows the device of the BASS player settings is used, on the other platforms the common audio output setting
+      string deviceName = OperatingSystem.IsWindows() ?
+          Controller.GetSettings().DirectSoundDevice : ServiceRegistration.Get<ISettingsManager>().Load<AudioOutputSettings>().AudioDevice;
       int deviceNo = BassConstants.BassDefaultDevice;
 
-      if (String.IsNullOrEmpty(deviceName) || deviceName == Controller.GetSettings().DirectSoundDevice)
-        Log.Info("Initializing default DirectSound device");
+      List<string> deviceNames = new List<string>();
+      List<int> deviceNumbers = new List<int>();
+      for (int i = 0; i < Bass.DeviceCount; i++)
+      {
+        ManagedBass.DeviceInfo bassDeviceInfo;
+        if (Bass.GetDeviceInfo(i, out bassDeviceInfo) && bassDeviceInfo.IsEnabled)
+        {
+          deviceNames.Add(bassDeviceInfo.Name);
+          deviceNumbers.Add(i);
+        }
+      }
+
+      if (String.IsNullOrEmpty(deviceName))
+        Log.Info("Initializing default audio device");
       else
       {
-        bool found = false;
-        BASS_DEVICEINFO[] deviceDescriptions = Bass.BASS_GetDeviceInfos();
-        for (int i = 0; i < deviceDescriptions.Length; i++)
+        int index = AudioDeviceMatcher.Find(deviceName, deviceNames);
+        if (index >= 0)
         {
-          if (deviceDescriptions[i].name == deviceName)
-          {
-            deviceNo = i;
-            found = true;
-            break;
-          }
+          deviceNo = deviceNumbers[index];
+          Log.Info("Initializing audio device '{0}' (device no {1})", deviceNames[index], deviceNo);
         }
-        if (found)
-          Log.Info("Initializing DirectSound device '{0}' (device no {1})", deviceName, deviceNo);
         else
-          Log.Warn("Specified DirectSound device '{0}' does not exist. Initializing default DirectSound device", deviceName);
+          Log.Warn("Specified audio device '{0}' does not exist or is ambiguous. Initializing default audio device. Available devices: {1}", deviceName,
+              string.Join("; ", deviceNames));
       }
       return deviceNo;
     }
@@ -299,7 +314,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
       DateTime timeout = DateTime.Now + CurrentDeviceInfo.Latency + TimeSpan.FromSeconds(1);
       BassStream stream = _outputStream;
       if (stream != null)
-        while (Bass.BASS_ChannelIsActive(stream.Handle) != BASSActive.BASS_ACTIVE_STOPPED && DateTime.Now < timeout)
+        while (Bass.ChannelIsActive(stream.Handle) != PlaybackState.Stopped && DateTime.Now < timeout)
           Thread.Sleep(10);
       base.WaitAndHandleOutputEnd_Sync();
     }

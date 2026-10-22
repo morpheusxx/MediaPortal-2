@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using MediaPortal.Common;
 using MediaPortal.Common.Logging;
-using Un4seen.Bass.AddOn.Cd;
+using ManagedBass.Cd;
 
 namespace MediaPortal.Extensions.BassLibraries
 {
@@ -39,11 +39,6 @@ namespace MediaPortal.Extensions.BassLibraries
 
     #endregion
 
-    static BassUtils()
-    {
-      // Make sure to initialize library first, otherwise required dll paths are not set.
-      _lib = BassLibraryManager.Get();
-    }
 
     public class AudioTrack
     {
@@ -116,13 +111,24 @@ namespace MediaPortal.Extensions.BassLibraries
     protected static readonly object _syncObj = new object();
 
     /// <summary>
+    /// Makes sure that the BASS library is loaded and initialized.
+    /// </summary>
+    public static void EnsureInitialized()
+    {
+      lock (_syncObj)
+        if (_lib == null)
+          _lib = BassLibraryManager.Get(); // Makes sure that the native libraries are found
+    }
+
+    /// <summary>
     /// Checks, if the media in the given drive Letter is a Red Book (Audio) CD.
     /// </summary>
     /// <param name="drive">Drive path or drive letter (<c>"F:"</c> or <c>"F"</c>).</param>
     /// <returns><c>true</c>, if the media in the given <paramref name="drive"/> is a Red Book CD.</returns>
     public static bool IsARedBookCD(string drive)
     {
-      return GetAudioTracks(drive).Count > 0;
+      IList<AudioTrack> tracks = GetAudioTracks(drive);
+      return tracks != null && tracks.Count > 0;
     }
 
     /// <summary>
@@ -133,15 +139,18 @@ namespace MediaPortal.Extensions.BassLibraries
     /// the given <paramref name="drive"/>).</returns>
     public static int GetNumAudioTracks(string drive)
     {
+      if (!OperatingSystem.IsWindows())
+        return -1; // CD drives are addressed by their drive letter, TODO: other platforms
       lock (_syncObj)
         try
         {
+          EnsureInitialized();
           if (string.IsNullOrEmpty(drive))
             return -1;
           char driveLetter = System.IO.Path.GetFullPath(drive).ToCharArray()[0];
           int driveId = Drive2BassID(driveLetter);
 
-          return BassCd.BASS_CD_GetTracks(driveId);
+          return BassCd.GetTracks(driveId);
         }
         catch (Exception e)
         {
@@ -158,27 +167,32 @@ namespace MediaPortal.Extensions.BassLibraries
     /// the given <paramref name="drive"/>).</returns>
     public static IList<AudioTrack> GetAudioTracks(string drive)
     {
+      if (!OperatingSystem.IsWindows())
+        return null; // CD drives are addressed by their drive letter, TODO: other platforms
       lock (_syncObj)
         try
         {
+          EnsureInitialized();
           if (string.IsNullOrEmpty(drive))
             return null;
           char driveLetter = System.IO.Path.GetFullPath(drive).ToCharArray()[0];
           int driveId = Drive2BassID(driveLetter);
 
-          BASS_CD_TOC toc = BassCd.BASS_CD_GetTOC(driveId, BASSCDTOCMode.BASS_CD_TOC_TIME);
-          if (toc == null)
+          TOC toc;
+          if (!BassCd.GetTOC(driveId, TOCMode.Time, out toc))
             return null;
-          IList<AudioTrack> result = new List<AudioTrack>(toc.tracks.Count);
+          IList<AudioTrack> result = new List<AudioTrack>(toc.Tracks.Count);
           int trackNo = 0; // BASS starts to count at track 0
           // Albert, 2011-07-30: Due to the spare documentation of the BASS library, I don't know the correct way...
           // It seems that this algorithm returns the correct number of audio tracks.
-          foreach (BASS_CD_TOC_TRACK track in toc.tracks)
+          foreach (TOCTrack track in toc.Tracks)
           {
-            if ((track.Control & BASSCDTOCFlags.BASS_CD_TOC_CON_DATA) == 0 && track.track != 170) // 170 = lead-out (see BASS documentation)
+            if ((track.Control & TOCControlFlags.DataTrack) == 0 && track.Track != 170) // 170 = lead-out (see BASS documentation)
             {
-              double duration = BassCd.BASS_CD_GetTrackLengthSeconds(driveId, trackNo++);
-              result.Add(new AudioTrack(track.track, duration, track.hour + (track.minute / 60), track.minute, track.second, track.frame)); // Hours are returned as part of minutes (see BASS documentation)
+              // Length of the track in bytes (CD audio: 44100 Hz, 16 bit, stereo)
+              double duration = BassCd.GetTrackLength(driveId, trackNo++) / (44100.0 * 2 * 2);
+              TimeSpan address = track.Address; // Time mode: hours are returned as part of the minutes (see BASS documentation), the frames are given separately
+              result.Add(new AudioTrack(track.Track, duration, (int) address.TotalHours, (int) address.TotalMinutes, address.Seconds, track.Frame));
             }
           }
           return result;
@@ -197,12 +211,15 @@ namespace MediaPortal.Extensions.BassLibraries
     /// <returns>Bass id of the given <paramref name="driveLetter"/>.</returns>
     public static int Drive2BassID(char driveLetter)
     {
+      if (!OperatingSystem.IsWindows())
+        return -1;
       lock (_syncObj)
       {
+        EnsureInitialized();
         for (int i = 0; i < 26; i++)
         {
-          BASS_CD_INFO cdInfo = BassCd.BASS_CD_GetInfo(i, true);
-          if (cdInfo != null && cdInfo.DriveLetter == driveLetter)
+          CDInfo cdInfo;
+          if (BassCd.GetInfo(i, out cdInfo) && cdInfo.DriveLetter == driveLetter)
             return i;
         }
       }

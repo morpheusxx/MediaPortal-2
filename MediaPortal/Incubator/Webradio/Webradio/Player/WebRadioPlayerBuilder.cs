@@ -31,7 +31,7 @@ using MediaPortal.Common.MediaManagement;
 using MediaPortal.UI.Players.BassPlayer;
 using MediaPortal.UI.Players.BassPlayer.PlayerComponents;
 using MediaPortal.UI.Presentation.Players;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace Webradio.Player
 {
@@ -67,7 +67,7 @@ namespace Webradio.Player
         BassPlayer player = new WebRadioBassPlayer(_pluginDirectory);
 
         // Config the BASSPlayer to play also .pls and .m3u
-        Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_NET_PLAYLIST, 1);
+        Bass.Configure(Configuration.NetPlaylist, 1);
         try
         {
           player.SetMediaItem(mediaItem);

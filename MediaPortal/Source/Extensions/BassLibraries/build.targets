@@ -15,22 +15,25 @@
       <PluginFiles Include="$(TargetDir)$(ProjectName).pdb" />
     </ItemGroup>
 
-    <!-- BASS core -->
+    <!-- Managed BASS wrapper -->
     <ItemGroup>
-      <References Include="$(TargetDir)Bass.Net.dll" />
-      <References Include="$(TargetDir)BassRegistration.dll" />
+      <References Include="$(TargetDir)ManagedBass*.dll" />
     </ItemGroup>
 
-    <!-- Platform specifc, bass.dll and all plugins -->
-    <ItemGroup>
-    </ItemGroup>
+    <!-- Platform specifc native libraries: bass.dll and the others, the add-ins are in the sub folder Plugins. Windows x64 comes from the package BASSCombined -->
     <ItemGroup>
       <ReferencesX64 Include="$(TargetDir)\x64\**\*.*" />
     </ItemGroup>
 
+    <!-- Native libraries of Linux and macOS from the package MediaPortal.Native.Bass -->
+    <ItemGroup Condition="'$(PkgMediaPortal_Native_Bass)' != ''">
+      <ReferencesOther Include="$(PkgMediaPortal_Native_Bass)\runtimes\**\*.*" />
+    </ItemGroup>
+
     <Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginDestination)" />
     <Copy SourceFiles="@(References)" DestinationFolder="$(PluginDestination)" />
-    <Copy SourceFiles="@(ReferencesX64)" DestinationFiles="@(ReferencesX64->'$(PluginDestination)\x64\%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Copy SourceFiles="@(ReferencesOther)" DestinationFiles="@(ReferencesOther->'$(PluginDestination)runtimes\%(RecursiveDir)%(Filename)%(Extension)')" Condition="'@(ReferencesOther)' != ''" />
+    <Copy SourceFiles="@(ReferencesX64)" DestinationFiles="@(ReferencesX64->'$(PluginDestination)runtimes\win-x64\native\%(RecursiveDir)%(Filename)%(Extension)')" />
   </Target>
 
 </Project>

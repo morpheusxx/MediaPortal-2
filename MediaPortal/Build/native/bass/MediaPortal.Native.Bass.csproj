@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Packs the native BASS libraries of Linux and macOS which build-package.py has prepared in "staging" as NuGet package MediaPortal.Native.Bass.
+       The Windows libraries are delivered by the package BASSCombined. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>MediaPortal.Native.Bass</PackageId>
+    <Version Condition="'$(Version)' == ''">0.0.0</Version>
+    <Authors>Team MediaPortal</Authors>
+    <Description>Native BASS audio libraries (https://www.un4seen.com) for Linux and macOS, for MediaPortal 2. See NOTICE.txt for the license.</Description>
+    <PackageProjectUrl>https://github.com/MediaPortal/MediaPortal-2</PackageProjectUrl>
+    <PackageLicenseFile>NOTICE.txt</PackageLicenseFile>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <NoWarn>$(NoWarn);NU5128;CS2008</NoWarn>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="staging\runtimes\**\*" Pack="true" PackagePath="runtimes" />
+    <None Include="staging\NOTICE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

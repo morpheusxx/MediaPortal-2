@@ -25,7 +25,7 @@
 using System;
 using System.Threading;
 using MediaPortal.Extensions.BassLibraries;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.Utils
 {
@@ -124,7 +124,7 @@ namespace MediaPortal.UI.Players.BassPlayer.Utils
     /// </summary>
     protected void WaitForVolumeSlide()
     {
-      while (Bass.BASS_ChannelIsSliding(_stream.Handle, BASSAttribute.BASS_ATTRIB_VOL))
+      while (Bass.ChannelIsSliding(_stream.Handle, ChannelAttribute.Volume))
         Thread.Sleep(10);
     }
 
@@ -134,7 +134,7 @@ namespace MediaPortal.UI.Players.BassPlayer.Utils
     /// <param name="volume">0.0f-1.0f -> 0-100%</param>
     protected void SetVolume(float volume)
     {
-      if (!Bass.BASS_ChannelSetAttribute(_stream.Handle, BASSAttribute.BASS_ATTRIB_VOL, volume))
+      if (!Bass.ChannelSetAttribute(_stream.Handle, ChannelAttribute.Volume, volume))
         throw new BassLibraryException("BASS_ChannelSetAttribute");
     }
 
@@ -144,7 +144,7 @@ namespace MediaPortal.UI.Players.BassPlayer.Utils
     /// <param name="volume">0.0f-1.0f -> 0-100%</param>
     protected void SlideVolume(float volume)
     {
-      if (!Bass.BASS_ChannelSlideAttribute(_stream.Handle, BASSAttribute.BASS_ATTRIB_VOL, volume, _durationMS))
+      if (!Bass.ChannelSlideAttribute(_stream.Handle, ChannelAttribute.Volume, volume, _durationMS))
         throw new BassLibraryException("BASS_ChannelSlideAttribute");
     }
 

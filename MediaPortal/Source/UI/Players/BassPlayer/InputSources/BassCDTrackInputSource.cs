@@ -26,8 +26,8 @@ using System;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Cd;
+using ManagedBass;
+using ManagedBass.Cd;
 
 namespace MediaPortal.UI.Players.BassPlayer.InputSources
 {
@@ -97,7 +97,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
         return false;
 
       BassStream stream = _bassStream;
-      if (stream != null && BassCd.BASS_CD_StreamSetTrack(stream.Handle, other.BassTrackNo))
+      if (stream != null && BassCd.StreamSetTrack(stream.Handle, other.BassTrackNo))
       {
         Log.Debug("BassCDTrackInputSource: Simply switched the current track to drive '{0}', track {1}", other.Drive, other.TrackNo);
         _trackNo = other._trackNo;
@@ -154,7 +154,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
       _trackNo = trackNo;
       int bassDrive = BassUtils.Drive2BassID(_drive);
       // Note: CD audio is always 44100hz stereo 16-bit. That's 176400 bytes per second. So dividing the track length by 176400 gives the length in seconds. 
-      int cdLength = BassCd.BASS_CD_GetTrackLength(bassDrive, BassTrackNo);
+      int cdLength = BassCd.GetTrackLength(bassDrive, BassTrackNo);
       _length = TimeSpan.FromSeconds((double)cdLength / 176400);
     }
 
@@ -165,16 +165,16 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     {
       Log.Debug("BassCDTrackInputSource.Initialize()");
 
-      Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_CD_FREEOLD, false);
+      Bass.Configure(Configuration.CDFreeOld, false);
 
-      const BASSFlag flags = BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT;
+      const BassFlags flags = BassFlags.Decode | BassFlags.Float;
 
       int bassDrive = BassUtils.Drive2BassID(_drive);
-      int handle = BassCd.BASS_CD_StreamCreate(bassDrive, BassTrackNo, flags);
+      int handle = BassCd.CreateStream(bassDrive, BassTrackNo, flags);
 
       if (handle == 0)
       {
-        if (Bass.BASS_ErrorGetCode() == BASSError.BASS_ERROR_ALREADY)
+        if (Bass.LastError == Errors.Already)
           // Drive is already playing - stream must be lazily initialized
           return;
         throw new BassLibraryException("BASS_CD_StreamCreate");

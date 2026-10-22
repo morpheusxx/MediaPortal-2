@@ -29,7 +29,7 @@ using System.Threading;
 using MediaPortal.Utilities;
 using MediaPortal.Utilities.FileSystem;
 using MediaPortal.Utilities.SystemAPI;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.Extensions.BassLibraries
 {
@@ -58,10 +58,8 @@ namespace MediaPortal.Extensions.BassLibraries
     {
       lock (_syncObj)
       {
-        string absolutePlatformDir;
-        if (!NativeMethods.SetPlatformSearchDirectories(out absolutePlatformDir))
-          throw new Exception("Error adding dll probe path");
-        string playerPluginsDirectory = Path.Combine(absolutePlatformDir, "Plugins");
+        BassNativeLibrary.Install();
+        string playerPluginsDirectory = BassNativeLibrary.PluginsDirectory;
         var bassLibraryManager = new BassLibraryManager();
         bassLibraryManager.Initialize(playerPluginsDirectory);
         return bassLibraryManager;
@@ -82,19 +80,16 @@ namespace MediaPortal.Extensions.BassLibraries
       if (_refCount > 1)
         return;
 
-      // Register BASS.Net, necessary to avoid splash screen
-      BassRegistration.BassRegistration.Register();
-
       // Initialize the NoSound device to enable calling BASS functions before our output device is properly initialized
-      if (!Bass.BASS_Init(BassConstants.BassNoSoundDevice, 44100, 0, IntPtr.Zero))
+      if (!Bass.Init(BassConstants.BassNoSoundDevice, 44100, DeviceInitFlags.Default, IntPtr.Zero))
         throw new BassLibraryException("BASS_Init");
 
       // Set volume to linear scale as requested by the IVolumeControl interface
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_CURVE_VOL, false))
+      if (!Bass.Configure(Configuration.LogarithmicVolumeCurve, false))
         throw new BassLibraryException("BASS_SetConfig");
 
       // Disable update thread while the player is not running
-      if (!Bass.BASS_SetConfig(BASSConfig.BASS_CONFIG_UPDATEPERIOD, 0))
+      if (!Bass.Configure(Configuration.UpdatePeriod, 0))
         throw new BassLibraryException("BASS_SetConfig");
 
       LoadPlugins(playerPluginsDirectory);
@@ -115,16 +110,24 @@ namespace MediaPortal.Extensions.BassLibraries
       string currentDirectory = Directory.GetCurrentDirectory();
       Directory.SetCurrentDirectory(playerPluginsDirectory);
 
-      IDictionary<int, string> plugins = Bass.BASS_PluginLoadDirectory(playerPluginsDirectory);
-      if (plugins != null)
-        foreach (string pluginFile in plugins.Values)
-          Log.Debug("Loaded plugin '{0}'", pluginFile);
-      CollectionUtils.AddAll(_decoderPluginHandles, plugins.Keys);
+      int loaded = 0;
+      foreach (string pluginFile in Directory.GetFiles(playerPluginsDirectory, BassNativeLibrary.PluginFilePattern))
+      {
+        int handle = Bass.PluginLoad(pluginFile);
+        if (handle == 0)
+        {
+          Log.Debug("Unable to load plugin '{0}': {1}", pluginFile, Bass.LastError); // Probably loaded already or not a BASS add-in
+          continue;
+        }
+        Log.Debug("Loaded plugin '{0}'", pluginFile);
+        _decoderPluginHandles.Add(handle);
+        loaded++;
+      }
 
-      if (plugins.Count == 0)
+      if (loaded == 0)
         Log.Info("No audio decoders loaded; probably already loaded.");
       else
-        Log.Info("Loaded {0} audio decoders.", plugins.Count);
+        Log.Info("Loaded {0} audio decoders.", loaded);
 
       Directory.SetCurrentDirectory(currentDirectory);
     }
@@ -144,14 +147,15 @@ namespace MediaPortal.Extensions.BassLibraries
 
         Log.Debug("Unloading all BASS player plugins");
         foreach (int pluginHandle in _decoderPluginHandles)
-          Bass.BASS_PluginFree(pluginHandle);
+          Bass.PluginFree(pluginHandle);
         _decoderPluginHandles.Clear();
 
         // Free the NoSound device
-        if (!Bass.BASS_SetDevice(BassConstants.BassNoSoundDevice))
+        Bass.CurrentDevice = BassConstants.BassNoSoundDevice;
+        if (Bass.LastError != Errors.OK)
           throw new BassLibraryException("BASS_SetDevice");
 
-        if (!Bass.BASS_Free())
+        if (!Bass.Free())
           throw new BassLibraryException("BASS_Free");
       }
     }

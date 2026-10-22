@@ -27,9 +27,6 @@
     <ProjectReference Include="..\OnlineLibraries\OnlineLibraries.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BASS.NET">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
   </ItemGroup>

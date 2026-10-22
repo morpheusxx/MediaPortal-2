@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
 {
@@ -179,7 +179,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
     protected virtual int WriteOutputStream(IntPtr buffer, int requestedBytes)
     {
       if (_deviceState == DeviceState.Stopped || _outputStreamEnded)
-        return (int)BASSStreamProc.BASS_STREAMPROC_END;
+        return BassConstants.StreamProcedureEnd;
 
       int read = ReadStream.Read(buffer, requestedBytes);
       if (read != -1)

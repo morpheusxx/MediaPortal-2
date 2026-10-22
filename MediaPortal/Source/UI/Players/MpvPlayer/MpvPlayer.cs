@@ -32,10 +32,12 @@ using MediaPortal.Common;
 using MediaPortal.Common.Logging;
 using MediaPortal.Common.MediaManagement;
 using MediaPortal.Common.ResourceAccess;
+using MediaPortal.Common.Settings;
 using MediaPortal.UI.Players.Mpv.Interop;
 using MediaPortal.UI.Presentation.Geometries;
 using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Players.ResumeState;
+using MediaPortal.UI.Settings;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.Players;
@@ -151,6 +153,7 @@ namespace MediaPortal.UI.Players.Mpv
         SetOption(option.Key, option.Value);
       Check(LibMpv.mpv_initialize(_handle), "mpv_initialize");
       LibMpv.mpv_request_log_messages(_handle, "warn");
+      SelectAudioDevice();
 
       // The render context has to be created in the render thread
       Exception renderException = null;
@@ -223,6 +226,33 @@ namespace MediaPortal.UI.Players.Mpv
     private static ILogger Logger
     {
       get { return ServiceRegistration.Get<ILogger>(); }
+    }
+
+    /// <summary>
+    /// Selects the audio device which is configured in the <see cref="AudioOutputSettings"/>, the default device of the system if none is configured.
+    /// The configured name is matched against the descriptions and names of the devices which libmpv knows.
+    /// </summary>
+    private void SelectAudioDevice()
+    {
+      string wanted = ServiceRegistration.Get<ISettingsManager>().Load<AudioOutputSettings>().AudioDevice;
+      if (string.IsNullOrWhiteSpace(wanted))
+        return;
+      List<string> names = new List<string>();
+      List<string> descriptions = new List<string>();
+      long count = GetLong("audio-device-list/count") ?? 0;
+      for (int i = 0; i < count; i++)
+      {
+        names.Add(GetString("audio-device-list/" + i + "/name"));
+        descriptions.Add(GetString("audio-device-list/" + i + "/description"));
+      }
+      int index = AudioDeviceMatcher.Find(wanted, descriptions);
+      if (index < 0)
+        index = AudioDeviceMatcher.Find(wanted, names);
+      if (index >= 0 && SetProperty("audio-device", names[index]))
+        Logger.Info("MpvPlayer: Using audio device '{0}' ({1})", descriptions[index], names[index]);
+      else
+        Logger.Warn("MpvPlayer: The audio device '{0}' does not exist or is ambiguous, using the default device. Available devices: {1}", wanted,
+            string.Join("; ", descriptions));
     }
 
     private void SetOption(string name, string value)

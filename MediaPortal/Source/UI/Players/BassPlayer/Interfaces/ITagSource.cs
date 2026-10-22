@@ -22,7 +22,6 @@
 
 #endregion
 
-using Un4seen.Bass.AddOn.Tags;
 
 namespace MediaPortal.UI.Players.BassPlayer.Interfaces
 {
@@ -35,6 +34,6 @@ namespace MediaPortal.UI.Players.BassPlayer.Interfaces
     /// Gets tags from current source, which contain information about artist and title. This is mainly important for streams where this information will
     /// change regulary.
     /// </summary>
-    TAG_INFO Tags { get; }
+    TagInfo Tags { get; }
   }
 }

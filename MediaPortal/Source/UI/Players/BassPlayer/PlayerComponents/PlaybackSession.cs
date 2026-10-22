@@ -27,7 +27,7 @@ using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.InputSources;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 {
@@ -69,7 +69,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     protected UpDownMixer _upDownMixer;
     protected VSTProcessor _vstProcessor;
     protected WinAmpDSPProcessor _winAmpDSPProcessor;
-    protected readonly STREAMPROC _streamWriteProcDelegate;
+    protected readonly StreamProcedure _streamWriteProcDelegate;
 
     #endregion
 
@@ -284,9 +284,9 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
       Log.Debug("PlaybackSession: Creating output stream");
 
-      const BASSFlag flags = BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_DECODE;
+      const BassFlags flags = BassFlags.Float | BassFlags.Decode;
 
-      int handle = Bass.BASS_StreamCreate(
+      int handle = Bass.CreateStream(
           _currentInputSource.OutputStream.SampleRate,
           _currentInputSource.OutputStream.Channels,
           flags,
@@ -327,7 +327,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
         if (inputSource == null)
         {
           _state = SessionState.Ended;
-          return (int) BASSStreamProc.BASS_STREAMPROC_END;
+          return BassConstants.StreamProcedureEnd;
         }
       }
 
@@ -375,7 +375,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
           if (newInputSource == null)
           {
             _state = SessionState.Ended;
-            return (int) BASSStreamProc.BASS_STREAMPROC_END;
+            return BassConstants.StreamProcedureEnd;
           }
         }
 
@@ -383,7 +383,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
         { // The next available input source is not compatible, so end our stream. The playback processor will start a new playback session later.
           lock (_syncObj)
             _state = SessionState.Ended;
-          return (int) BASSStreamProc.BASS_STREAMPROC_END;
+          return BassConstants.StreamProcedureEnd;
         }
         _playbackProcessor.ClearNextInputSource(); // Should be the contents of newInputSource
         lock (_syncObj)

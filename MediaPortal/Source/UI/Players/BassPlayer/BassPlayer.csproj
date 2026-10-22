@@ -1,12 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.UI.Players.BassPlayer</RootNamespace>
     <OldToolsVersion>3.5</OldToolsVersion>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\..\</SolutionDir>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>true</UseWindowsForms>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
@@ -28,12 +27,6 @@
     <Content Include="plugin.xml" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="BASS.NET">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
-    <PackageReference Include="BassRegistration">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Skin\Nereus\screens\BassPlayerPlaybackBufferSetup.xaml">

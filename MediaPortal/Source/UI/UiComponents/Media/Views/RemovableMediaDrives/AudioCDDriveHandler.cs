@@ -34,7 +34,7 @@ using MediaPortal.Common.SystemResolver;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.Extensions.ResourceProviders.AudioCDResourceProvider;
 using MediaPortal.Utilities.FileSystem;
-using Un4seen.Bass.AddOn.Cd;
+using ManagedBass.Cd;
 
 namespace MediaPortal.UiComponents.Media.Views.RemovableMediaDrives
 {
@@ -117,16 +117,16 @@ namespace MediaPortal.UiComponents.Media.Views.RemovableMediaDrives
         int driveId = BassUtils.Drive2BassID(driveChar);
         if (driveId > -1)
         {
-          BASS_CD_INFO info = BassCd.BASS_CD_GetInfo(driveId);
-          if(info.cdtext)
+          CDInfo info = BassCd.GetInfo(driveId);
+          if (info.CDText)
           {
-            string[] tags = BassCd.BASS_CD_GetIDText(driveId);
+            string[] tags = BassCd.GetIDText(driveId);
             string album = GetCDText(tags, "TITLE");
             string albumArtist = GetCDText(tags, "PERFORMER");
             foreach (BassUtils.AudioTrack track in audioTracks)
             {
               tracks.Add(CreateMediaItem(track, driveChar, audioTracks.Count, systemId, album, albumArtist, 
-                album, albumArtist, irsc: BassCd.BASS_CD_GetISRC(driveId, track.TrackNo - 1)));
+                album, albumArtist, irsc: BassCd.GetID(driveId, CDID.ISRC + (track.TrackNo - 1))));
             }
           }
           else
@@ -134,10 +134,10 @@ namespace MediaPortal.UiComponents.Media.Views.RemovableMediaDrives
             foreach (BassUtils.AudioTrack track in audioTracks)
             {
               tracks.Add(CreateMediaItem(track, driveChar, audioTracks.Count, systemId, 
-                irsc: BassCd.BASS_CD_GetISRC(driveId, track.TrackNo - 1)));
+                irsc: BassCd.GetID(driveId, CDID.ISRC + (track.TrackNo - 1))));
             }
           }
-          BassCd.BASS_CD_Release(driveId);
+          BassCd.Release(driveId);
         }
         else
         {

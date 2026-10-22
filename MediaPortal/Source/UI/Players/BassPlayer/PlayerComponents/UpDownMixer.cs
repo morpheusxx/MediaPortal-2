@@ -26,8 +26,8 @@
 
 using System;
 using MediaPortal.Extensions.BassLibraries;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Mix;
+using ManagedBass;
+using ManagedBass.Mix;
 
 namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 {
@@ -45,7 +45,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     private int _mixerHandle = 0;
     private float[,] _mixingMatrix = null;
 
-    private const BASSFlag MIXER_FLAGS = BASSFlag.BASS_MIXER_NONSTOP | BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_STREAM_DECODE;
+    private const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerNoRampin | BassFlags.Decode;
 
     #endregion
 
@@ -159,7 +159,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     /// </summary>
     private void CreateMixer(int channels)
     {
-      _mixerHandle = BassMix.BASS_Mixer_StreamCreate(_inputStream.SampleRate, channels, MIXER_FLAGS);
+      _mixerHandle = BassMix.CreateMixerStream(_inputStream.SampleRate, channels, MIXER_FLAGS);
       if (_mixerHandle == BassConstants.BassInvalidHandle)
         throw new BassLibraryException("BASS_Mixer_StreamCreate");
 
@@ -168,24 +168,24 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
       // Now Attach the Input Stream to the mixer
       try
       {
-        Bass.BASS_ChannelLock(_mixerHandle, true);
+        Bass.ChannelLock(_mixerHandle, true);
 
-        bool result = BassMix.BASS_Mixer_StreamAddChannel(_mixerHandle, _inputStream.Handle,
-                                          BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_MIXER_BUFFER |
-                                          BASSFlag.BASS_MIXER_MATRIX | BASSFlag.BASS_MIXER_DOWNMIX |
-                                          BASSFlag.BASS_STREAM_AUTOFREE
+        bool result = BassMix.MixerAddChannel(_mixerHandle, _inputStream.Handle,
+                                          BassFlags.MixerNoRampin | BassFlags.MixerBuffer |
+                                          BassFlags.MixerMatrix | BassFlags.MixerDownMix |
+                                          BassFlags.AutoFree
                                           );
         if (!result)
           throw new BassLibraryException("BASS_UpDownMix_StreamAddChannel");
       }
       finally
       {
-        Bass.BASS_ChannelLock(_mixerHandle, false);
+        Bass.ChannelLock(_mixerHandle, false);
       }
 
       if (_mixingMatrix != null)
       {
-        bool result = BassMix.BASS_Mixer_ChannelSetMatrix(_inputStream.Handle, _mixingMatrix);
+        bool result = BassMix.ChannelSetMatrix(_inputStream.Handle, _mixingMatrix);
         if (!result)
           throw new BassLibraryException("BASS_UpDownMix_SetMixingMatrix");
       }

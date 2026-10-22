@@ -62,7 +62,9 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
       IOutputDevice outputDevice;
       BassPlayerSettings settings = Controller.GetSettings();
 
-      switch (settings.OutputMode)
+      // WASAPI and the DirectSound specific settings exist on Windows only, the other platforms use the default BASS output
+      OutputMode mode = OperatingSystem.IsWindows() ? settings.OutputMode : OutputMode.DirectSound;
+      switch (mode)
       {
         case OutputMode.DirectSound:
           outputDevice = new DirectXOutputDevice(_controller);
@@ -71,7 +73,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
           outputDevice = new WASAPIOutputDevice(_controller);
           break;
         default:
-          throw new BassPlayerException(String.Format("Unimplemented audio output mode {0}", settings.OutputMode));
+          throw new BassPlayerException(String.Format("Unimplemented audio output mode {0}", mode));
       }
       return outputDevice;
     }

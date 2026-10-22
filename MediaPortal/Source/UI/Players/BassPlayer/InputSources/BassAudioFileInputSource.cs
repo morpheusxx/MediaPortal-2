@@ -29,7 +29,7 @@ using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.InputSources
 {
@@ -43,17 +43,17 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
   internal class BassAudioFileInputSource : AbstractBassResourceInputSource, IInputSource
   {
     /// <summary>
-    /// Encapsulates stream access methods for a <see cref="BASS_FILEPROCS"/> instance.
+    /// Encapsulates stream access methods for a <see cref="FileProcedures"/> instance.
     /// </summary>
     protected class StreamInput
     {
       private readonly Stream _inputStream;
-      private readonly BASS_FILEPROCS _fileProcs;
+      private readonly FileProcedures _fileProcs;
 
       public StreamInput(Stream inputStream)
       {
         _inputStream = inputStream;
-        _fileProcs = new BASS_FILEPROCS(CloseCallback, LengthCalback, ReadCallback, SeekCallback);
+        _fileProcs = new FileProcedures { Close = CloseCallback, Length = LengthCalback, Read = ReadCallback, Seek = SeekCallback };
       }
 
       private bool SeekCallback(long offset, IntPtr user)
@@ -71,7 +71,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
 
       private int ReadCallback(IntPtr buffer, int length, IntPtr user)
       {
-        // Code taken from BASS help for BASS_FILEPROCS class
+        // Code taken from BASS help for FileProcedures class
         try
         {
           // At first we need to create a byte[] with the size of the requested length
@@ -95,7 +95,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
         _inputStream.Close();
       }
 
-      public BASS_FILEPROCS FileProcs
+      public FileProcedures FileProcs
       {
         get { return _fileProcs; }
       }
@@ -165,20 +165,20 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     {
       Log.Debug("BassAudioFileInputSource.Initialize()");
 
-      BASSFlag flags = BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT;
+      BassFlags flags = BassFlags.Decode | BassFlags.Float;
 
       int handle;
       ILocalFsResourceAccessor lfra = _accessor as ILocalFsResourceAccessor;
       if (lfra == null)
       { // Build stream reading procs for the resource's input stream
-        flags |= BASSFlag.BASS_STREAM_PRESCAN;
+        flags |= BassFlags.Prescan;
         _streamInput = new StreamInput(_accessor.OpenRead());
-        handle = Bass.BASS_StreamCreateFileUser(
-            BASSStreamSystem.STREAMFILE_NOBUFFER, flags, _streamInput.FileProcs, IntPtr.Zero);
+        handle = Bass.CreateStream(
+            StreamSystem.NoBuffer, flags, _streamInput.FileProcs, IntPtr.Zero);
       }
       else
         // Optimize access to local filesystem resource
-        handle = lfra.RunWithLocalFileSystemAccess(() => Bass.BASS_StreamCreateFile(lfra.LocalFileSystemPath, 0, 0, flags));
+        handle = lfra.RunWithLocalFileSystemAccess(() => Bass.CreateStream(lfra.LocalFileSystemPath, 0, 0, flags));
 
       if (handle == BassConstants.BassInvalidHandle)
         throw new BassLibraryException("BASS_StreamCreateFile");

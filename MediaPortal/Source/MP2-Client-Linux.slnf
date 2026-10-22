@@ -58,6 +58,7 @@
       "Main\\MediaPortal.Client\\MediaPortal.Client.csproj",
       "UI\\FanArt\\FanArtService.Client\\FanArtService.Client.csproj",
       "UI\\FanArt\\FanArtService.Interfaces\\FanArtService.Interfaces.csproj",
+      "UI\\Players\\BassPlayer\\BassPlayer.csproj",
       "UI\\Players\\ImagePlayer\\ImagePlayer.csproj",
       "UI\\Players\\MpvPlayer\\MpvPlayer.csproj",
       "UI\\SkinEngine\\SkinEngine.csproj",

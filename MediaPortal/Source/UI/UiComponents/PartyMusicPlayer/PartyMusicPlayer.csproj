@@ -8,7 +8,6 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BASS.NET" Version="2.4.14.1" />
     <ProjectReference Include="..\..\..\Extensions\BassLibraries\BassLibraries.csproj" />
     <ProjectReference Include="..\..\..\Extensions\ResourceProviders\AudioCDResourceProvider\AudioCDResourceProvider.csproj" />
     <ProjectReference Include="..\..\..\Core\MediaPortal.Common\MediaPortal.Common.csproj" />

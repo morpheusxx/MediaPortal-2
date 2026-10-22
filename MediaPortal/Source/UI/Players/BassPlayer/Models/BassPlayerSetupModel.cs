@@ -36,8 +36,8 @@ using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UiComponents.SkinBase.General;
 using MediaPortal.UI.Players.BassPlayer.OutputDevices;
 using MediaPortal.UI.Players.BassPlayer.Settings;
-using Un4seen.Bass;
-using Un4seen.BassWasapi;
+using ManagedBass;
+using ManagedBass.Wasapi;
 
 namespace MediaPortal.UI.Players.BassPlayer.Models
 {
@@ -157,28 +157,30 @@ namespace MediaPortal.UI.Players.BassPlayer.Models
       UseDirectSound = settings.OutputMode == OutputMode.DirectSound;
       UseWASAPI = settings.OutputMode == OutputMode.WASAPI;
       FillDirectSoundDeviceList();
-      FillWASAPIDeviceList();
+      if (OperatingSystem.IsWindows())
+        FillWASAPIDeviceList();
     }
 
     private void FillWASAPIDeviceList()
     {
       _WASAPIDevices.Clear();
       BassPlayerSettings settings = Controller.GetSettings();
-      BASS_WASAPI_DEVICEINFO[] deviceDescriptions = BassWasapi.BASS_WASAPI_GetDeviceInfos();
-      for (int i = 0; i < deviceDescriptions.Length; i++)
+      for (int i = 0; i < BassWasapi.DeviceCount; i++)
       {
         // Skip input devices, they have same name as output devices.
-        BASS_WASAPI_DEVICEINFO deviceInfo = deviceDescriptions[i];
+        WasapiDeviceInfo deviceInfo;
+        if (!BassWasapi.GetDeviceInfo(i, out deviceInfo))
+          continue;
         bool skip = !WASAPIOutputDevice.IsValidDevice(deviceInfo);
 
-        ServiceRegistration.Get<ILogger>().Debug("{5} WASAPI Device {0}: '{1}' Flags: {2} Device path: [{3}] Ch: {4}", i, deviceInfo.name, deviceInfo.flags, deviceInfo.id, deviceInfo.mixchans,
+        ServiceRegistration.Get<ILogger>().Debug("{5} WASAPI Device {0}: '{1}' Flags: {2} Device path: [{3}] Ch: {4}", i, deviceInfo.Name, deviceInfo.Type, deviceInfo.ID, deviceInfo.MixChannels,
           skip ? "Skip" : "Use ");
         if (skip)
           continue;
 
-        ListItem deviceItem = new ListItem(Consts.KEY_NAME, deviceInfo.name)
+        ListItem deviceItem = new ListItem(Consts.KEY_NAME, deviceInfo.Name)
         {
-          Selected = deviceInfo.name == settings.WASAPIDevice
+          Selected = deviceInfo.Name == settings.WASAPIDevice
         };
         deviceItem.SelectedProperty.Attach(delegate
         {
@@ -195,14 +197,15 @@ namespace MediaPortal.UI.Players.BassPlayer.Models
     {
       _directSoundDevices.Clear();
       BassPlayerSettings settings = Controller.GetSettings();
-      BASS_DEVICEINFO[] deviceDescriptions = Bass.BASS_GetDeviceInfos();
-      for (int i = 0; i < deviceDescriptions.Length; i++)
+      for (int i = 0; i < Bass.DeviceCount; i++)
       {
-        BASS_DEVICEINFO deviceInfo = deviceDescriptions[i];
+        ManagedBass.DeviceInfo deviceInfo;
+        if (!Bass.GetDeviceInfo(i, out deviceInfo))
+          continue;
 
-        ListItem deviceItem = new ListItem(Consts.KEY_NAME, deviceInfo.name)
+        ListItem deviceItem = new ListItem(Consts.KEY_NAME, deviceInfo.Name)
         {
-          Selected = deviceInfo.name == settings.DirectSoundDevice
+          Selected = deviceInfo.Name == settings.DirectSoundDevice
         };
         deviceItem.SelectedProperty.Attach(delegate
         {

@@ -30,5 +30,10 @@ namespace MediaPortal.Extensions.BassLibraries
     public const int BassDefaultDevice = -1;
     public const int BassNoSoundDevice = 0;
     public const int BassInvalidHandle = 0;
+
+    /// <summary>
+    /// Return value of a stream procedure to signal the end of the stream (BASS_STREAMPROC_END).
+    /// </summary>
+    public const int StreamProcedureEnd = unchecked((int) 0x80000000);
   }
 }

@@ -30,15 +30,25 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <!-- Native Windows libraries (bass.dll, add-ins, ...) -->
     <PackageReference Include="BASSCombined">
       <Version>2.4.15</Version>
     </PackageReference>
-    <PackageReference Include="BASS.NET">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
-    <PackageReference Include="BassRegistration">
-      <Version>2.4.14.1</Version>
-    </PackageReference>
+    <PackageReference Include="ManagedBass" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Mix" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Wasapi" Version="4.0.2" />
+    <PackageReference Include="ManagedBass.Cd" Version="4.0.2" />
+  </ItemGroup>
+  <PropertyGroup>
+    <!-- Native libraries of Linux and macOS: package MediaPortal.Native.Bass (Build\native\bass). Until it is published on the Team MediaPortal feed it can be created locally
+         with build-package.py; it is then found in the folder "feed". Set -p:UseBassNativePackage=true to require it (CI). -->
+    <BassNativeVersion>2.4.0.20261022</BassNativeVersion>
+    <BassPackageFeed>$(MSBuildThisFileDirectory)..\..\..\Build\native\bass\feed</BassPackageFeed>
+    <UseBassNativePackage Condition="'$(UseBassNativePackage)' == '' And Exists('$(BassPackageFeed)\MediaPortal.Native.Bass.$(BassNativeVersion).nupkg')">true</UseBassNativePackage>
+    <RestoreAdditionalProjectSources Condition="Exists('$(BassPackageFeed)')">$(RestoreAdditionalProjectSources);$(BassPackageFeed)</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(UseBassNativePackage)' == 'true'">
+    <PackageReference Include="MediaPortal.Native.Bass" Version="$(BassNativeVersion)" GeneratePathProperty="true" ExcludeAssets="native;runtime;compile" PrivateAssets="all" />
   </ItemGroup>
   <Import Project="build.targets" />
 </Project>

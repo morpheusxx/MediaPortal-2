@@ -26,7 +26,7 @@ using MediaPortal.Common.MediaManagement.Helpers;
 using MediaPortal.Extensions.BassLibraries;
 using System.Collections.Generic;
 using System.IO;
-using Un4seen.Bass.AddOn.Cd;
+using ManagedBass.Cd;
 
 namespace MediaPortal.Extensions.MetadataExtractors.AudioMetadataExtractor.Matchers
 {
@@ -57,11 +57,11 @@ namespace MediaPortal.Extensions.MetadataExtractors.AudioMetadataExtractor.Match
         int drive = BassUtils.Drive2BassID(rootLetter);
         if (drive > -1)
         {
-          string cdDbId = BassCd.BASS_CD_GetID(drive, BASSCDId.BASS_CDID_CDDB);
-          string musicBrainzId = BassCd.BASS_CD_GetID(drive, BASSCDId.BASS_CDID_MUSICBRAINZ);
-          string upc = BassCd.BASS_CD_GetID(drive, BASSCDId.BASS_CDID_UPC);
-          string irsc = BassCd.BASS_CD_GetID(drive, BASSCDId.BASS_CDID_ISRC + (trackNo - 1));
-          BassCd.BASS_CD_Release(drive);
+          string cdDbId = BassCd.GetID(drive, CDID.CDDB);
+          string musicBrainzId = BassCd.GetID(drive, CDID.MusicBrainz);
+          string upc = BassCd.GetID(drive, CDID.UPC);
+          string irsc = BassCd.GetID(drive, CDID.ISRC + (trackNo - 1));
+          BassCd.Release(drive);
 
           if (!string.IsNullOrEmpty(cdDbId)) trackInfo.AlbumCdDdId = cdDbId;
           if (!string.IsNullOrEmpty(musicBrainzId)) trackInfo.AlbumMusicBrainzDiscId = musicBrainzId;

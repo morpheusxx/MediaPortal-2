@@ -39,7 +39,6 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Un4seen.Bass.AddOn.Tags;
 
 namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
 {
@@ -119,7 +118,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
 
       try
       {
-        TAG_INFO tags = fsra.RunWithLocalFileSystemAccess(() => BassTags.BASS_TAG_GetFromFile(fsra.LocalFileSystemPath));
+        AudioFileTags tags = fsra.RunWithLocalFileSystemAccess(() => AudioFileTags.Read(fsra.LocalFileSystemPath));
         if (tags == null)
           return false;
 
@@ -128,20 +127,20 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
         string artist;
         uint? trackNo;
         GuessMetadataFromFileName(fileName, out title, out artist, out trackNo);
-        if (!string.IsNullOrWhiteSpace(tags.title))
-          title = tags.title;
+        if (!string.IsNullOrWhiteSpace(tags.Title))
+          title = tags.Title;
         IEnumerable<string> artists;
-        if (!string.IsNullOrWhiteSpace(tags.artist))
+        if (!string.IsNullOrWhiteSpace(tags.Artist))
         {
-          artists = SplitTagEnum(tags.artist);
+          artists = SplitTagEnum(tags.Artist);
           artists = PatchID3v23Enumeration(artists);
         }
         else
           artists = artist == null ? null : new string[] { artist };
-        if (!string.IsNullOrWhiteSpace(tags.track) && tags.track != "0")
+        if (!string.IsNullOrWhiteSpace(tags.Track) && tags.Track != "0")
         {
           int iTrackNo;
-          if (int.TryParse(tags.track, out iTrackNo))
+          if (int.TryParse(tags.Track, out iTrackNo))
             trackNo = (uint?)iTrackNo;
           else
             trackNo = null;
@@ -164,15 +163,15 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
             // Calling EnsureLocalFileSystemAccess not necessary; only string operation
             providerResourceAspect[0].SetAttribute(ProviderResourceAspect.ATTR_MIME_TYPE, "audio/" + Path.GetExtension(fsra.LocalFileSystemPath).Substring(1));
           }
-          MediaItemAspect.SetAttribute(extractedAspectData, AudioAspect.ATTR_BITRATE, tags.bitrate);
-          MediaItemAspect.SetAttribute(extractedAspectData, MediaAspect.ATTR_COMMENT, StringUtils.TrimToNull(tags.comment));
-          MediaItemAspect.SetAttribute(extractedAspectData, AudioAspect.ATTR_DURATION, (long)tags.duration);
+          MediaItemAspect.SetAttribute(extractedAspectData, AudioAspect.ATTR_BITRATE, tags.Bitrate);
+          MediaItemAspect.SetAttribute(extractedAspectData, MediaAspect.ATTR_COMMENT, StringUtils.TrimToNull(tags.Comment));
+          MediaItemAspect.SetAttribute(extractedAspectData, AudioAspect.ATTR_DURATION, (long)tags.Duration);
         }
 
         if (!trackInfo.IsBaseInfoPresent)
         {
           trackInfo.TrackName = title;
-          trackInfo.Album = StringUtils.TrimToNull(tags.album);
+          trackInfo.Album = StringUtils.TrimToNull(tags.Album);
           if (trackNo.HasValue)
             trackInfo.TrackNum = (int)trackNo.Value;
 
@@ -188,7 +187,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
             });
           }
 
-          IEnumerable<string> albumArtists = SplitTagEnum(tags.albumartist);
+          IEnumerable<string> albumArtists = SplitTagEnum(tags.AlbumArtist);
           albumArtists = PatchID3v23Enumeration(albumArtists);
           trackInfo.AlbumArtists = new List<PersonInfo>();
           foreach (string artistName in ApplyAdditionalSeparator(albumArtists))
@@ -202,7 +201,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
             });
           }
 
-          IEnumerable<string> composers = SplitTagEnum(tags.composer);
+          IEnumerable<string> composers = SplitTagEnum(tags.Composer);
           composers = PatchID3v23Enumeration(composers);
           trackInfo.Composers = new List<PersonInfo>();
           foreach (string composerName in ApplyAdditionalSeparator(composers))
@@ -216,7 +215,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
             });
           }
 
-          IEnumerable<string> genres = SplitTagEnum(tags.genre);
+          IEnumerable<string> genres = SplitTagEnum(tags.Genre);
           genres = PatchID3v23Enumeration(genres);
           trackInfo.Genres = ApplyAdditionalSeparator(genres).Where(s => !string.IsNullOrEmpty(s?.Trim())).Select(s => new GenreInfo { Name = s.Trim() }).ToList();
           IGenreConverter converter = ServiceRegistration.Get<IGenreConverter>();
@@ -227,7 +226,7 @@ namespace MediaPortal.Extensions.MetadataExtractors.BassAudioMetadataExtractor
           }
 
           int year;
-          if (int.TryParse(tags.year, out year))
+          if (int.TryParse(tags.Year, out year))
           {
             if (year >= 30 && year <= 99)
               year += 1900;

@@ -28,7 +28,7 @@ using MediaPortal.Common.ResourceAccess;
 using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Interfaces;
 using MediaPortal.UI.Players.BassPlayer.Utils;
-using Un4seen.Bass;
+using ManagedBass;
 
 namespace MediaPortal.UI.Players.BassPlayer.InputSources
 {
@@ -86,7 +86,7 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
       base.Dispose();
       if (_bassStream != null)
         _bassStream.Dispose();
-      // Bass.BASS_MusicFree is not necessary to be called here because of flag BASS_MUSIC_AUTOFREE
+      // Bass.MusicFree is not necessary to be called here because of flag BASS_MUSIC_AUTOFREE
     }
 
     #endregion
@@ -106,8 +106,8 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
     {
       Log.Debug("BassMODFileInputSource.Initialize()");
 
-      const BASSFlag flags = BASSFlag.BASS_SAMPLE_SOFTWARE | BASSFlag.BASS_SAMPLE_FLOAT |
-          BASSFlag.BASS_MUSIC_AUTOFREE | BASSFlag.BASS_MUSIC_PRESCAN;
+      const BassFlags flags = BassFlags.SoftwareMixing | BassFlags.Float |
+          BassFlags.AutoFree | BassFlags.Prescan;
 
       int handle;
       ILocalFsResourceAccessor lfra = _accessor as ILocalFsResourceAccessor;
@@ -117,11 +117,11 @@ namespace MediaPortal.UI.Players.BassPlayer.InputSources
         int length = (int)inputStream.Length;
         byte[] audioData = new byte[length];
         inputStream.Read(audioData, 0, length);
-        handle = Bass.BASS_MusicLoad(audioData, 0, length, flags, 0);
+        handle = Bass.MusicLoad(audioData, 0, length, flags, 0);
       }
       else
         // Optimize access to local filesystem resource
-        handle = lfra.RunWithLocalFileSystemAccess(() => Bass.BASS_MusicLoad(lfra.LocalFileSystemPath, 0, 0, flags, 0));
+        handle = lfra.RunWithLocalFileSystemAccess(() => Bass.MusicLoad(lfra.LocalFileSystemPath, 0, 0, flags, 0));
 
       if (handle == BassConstants.BassInvalidHandle)
         throw new BassLibraryException("BASS_MusicLoad");

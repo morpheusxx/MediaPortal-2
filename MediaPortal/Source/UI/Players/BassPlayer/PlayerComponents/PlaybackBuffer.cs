@@ -30,8 +30,8 @@ using MediaPortal.Extensions.BassLibraries;
 using MediaPortal.UI.Players.BassPlayer.Settings;
 using MediaPortal.UI.Players.BassPlayer.Utils;
 using MediaPortal.UI.Presentation.Players;
-using Un4seen.Bass;
-using Un4seen.Bass.AddOn.Mix;
+using ManagedBass;
+using ManagedBass.Mix;
 
 namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 {
@@ -62,14 +62,14 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
     private readonly TimeSpan _bufferSize;
 
-    private readonly STREAMPROC _streamWriteProcDelegate;
-    private readonly STREAMPROC _vizRawStreamWriteProcDelegate;
+    private readonly StreamProcedure _streamWriteProcDelegate;
+    private readonly StreamProcedure _vizRawStreamWriteProcDelegate;
 
     private AudioRingBuffer _buffer;
     private readonly Silence _silence;
     private Thread _bufferUpdateThread = null;
 
-    private readonly int _maxFFT = (int)(BASSData.BASS_DATA_AVAILABLE | BASSData.BASS_DATA_FFT4096);
+    private readonly int _maxFFT = (int)(DataFlags.Available | DataFlags.FFT4096);
 
     #endregion
 
@@ -139,7 +139,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
       // If a Mixer has been created before, e.g. because of UpDownMixing,
       // use the mixer as output stream instead of using a Ringbuffer
-      if (stream.BassInfo.ctype == BASSChannelType.BASS_CTYPE_STREAM_MIXER)
+      if (stream.BassInfo.ChannelType == ChannelType.Mixer)
       {
         _outputStream = stream;
       }
@@ -202,9 +202,9 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
     private void CreateOutputStream()
     {
-      const BASSFlag flags = BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_DECODE;
+      const BassFlags flags = BassFlags.Float | BassFlags.Decode;
 
-      int handle = Bass.BASS_StreamCreate(
+      int handle = Bass.CreateStream(
           _inputStream.SampleRate,
           _inputStream.Channels,
           flags,
@@ -222,9 +222,9 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     /// </summary>
     private void CreateVizStream()
     {
-      BASSFlag streamFlags = BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT;
+      BassFlags streamFlags = BassFlags.Decode | BassFlags.Float;
 
-      int handle = Bass.BASS_StreamCreate(
+      int handle = Bass.CreateStream(
           _inputStream.SampleRate,
           _inputStream.Channels,
           streamFlags,
@@ -238,17 +238,17 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
       // Todo: apply AGC
 
-      streamFlags = BASSFlag.BASS_MIXER_NONSTOP | BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT;
+      streamFlags = BassFlags.MixerNonStop | BassFlags.Decode | BassFlags.Float;
 
-      handle = BassMix.BASS_Mixer_StreamCreate(_inputStream.SampleRate, 2, streamFlags);
+      handle = BassMix.CreateMixerStream(_inputStream.SampleRate, 2, streamFlags);
       if (handle == BassConstants.BassInvalidHandle)
         throw new BassLibraryException("BASS_StreamCreate");
 
       _vizStream = BassStream.Create(handle);
 
-      streamFlags = BASSFlag.BASS_MIXER_NORAMPIN | BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_MATRIX | BASSFlag.BASS_MIXER_BUFFER;
+      streamFlags = BassFlags.MixerNoRampin | BassFlags.MixerDownMix | BassFlags.MixerMatrix | BassFlags.MixerBuffer;
 
-      if (!BassMix.BASS_Mixer_StreamAddChannel(_vizStream.Handle, _vizRawStream.Handle, streamFlags))
+      if (!BassMix.MixerAddChannel(_vizStream.Handle, _vizRawStream.Handle, streamFlags))
         throw new BassLibraryException("BASS_Mixer_StreamAddChannel");
 
       // TODO Albert 2010-02-27: What is this?
@@ -258,7 +258,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
         mixMatrix[0, 0] = 1;
         mixMatrix[1, 0] = 1;
 
-        if (!BassMix.BASS_Mixer_ChannelSetMatrix(_vizRawStream.Handle, mixMatrix))
+        if (!BassMix.ChannelSetMatrix(_vizRawStream.Handle, mixMatrix))
           throw new BassLibraryException("BASS_Mixer_ChannelSetMatrix");
       }
     }
@@ -277,7 +277,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
         return 0;
 
       int read = _buffer.Read(buffer, requestedBytes / BassConstants.FloatBytes, 0);
-      int result = (read == 0 && _streamEnded) ? (int)BASSStreamProc.BASS_STREAMPROC_END : read * BassConstants.FloatBytes;
+      int result = (read == 0 && _streamEnded) ? BassConstants.StreamProcedureEnd : read * BassConstants.FloatBytes;
       _notifyBufferUpdateThread.Set();
       return result;
     }
@@ -298,7 +298,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
       if (_controller.Player.ExternalState == PlayerState.Active)
       {
         int read = _buffer.Peek(buffer, requestedBytes / BassConstants.FloatBytes, _vizReadOffsetBytes);
-        return (read == 0 && _streamEnded) ? (int)BASSStreamProc.BASS_STREAMPROC_END : read * BassConstants.FloatBytes;
+        return (read == 0 && _streamEnded) ? BassConstants.StreamProcedureEnd : read * BassConstants.FloatBytes;
       }
       return _silence.Write(buffer, requestedBytes);
     }
@@ -378,12 +378,12 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     public bool GetWaveData32(int length, out float[] waveData32)
     {
       waveData32 = new float[length];
-      return _vizStream != null && Bass.BASS_ChannelGetData(_vizStream.Handle, waveData32, length) == (int)BASSError.BASS_OK;
+      return _vizStream != null && Bass.ChannelGetData(_vizStream.Handle, waveData32, length) == (int)Errors.OK;
     }
 
     public bool GetFFTData(float[] fftDataBuffer)
     {
-      return _vizStream != null && Bass.BASS_ChannelGetData(_vizStream.Handle, fftDataBuffer, _maxFFT) > 0;
+      return _vizStream != null && Bass.ChannelGetData(_vizStream.Handle, fftDataBuffer, _maxFFT) > 0;
     }
 
     public bool GetFFTFrequencyIndex(int frequency, out int frequencyIndex)
@@ -391,7 +391,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
       frequencyIndex = 0;
       if (_vizStream == null)
         return false;
-      frequencyIndex = Un4seen.Bass.Utils.FFTFrequency2Index(frequency, 4096, _vizStream.SampleRate);
+      frequencyIndex = BassMath.FFTFrequency2Index(frequency, 4096, _vizStream.SampleRate);
       return true;
     }
 
@@ -401,9 +401,9 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
       dbLevelR = 0;
       if (_vizStream == null)
         return false;
-      var level = Bass.BASS_ChannelGetLevel(_vizStream.Handle);
-      dbLevelL = Un4seen.Bass.Utils.LevelToDB(Un4seen.Bass.Utils.LowWord32(level), 65535); // the left level
-      dbLevelR = Un4seen.Bass.Utils.LevelToDB(Un4seen.Bass.Utils.HighWord32(level), 65535); // the right level
+      var level = Bass.ChannelGetLevel(_vizStream.Handle);
+      dbLevelL = BassMath.LevelToDB(BassMath.LowWord32(level), 65535); // the left level
+      dbLevelR = BassMath.LevelToDB(BassMath.HighWord32(level), 65535); // the right level
       return true;
     }
 

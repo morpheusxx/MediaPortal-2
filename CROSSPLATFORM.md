@@ -169,6 +169,19 @@ cd MediaPortal/Bin/MP2-Client/bin/Debug && dotnet MP2-Client.dll -d ~/mp2data
 an image plays, `~/mp2data/Log/Client.log` has no new errors. Expected problems: fonts of the skins, native libraries (GLFW/Skia) not found in plugin folders (`NativeLibraryHelper`), Windows-only services (Dokan) still being started,
 remaining `\` in plugin/file paths, mouse wheel and window mode switching, `mpv` audio device selection.
 
+### Audio: BASS.NET -> ManagedBass (2026-10-22)
+
+- BASS.NET and BassRegistration are removed. `BassLibraries`, `BassPlayer`, `AudioMetadataExtractor`, `BassAudioMetadataExtractor`, `Media`, `Webradio` use **ManagedBass 4.0.2** (MIT; `.Mix`, `.Wasapi`, `.Cd`). `BassPlayer` is plain `net10.0`.
+- Native libraries: `BassNativeLibrary` (BassLibraries) maps the library names of ManagedBass to `runtimes/<rid>/native` of the plugin, the add-ins are loaded from `native/Plugins`. Windows x64 still comes from the package `BASSCombined`;
+  Linux (x64, arm64) and macOS (x64, arm64) come from the new package `MediaPortal.Native.Bass` (`Build/native/bass/build-package.py` downloads the libraries from un4seen.com, like the libmpv package, the pack is kept in `feed/` until it can be published).
+- `TAG_INFO` is replaced by `TagInfo` (web stream tags), `AudioFileTags` (file tags, duration, bitrate) and an own `Id3v2Reader`, because the tag reader of ManagedBass decodes UTF-16 ID3v2 frames incorrectly.
+- Audio output: Windows keeps DirectSound/WASAPI (exclusive mode, device by name); the other platforms use the default BASS output. New common setting `AudioOutputSettings.AudioDevice` (empty = default device) selects the
+  device by name on non-Windows for BASS and on all platforms for mpv (the name is matched against the device names/descriptions of the backend, the log lists the available devices if there is no match).
+  The old device selection of the BASS player never worked (the device name was compared with itself and always resulted in the default device), this is fixed.
+- `AudioCDResourceProvider` is no longer Windows-only (the plugins `Media`, `BassPlayer`, ... depend on it); CD access is available on Windows only (drive letters).
+- Verified on Windows: BassPlayer plays an MP3 in DirectSound, WASAPI shared and WASAPI exclusive (with fallback) mode, pause/resume/seek/stop; file tags (ID3v2) and duration. Not verified: audible output, CD, web radio,
+  MOD files, VST/WinAmp DSP (not ported, Windows only), Linux and macOS.
+
 Open (next steps, in order):
 2. Look at the remaining runtime issues (CloseTopmostDialog parameter conversion, "Cannot open texture", path separators), check other skins, fullscreen/window modes, input.
 3. Win32 message hook for Windows-only features (`WM_INPUT`/HID, `WM_APPCOMMAND`, single-instance message, touch), kerning (HarfBuzz) and skin sounds on other platforms.

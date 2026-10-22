@@ -36,7 +36,7 @@ using MediaPortal.UI.Presentation.Players;
 using MediaPortal.UI.Presentation.Workflow;
 using MediaPortal.UI.Services.UserManagement;
 using MediaPortal.UiComponents.Media.Models;
-using Un4seen.Bass;
+using ManagedBass;
 using Webradio.Helper;
 using Webradio.Models;
 
@@ -74,8 +74,8 @@ namespace Webradio.Player
       }
       else
       {
-        var channel = Bass.BASS_StreamCreateURL(stream.Streams[0].Url, 0, BASSFlag.BASS_DEFAULT, null, IntPtr.Zero);
-        Bass.BASS_ChannelPlay(channel, false);
+        var channel = Bass.CreateStream(stream.Streams[0].Url, 0, BassFlags.Default, null, IntPtr.Zero);
+        Bass.ChannelPlay(channel, false);
         PlayItemsModel.PlayItem(mediaItem);
       }
 

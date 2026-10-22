@@ -40,7 +40,6 @@ using MediaPortal.UI.Presentation.Players.ResumeState;
 using MediaPortal.UI.Settings;
 using MediaPortal.UI.SkinEngine.Players;
 using MediaPortal.UI.SkinEngine.Gpu;
-using MediaPortal.UI.SkinEngine.Players;
 
 namespace MediaPortal.UI.Players.Mpv
 {

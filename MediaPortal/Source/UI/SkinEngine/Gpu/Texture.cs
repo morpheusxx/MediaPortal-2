@@ -24,7 +24,6 @@
 
 using System;
 using MediaPortal.UI.SkinEngine.DirectX;
-using MediaPortal.UI.SkinEngine.DirectX;
 using SkiaSharp;
 
 namespace MediaPortal.UI.SkinEngine.Gpu

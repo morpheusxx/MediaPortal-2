@@ -45,7 +45,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
     private int _mixerHandle = 0;
     private float[,] _mixingMatrix = null;
 
-    private const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerNoRampin | BassFlags.Decode;
+    private const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerChanNoRampin | BassFlags.Decode;
 
     #endregion
 
@@ -171,8 +171,8 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
         Bass.ChannelLock(_mixerHandle, true);
 
         bool result = BassMix.MixerAddChannel(_mixerHandle, _inputStream.Handle,
-                                          BassFlags.MixerNoRampin | BassFlags.MixerBuffer |
-                                          BassFlags.MixerMatrix | BassFlags.MixerDownMix |
+                                          BassFlags.MixerChanNoRampin | BassFlags.MixerChanBuffer |
+                                          BassFlags.MixerChanMatrix | BassFlags.MixerChanDownMix |
                                           BassFlags.AutoFree
                                           );
         if (!result)

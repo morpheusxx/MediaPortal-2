@@ -44,6 +44,15 @@ namespace MediaPortal.Utilities.Graphics
   public static class ImageUtilities
   {
     /// <summary>
+    /// Sampling for the resizing of a bitmap: mip maps if the image gets smaller (avoids aliasing), a cubic filter if it gets bigger.
+    /// </summary>
+    private static SKSamplingOptions GetResizeSampling(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight)
+    {
+      return targetWidth < sourceWidth || targetHeight < sourceHeight ?
+          new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear) : new SKSamplingOptions(SKCubicResampler.Mitchell);
+    }
+
+    /// <summary>
     /// JPEG quality used when none is given. Matches the default of System.Drawing's JPEG encoder.
     /// </summary>
     public const int DEFAULT_JPEG_QUALITY = 75;
@@ -75,7 +84,7 @@ namespace MediaPortal.Utilities.Graphics
         if (size.Width == source.Width && size.Height == source.Height)
           return Encode(source, targetFormat, jpegQuality);
 
-        using (SKBitmap resized = source.Resize(new SKImageInfo(size.Width, size.Height, source.ColorType, source.AlphaType), SKFilterQuality.High))
+        using (SKBitmap resized = source.Resize(new SKImageInfo(size.Width, size.Height, source.ColorType, source.AlphaType), GetResizeSampling(source.Width, source.Height, size.Width, size.Height)))
         {
           if (resized == null)
             throw new InvalidDataException("Image could not be resized");
@@ -120,7 +129,7 @@ namespace MediaPortal.Utilities.Graphics
                 imageData = ((MemoryStream)encoded).ToArray();
               return true;
             }
-            using (SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, oriented.ColorType, oriented.AlphaType), SKFilterQuality.High))
+            using (SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, oriented.ColorType, oriented.AlphaType), GetResizeSampling(oriented.Width, oriented.Height, size.Width, size.Height)))
             {
               if (resized == null)
                 return false;
@@ -206,7 +215,7 @@ namespace MediaPortal.Utilities.Graphics
         SKSizeI size = FitInto(oriented.Width, oriented.Height, maxWidth, maxHeight);
         if (size.Width == oriented.Width && size.Height == oriented.Height)
           return oriented;
-        SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul), SKFilterQuality.High);
+        SKBitmap resized = oriented.Resize(new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul), GetResizeSampling(oriented.Width, oriented.Height, size.Width, size.Height));
         oriented.Dispose();
         return resized;
       }

@@ -246,7 +246,7 @@ namespace MediaPortal.UI.Players.BassPlayer.PlayerComponents
 
       _vizStream = BassStream.Create(handle);
 
-      streamFlags = BassFlags.MixerNoRampin | BassFlags.MixerDownMix | BassFlags.MixerMatrix | BassFlags.MixerBuffer;
+      streamFlags = BassFlags.MixerChanNoRampin | BassFlags.MixerChanDownMix | BassFlags.MixerChanMatrix | BassFlags.MixerChanBuffer;
 
       if (!BassMix.MixerAddChannel(_vizStream.Handle, _vizRawStream.Handle, streamFlags))
         throw new BassLibraryException("BASS_Mixer_StreamAddChannel");

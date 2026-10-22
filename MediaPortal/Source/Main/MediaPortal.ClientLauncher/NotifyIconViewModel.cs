@@ -122,11 +122,7 @@ namespace MediaPortal.Client.Launcher
 
     #endregion
 
-#if NET5_0_OR_GREATER
-    public event PropertyChangedEventHandler? PropertyChanged;
-#else
     public event PropertyChangedEventHandler PropertyChanged;
-#endif
 
     protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {

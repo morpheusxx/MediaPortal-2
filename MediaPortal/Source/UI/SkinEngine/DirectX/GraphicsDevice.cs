@@ -34,7 +34,6 @@ using MediaPortal.UI.SkinEngine.DirectX.RenderStrategy;
 using MediaPortal.UI.SkinEngine.Gpu;
 using MediaPortal.UI.SkinEngine.ScreenManagement;
 using MediaPortal.UI.SkinEngine.Utils;
-using MediaPortal.UI.SkinEngine.Utils;
 using SharpDX;
 using SkiaSharp;
 using Matrix = SharpDX.Matrix;
@@ -309,13 +308,14 @@ namespace MediaPortal.UI.SkinEngine.DirectX
     public static void StretchRectangle(Surface source, Rectangle sourceRect, Surface destination, Rectangle destinationRect, bool linear)
     {
       using (SKImage image = source.Snapshot())
-      using (SKPaint paint = new SKPaint { FilterQuality = linear ? SKFilterQuality.Medium : SKFilterQuality.None, BlendMode = SKBlendMode.Src })
+      using (SKPaint paint = new SKPaint { BlendMode = SKBlendMode.Src })
       {
         SKCanvas canvas = destination.Canvas;
         canvas.Save();
         canvas.ResetMatrix();
         canvas.DrawImage(image, SKRect.Create(sourceRect.X, sourceRect.Y, sourceRect.Width, sourceRect.Height),
-            SKRect.Create(destinationRect.X, destinationRect.Y, destinationRect.Width, destinationRect.Height), paint);
+            SKRect.Create(destinationRect.X, destinationRect.Y, destinationRect.Width, destinationRect.Height),
+            linear ? new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None) : SKSamplingOptions.Default, paint);
         canvas.Restore();
       }
       destination.MarkChanged();

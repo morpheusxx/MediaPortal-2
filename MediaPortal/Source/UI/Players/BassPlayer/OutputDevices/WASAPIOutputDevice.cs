@@ -40,7 +40,7 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
   {
     #region Fields
 
-    protected const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerNoRampin | BassFlags.Decode;
+    protected const BassFlags MIXER_FLAGS = BassFlags.MixerNonStop | BassFlags.Float | BassFlags.MixerChanNoRampin | BassFlags.Decode;
 
     protected readonly WasapiProcedure _streamWriteProcDelegate;
     protected readonly SyncProcedure _onPlaybackEndDelegate;
@@ -217,8 +217,8 @@ namespace MediaPortal.UI.Players.BassPlayer.OutputDevices
         RegisterStreamFreedEvent(_inputStream);
 
         bool result = BassMix.MixerAddChannel(_mixerHandle, _inputStream.Handle,
-                                          BassFlags.MixerNoRampin | BassFlags.MixerBuffer |
-                                          BassFlags.MixerMatrix | BassFlags.MixerDownMix |
+                                          BassFlags.MixerChanNoRampin | BassFlags.MixerChanBuffer |
+                                          BassFlags.MixerChanMatrix | BassFlags.MixerChanDownMix |
                                           BassFlags.AutoFree
                                           );
         if (!result)

@@ -187,6 +187,29 @@ Open (next steps, in order):
 3. Win32 message hook for Windows-only features (`WM_INPUT`/HID, `WM_APPCOMMAND`, single-instance message, touch), kerning (HarfBuzz) and skin sounds on other platforms.
 4. Verify and complete the libmpv player (see above), port `ImagePlayer` details, TV client + Bluray/Cinema/UPnP renderer on top of it.
 
+## Native packages (NuGet)
+
+Native libraries are not committed (libmpv alone is 120 MB). They are delivered as NuGet packages which are created by scripts in `MediaPortal/Build/native`, published on the Team MediaPortal feed
+(MyGet, `MediaPortal/NuGet.Config`) and referenced with a fixed version, so a build is reproducible and independent of the (short-lived) upstream download locations.
+
+| Package | Content | Created from | Pinned in |
+|---|---|---|---|
+| `MediaPortal.Native.Mpv` | `libmpv-2.dll` (Windows x64, generic build) | a daily build of shinchiro/mpv-winbuild-cmake (only the last ~30 stay available), version = build date | `MpvNativeVersion` in `UI/Players/MpvPlayer/MpvPlayer.csproj` |
+| `MediaPortal.Native.Bass` | BASS, BASSmix and the decoder add-ins for Linux (x64, arm64) and macOS (x64, arm64) | the current downloads of un4seen.com, version = `2.4.0.<revision date>` | `BassNativeVersion` in `Extensions/BassLibraries/BassLibraries.csproj` |
+
+Windows x64 BASS libraries come from the existing package `BASSCombined`; libmpv on Linux is the system package `libmpv2` (macOS: not decided).
+
+Workflow (details in `Build/native/mpv/README.md` and `Build/native/bass/README.md`):
+1. `python MediaPortal/Build/native/<mpv|bass>/build-package.py` creates the package in the git-ignored folder `feed/` next to the script.
+2. The projects use the package automatically if the pinned version is in that local `feed/` folder (property `UseMpvNativePackage` / `UseBassNativePackage`, set it to `true` to require the package, for example in CI).
+   Without the package the build succeeds, but there is no native library (video playback / audio on Linux and macOS won't work); the mpv build prints a message.
+3. To make the package available to everybody, publish it: `dotnet nuget push feed/<package>.nupkg -s https://www.myget.org/F/mediaportal/api/v2/package -k <api key>`. After that make the `UseMpvNativePackage` / `UseBassNativePackage` defaults `true`
+   (**open: the packages are not published yet**, so a fresh checkout has to create them locally first).
+4. To update a library: create and publish a new package, change the pinned version in the project, run the playback smoke test (play, pause, seek, stop and replay a file in the client).
+
+Library lookup at runtime: libmpv uses `MP2_LIBMPV` (full path) first, then `runtimes/<rid>/native` of the MpvPlayer plugin, then the system. BASS uses `runtimes/<rid>/native` of the BassLibraries plugin
+(`BassNativeLibrary`), the add-ins are loaded from its `Plugins` sub folder.
+
 ## Working conventions
 
 - Work on a dedicated branch; small, reviewable commits.

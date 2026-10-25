@@ -287,7 +287,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
       string url = TvdbLinkCreator.CreateBannerLink(BannerPath);
       try
       {
-        WebClient client = new CompressionWebClient();
+        CompressionWebClient client = new CompressionWebClient();
         return await client.DownloadDataTaskAsync(url).ConfigureAwait(false);
       }
       catch (WebException ex)
@@ -311,7 +311,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib.Data.Banner
     {
       try
       {
-        WebClient client = new CompressionWebClient();
+        CompressionWebClient client = new CompressionWebClient();
         return await client.DownloadDataTaskAsync(path).ConfigureAwait(false);
       }
       catch (Exception ex)

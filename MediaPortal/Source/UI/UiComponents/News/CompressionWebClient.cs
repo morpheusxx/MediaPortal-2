@@ -22,23 +22,14 @@
 
 #endregion
 
-using System;
-using System.Net;
+using MediaPortal.Utilities.Network;
 
 namespace MediaPortal.UiComponents.News
 {
-  public class CompressionWebClient : WebClient
+  /// <summary>
+  /// Web client which requests compressed responses and uses a timeout of 20 seconds (see <see cref="HttpWebClient"/>).
+  /// </summary>
+  public class CompressionWebClient : HttpWebClient
   {
-    protected override WebRequest GetWebRequest(Uri address)
-    {
-      Headers["Accept-Encoding"] = "gzip,deflate";
-      HttpWebRequest request = base.GetWebRequest(address) as HttpWebRequest;
-      if (request != null)
-      {
-        request.Timeout = 20000; // use 20 seconds - default is 100 seconds
-        request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-      }
-      return request;
-    }
   }
 }

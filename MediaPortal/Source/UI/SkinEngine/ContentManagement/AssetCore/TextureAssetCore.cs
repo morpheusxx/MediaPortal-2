@@ -28,7 +28,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Cache;
+using System.Threading;
 using MediaPortal.Common;
 using MediaPortal.Common.General;
 using MediaPortal.Common.Logging;
@@ -316,7 +316,8 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
     public class AsyncWebLoadOperation : AsyncLoadOperation
     {
       protected static SystemName _localSystem = SystemName.GetLocalSystemName();
-      protected WebClient _webClient;
+      protected HttpWebClient _webClient;
+      protected CancellationTokenSource _cancellation = new CancellationTokenSource();
       protected Uri _uri;
 
       protected static IList<string> _ignoredLoggingUriPatterns = new List<string>
@@ -332,13 +333,9 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
       {
         _uri = uri;
         // Load texture as a web resource
-        _webClient = new WebClient
-          {
-            CachePolicy = new RequestCachePolicy(RequestCacheLevel.CacheIfAvailable)
-          };
-        _webClient.DownloadDataCompleted += DownloadComplete;
+        _webClient = new HttpWebClient(false);
         if (NetworkConnectionTracker.IsNetworkConnected || _localSystem.IsAddressOrAlias(uri.Host))
-          _webClient.DownloadDataAsync(uri, null);
+          DownloadAsync();
         else
         {
           ServiceRegistration.Get<ILogger>().Warn("AsyncStreamLoadOperation: No Network connected");
@@ -353,20 +350,28 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
           if (_webClient == null) return;
           _webClient.Dispose();
           _webClient = null;
+          _cancellation.Dispose();
         }
       }
 
       public override void Cancel()
       {
         lock (_syncObj)
-          _webClient.CancelAsync();
+          if (_webClient != null)
+            _cancellation.Cancel();
       }
 
-      protected void DownloadComplete(object sender, DownloadDataCompletedEventArgs e)
+      protected async void DownloadAsync()
       {
-        if (e.Cancelled || e.Error != null)
+        byte[] data;
+        try
         {
-          string message = string.Format("AsyncWebLoadOperation: Failed to download {0} - {1}", _uri, e.Cancelled ? "Request timed out" : e.Error.Message);
+          data = await _webClient.DownloadDataTaskAsync(_uri, _cancellation.Token).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+          string message = string.Format("AsyncWebLoadOperation: Failed to download {0} - {1}", _uri,
+              ex is OperationCanceledException || (ex is WebException && ((WebException) ex).Status == WebExceptionStatus.Timeout) ? "Request timed out" : ex.Message);
           if (_ignoredLoggingUriPatterns.Any(pattern => _uri.AbsoluteUri.Contains(pattern)))
             ServiceRegistration.Get<ILogger>().Debug(message);
           else
@@ -374,7 +379,7 @@ namespace MediaPortal.UI.SkinEngine.ContentManagement.AssetCore
           OperationFailed();
           return;
         }
-        OperationCompleted(e.Result);
+        OperationCompleted(data);
       }
     }
 

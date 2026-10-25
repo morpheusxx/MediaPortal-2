@@ -26,6 +26,7 @@ using MediaPortal.Extensions.OnlineLibraries.Libraries.Common;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using MediaPortal.Utilities.Network;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -103,11 +104,12 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.MusicBrainzV2
       }
       catch (WebException ex)
       {
+        HttpStatusWebException statusException = ex as HttpStatusWebException;
         if (ex.Status == WebExceptionStatus.Timeout ||
-          (ex.Response != null &&
+          (statusException != null &&
           (
-            (((HttpWebResponse)ex.Response).StatusCode == HttpStatusCode.ServiceUnavailable ||
-            ((HttpWebResponse)ex.Response).StatusCode == HttpStatusCode.RequestTimeout)
+            (statusException.StatusCode == HttpStatusCode.ServiceUnavailable ||
+            statusException.StatusCode == HttpStatusCode.RequestTimeout)
           )))
         {
           //Rate limiting

@@ -178,7 +178,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Common
           if (File.Exists(downloadFile))
             return true;
           byte[] data = null;
-          using (WebClient webClient = new CompressionWebClient())
+          using (CompressionWebClient webClient = new CompressionWebClient())
           {
             foreach (KeyValuePair<string, string> headerEntry in Headers)
               webClient.Headers[headerEntry.Key] = headerEntry.Value;

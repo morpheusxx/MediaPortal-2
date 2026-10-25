@@ -71,25 +71,25 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.TvdbLib
 
     protected string DownloadString(string url)
     {
-      using (WebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
+      using (CompressionWebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
         return webClient.DownloadString(url);
     }
 
     protected async Task<string> DownloadStringAsync(string url)
     {
-      using (WebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
+      using (CompressionWebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
         return await webClient.DownloadStringTaskAsync(url).ConfigureAwait(false);
     }
 
     protected byte[] DownloadData(string url)
     {
-      using (WebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
+      using (CompressionWebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
         return webClient.DownloadData(url);
     }
 
     protected async Task<byte[]> DownloadDataAsync(string url)
     {
-      using (WebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
+      using (CompressionWebClient webClient = new CompressionWebClient { Encoding = Encoding.UTF8 })
         return await webClient.DownloadDataTaskAsync(url).ConfigureAwait(false);
     }
 

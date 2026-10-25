@@ -27,6 +27,7 @@ using MediaPortal.Extensions.MediaServer.Objects.MediaLibrary;
 using System;
 using System.IO;
 using System.Net;
+using MediaPortal.Utilities.Network;
 #if NET5_0_OR_GREATER
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -52,10 +53,8 @@ namespace MediaPortal.Extensions.MediaServer.Protocols
         // Get album art from FanArt
         MediaLibraryAlbumArt albumArt = new MediaLibraryAlbumArt(item.MediaItemId, item.Client);
         albumArt.Initialise();
-        WebRequest imageRequest = WebRequest.Create(albumArt.Uri);
-        WebResponse imageResponse = imageRequest.GetResponse();
         context.Response.ContentType = albumArt.MimeType;
-        return imageResponse.GetResponseStream();
+        return new HttpWebClient(false).OpenRead(albumArt.Uri);
 
         //if (item.MediaSource.Aspects.ContainsKey(ThumbnailLargeAspect.ASPECT_ID))
         //{

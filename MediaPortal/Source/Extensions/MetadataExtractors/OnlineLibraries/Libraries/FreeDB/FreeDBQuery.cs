@@ -28,6 +28,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -307,14 +308,13 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.Freedb
       return retval;
     }
 
+    private static readonly HttpClient HTTP_CLIENT = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+
     private async Task<StreamReader> GetStreamFromSiteAsync(string command)
     {
       System.Uri url = new System.Uri(m_serverURL + "?cmd=" + command +  m_idStr);
-      WebRequest req = WebRequest.Create(url);
-      WebResponse resp = await req.GetResponseAsync().ConfigureAwait(false);
-      StreamReader urlRdr = new StreamReader(new StreamReader(resp.GetResponseStream()).BaseStream, Encoding.UTF8);
-
-      return urlRdr;
+      Stream stream = await HTTP_CLIENT.GetStreamAsync(url).ConfigureAwait(false);
+      return new StreamReader(stream, Encoding.UTF8);
     }
 
     private int GetCode(string content)

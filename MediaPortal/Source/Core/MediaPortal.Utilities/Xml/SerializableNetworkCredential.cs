@@ -64,6 +64,18 @@ namespace MediaPortal.Utilities.Xml
     #region private methods
 
     /// <summary>
+    /// Sets the key and the initialization vector of the given algorithm. Both are consecutive parts of the same PBKDF2 (SHA-1) output.
+    /// </summary>
+    private static void DeriveKeyAndIv(SymmetricAlgorithm algorithm)
+    {
+      int keyLength = algorithm.KeySize / 8;
+      int ivLength = algorithm.BlockSize / 8;
+      byte[] derived = Rfc2898DeriveBytes.Pbkdf2(KEY_BYTES, SALT_BYTES, RFC_2898_ITERATIONS, HashAlgorithmName.SHA1, keyLength + ivLength);
+      algorithm.Key = derived[..keyLength];
+      algorithm.IV = derived[keyLength..];
+    }
+
+    /// <summary>
     /// Takes a <see cref="SecureString"/>, encrypts it using AES and returns an encrypted <see cref="string"/>
     /// </summary>
     /// <param name="secureStringToEncrypt"><see cref="SecureString"/> to encrypt</param>
@@ -71,13 +83,11 @@ namespace MediaPortal.Utilities.Xml
     private static string AesEncrypt(SecureString secureStringToEncrypt)
     {
       using (var ms = new MemoryStream())
-        using (var aes = new RijndaelManaged())
+        using (var aes = Aes.Create())
         {
           aes.KeySize = 256;
           aes.BlockSize = 128;
-          var key = new Rfc2898DeriveBytes(KEY_BYTES, SALT_BYTES, RFC_2898_ITERATIONS);
-          aes.Key = key.GetBytes(aes.KeySize / 8);
-          aes.IV = key.GetBytes(aes.BlockSize / 8);
+          DeriveKeyAndIv(aes);
           aes.Mode = CipherMode.CBC;
           using (var cs = new CryptoStream(ms, aes.CreateEncryptor(), CryptoStreamMode.Write))
           {
@@ -110,13 +120,11 @@ namespace MediaPortal.Utilities.Xml
     {
       var bytesToDecrypt = Convert.FromBase64String(stringToDecrypt);
       using (var ms = new MemoryStream())
-        using (var aes = new RijndaelManaged())
+        using (var aes = Aes.Create())
         {
           aes.KeySize = 256;
           aes.BlockSize = 128;
-          var key = new Rfc2898DeriveBytes(KEY_BYTES, SALT_BYTES, RFC_2898_ITERATIONS);
-          aes.Key = key.GetBytes(aes.KeySize / 8);
-          aes.IV = key.GetBytes(aes.BlockSize / 8);
+          DeriveKeyAndIv(aes);
           aes.Mode = CipherMode.CBC;
           char[] charArray = null;
           var result = new SecureString();

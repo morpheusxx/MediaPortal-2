@@ -105,8 +105,7 @@ namespace MediaPortal.Common.UserProfileDataManagement
       if (string.IsNullOrEmpty(password))
         return "";
 
-      HashAlgorithm hash = HashAlgorithm.Create("SHA256");
-      string hashedPassword = Convert.ToBase64String(hash.ComputeHash(Encoding.Unicode.GetBytes(password)));
+      string hashedPassword = Convert.ToBase64String(SHA256.HashData(Encoding.Unicode.GetBytes(password)));
       return hashedPassword.Substring(0, hashedPassword.Length < MAX_PASSWORD_LENGTH ? hashedPassword.Length : MAX_PASSWORD_LENGTH);
     }
 

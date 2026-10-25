@@ -73,7 +73,7 @@ namespace MediaPortal.UI.SkinEngine.Xaml
         Type t = GetElementType(typeName);
         // Special case for structs: they cannot be created like classes. So we use another way...
         if (t.IsValueType)
-          return FormatterServices.GetUninitializedObject(t);
+          return System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(t);
 
         // Regular class types
         ConstructorInfo constructorInfo;

@@ -140,7 +140,7 @@ namespace MediaPortal.Extensions.OnlineLibraries.Libraries.SubDbV1
       file.ReadAtLeast(new System.Span<byte>(array, 0, readSize), readSize, false);
       data.AddRange(array);
 
-      return new MD5CryptoServiceProvider().ComputeHash(data.ToArray());
+      return System.Security.Cryptography.MD5.HashData(data.ToArray());
     }
 
     /// <summary>

@@ -32,6 +32,10 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 
+// TODO: The scriptable scrapers use the HttpWebRequest/HttpWebResponse API which is exposed by this class (cookies, retries, timeouts).
+// The class has to be ported to HttpClient together with the scrapers.
+#pragma warning disable SYSLIB0014
+
 namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.Data
 {
   public class WebGrabber
@@ -110,10 +114,6 @@ namespace MediaPortal.Extensions.MetadataExtractors.ScriptableMetadataExtractor.
 
         // enable unsafe header parsing if needed
         if (AllowUnsafeHeader) SetAllowUnsafeHeaderParsing(true);
-
-        // In .NET 4.0 default transport level security standard is TLS 1.1,
-        // Some endpoints will reject this older insecure standard.
-        ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
 
         // setup some request properties
         Request.Proxy = WebRequest.DefaultWebProxy;

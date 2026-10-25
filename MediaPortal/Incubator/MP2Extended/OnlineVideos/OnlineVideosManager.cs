@@ -350,7 +350,9 @@ namespace MediaPortal.Plugins.MP2Extended.OnlineVideos
       Downloader.ClearDownloadCache();
 
       // The default connection limit is 2 in .Net on most platforms! This means downloading two files will block all other WebRequests.
+#pragma warning disable SYSLIB0014 // OnlineVideos uses WebRequest
       ServicePointManager.DefaultConnectionLimit = 100;
+#pragma warning restore SYSLIB0014
       // The default .Net implementation for URI parsing removes trailing dots, which is not correct
       DotNetFrameworkHelper.FixUriTrailingDots();
     }

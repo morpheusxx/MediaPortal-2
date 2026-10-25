@@ -71,14 +71,5 @@ namespace MediaPortal.Plugins.MP2Extended.OnlineVideos
       }
     }
 
-    #region MarshalByRefObject overrides
-
-    public override object InitializeLifetimeService()
-    {
-      // In order to have the lease across appdomains live forever, we return null.
-      return null;
-    }
-
-    #endregion
   }
 }

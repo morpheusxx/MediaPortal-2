@@ -31,15 +31,6 @@ namespace MediaPortal.Plugins.MP2Extended.OnlineVideos
 {
   public class LogDelegator : MarshalByRefObject, ILog
   {
-    #region MarshalByRefObject overrides
-
-    public override object InitializeLifetimeService()
-    {
-      // In order to have the lease across appdomains live forever, we return null.
-      return null;
-    }
-
-    #endregion
 
     private const string PREFIX = "[OnlineVideos] ";
 

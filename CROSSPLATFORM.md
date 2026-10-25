@@ -259,6 +259,10 @@ Still open: `win-x86`/`linux-x86`/arm runtime folders of SQLite and Skia, legacy
 - Open for Phase 1: native libraries per RID (MediaInfo, FreeImage, OpenCV, FFmpeg), skipping
   Windows-only plugins cleanly in the portable host, verifying an existing System.Data.SQLite database with the new provider, Linux run + Docker image.
 
+- **Open, found 2026-10-25: the HTTP servers of the UPnP stack and the resource server use HTTP.sys (`UPnP.Infrastructure.Http.HttpServer`, `UseHttpSys`), which exists on Windows only.** The UPnP server/control point and the resource server
+  each start an own web host on the same port below different base paths (HTTP.sys allows that). On Linux/macOS this throws `PlatformNotSupportedException`; Kestrel cannot share a port between hosts, so all servers need a single shared web host
+  with path based routing. The hosts are created with the generic host now (`HttpServer.CreateHostBuilder`), which is the first step. Until then the server (UPnP, resource access) cannot run on Linux, which also affects the Linux client's UPnP features.
+
 ## Status
 
 - [x] Architecture evaluation

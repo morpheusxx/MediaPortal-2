@@ -35,6 +35,7 @@ using UPnP.Infrastructure.Dv;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using UPnP.Infrastructure.Http;
 #else
 using MediaPortal.Common.UserManagement;
@@ -82,7 +83,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
 
 #if NET5_0_OR_GREATER
         var urls = HttpServer.BuildUrls(_servicePrefix, filters, _serverPort);
-        IWebHost host = HttpServer.CreateWebHostBuilder(urls)
+        IHost host = HttpServer.CreateHostBuilder(urls, webHost => webHost
           .ConfigureServices(services=>
           {
             //ToDo
@@ -116,7 +117,7 @@ namespace MediaPortal.Common.Services.ResourceAccess
             {
               app.UseMiddleware(middleWareType);
             }
-          })
+          }))
           .Build();
         host.Start();
         _httpServer = host;

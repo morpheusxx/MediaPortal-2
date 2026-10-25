@@ -22,11 +22,14 @@
 
 #endregion
 #if NET5_0_OR_GREATER
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Threading.Tasks;
 #else
 using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
@@ -58,8 +61,7 @@ namespace UPnP.Infrastructure.Http
       IDisposable server = null;
       try
       {
-        var host = CreateWebHostBuilder(urls)
-              .Configure(app => { app.Run(handler); })
+        var host = CreateHostBuilder(urls, webHost => webHost.Configure(app => { app.Run(handler); }))
               .Build();
         host.Start();
         server = host;
@@ -107,23 +109,51 @@ namespace UPnP.Infrastructure.Http
       return urls.ToArray();
     }
 
-    public static IWebHostBuilder CreateWebHostBuilder(string[] urls)
+    /// <summary>
+    /// Creates the host builder for a web server which listens at the given <paramref name="urls"/>.
+    /// </summary>
+    /// <param name="urls">Urls to listen at.</param>
+    /// <param name="configureWebHost">Configures the services and the request pipeline of the web server.</param>
+    public static IHostBuilder CreateHostBuilder(string[] urls, Action<IWebHostBuilder> configureWebHost)
     {
-#pragma warning disable CA1416 // Validate platform compatibility
-      return WebHost.CreateDefaultBuilder()
-        // HttpSys allows port sharing so multiple instances of the web host
-        // can listen on the same port under different base paths
-        .UseHttpSys(options =>
+      return Host.CreateDefaultBuilder()
+        // The hosts are started and stopped by their owners, they must not react on Ctrl+C or print messages to the console
+        .ConfigureServices(services => services.AddSingleton<IHostLifetime, OwnerControlledLifetime>())
+        .ConfigureWebHostDefaults(webHost =>
         {
-          // Synchronous IO, which allows synchronous read/writes to the request/response streams,
-          // is disabled by default, currently the XmlSerializer in GENAClientController.HandleEventNotification
-          // does synchronous reads of the request stream so we need this enabled.
-          // ToDo: Make all read/writes asynchronous, see here for how the MVC formatter does this for Xml deserialization
-          // https://github.com/dotnet/aspnetcore/blob/093df67c06297c20edb422fe6d3a555008e152a9/src/Mvc/Mvc.Formatters.Xml/src/XmlSerializerInputFormatter.cs#L102-L117
-          options.AllowSynchronousIO = true;
-        })
-        .UseUrls(urls);
+#pragma warning disable CA1416 // Validate platform compatibility
+          // HttpSys allows port sharing so multiple instances of the web host
+          // can listen on the same port under different base paths
+          // ToDo: HttpSys exists on Windows only. A common web host has to be used for all servers on the other platforms
+          webHost.UseHttpSys(options =>
+          {
+            // Synchronous IO, which allows synchronous read/writes to the request/response streams,
+            // is disabled by default, currently the XmlSerializer in GENAClientController.HandleEventNotification
+            // does synchronous reads of the request stream so we need this enabled.
+            // ToDo: Make all read/writes asynchronous, see here for how the MVC formatter does this for Xml deserialization
+            // https://github.com/dotnet/aspnetcore/blob/093df67c06297c20edb422fe6d3a555008e152a9/src/Mvc/Mvc.Formatters.Xml/src/XmlSerializerInputFormatter.cs#L102-L117
+            options.AllowSynchronousIO = true;
+          });
 #pragma warning restore CA1416 // Validate platform compatibility
+          webHost.UseUrls(urls);
+          configureWebHost(webHost);
+        });
+    }
+
+    /// <summary>
+    /// Lifetime of a host which is started and stopped explicitly by its owner (no console handling).
+    /// </summary>
+    private class OwnerControlledLifetime : IHostLifetime
+    {
+      public Task WaitForStartAsync(CancellationToken cancellationToken)
+      {
+        return Task.CompletedTask;
+      }
+
+      public Task StopAsync(CancellationToken cancellationToken)
+      {
+        return Task.CompletedTask;
+      }
     }
 
 #else

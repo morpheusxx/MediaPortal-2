@@ -31,19 +31,18 @@ namespace MediaPortal.Utilities
   {
     /// <summary>
     /// CallWithTimeout executes an action and waits for the given number of milliseconds. If the action will not finish in time,
-    /// the thread executing the action gets aborted and a <see cref="TimeoutException"/> is raised.
-    /// The given <paramref name="action"/> should be prepared to handle a <see cref="ThreadAbortException"/> during its execution.
+    /// a <see cref="TimeoutException"/> is raised. Threads cannot be aborted in .NET Core, so the action keeps running on its
+    /// background thread until it ends by itself.
     /// </summary>
     /// <param name="action">Action to start.</param>
-    /// <param name="timeoutMs">Timeout in ms to wait for the action, until the action's thread is aborted via <see cref="Thread.Abort()"/>.</param>
+    /// <param name="timeoutMs">Timeout in ms to wait for the action.</param>
     /// <exception cref="TimeoutException">If the given <paramref name="action"/> runs longer than the given numer of <paramref name="timeoutMs"/>.</exception>
     public static void CallWithTimeout(Action action, int timeoutMs)
     {
-      var thread = new Thread(new ThreadStart(action));
+      var thread = new Thread(new ThreadStart(action)) { IsBackground = true };
       thread.Start();
       if (thread.Join(timeoutMs))
         return;
-      thread.Abort();
       throw new TimeoutException("Action timed out");
     }
 

@@ -506,8 +506,7 @@ namespace MediaPortal.Common.Services.ResourceAccess.ImpersonationService
       // as an out parameter, because the unmanaged code is not able to create these objects. We therefore use
       // IntPtr and ensure in the following that the IntPtrs are stored in SafeHandle objects immediately after
       // they have been obtained.
-      // For details see here: https://msdn.microsoft.com/en-us/library/system.runtime.compilerservices.runtimehelpers.prepareconstrainedregions(v=vs.110).aspx
-      RuntimeHelpers.PrepareConstrainedRegions();
+      // (Constrained execution regions do not exist any longer in .NET Core, there are no asynchronous thread aborts.)
       try { }
       finally
       {

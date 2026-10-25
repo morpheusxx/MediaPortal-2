@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 using MediaPortal.Utilities.Exceptions;
@@ -49,7 +48,6 @@ namespace MediaPortal.Utilities.Security
     }
 
     [DllImport("kernel32.dll")]
-    [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
     [SuppressUnmanagedCodeSecurity]
     private static extern bool CloseHandle(IntPtr handle);
 

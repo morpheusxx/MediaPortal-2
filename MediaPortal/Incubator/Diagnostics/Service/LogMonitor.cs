@@ -119,18 +119,13 @@ namespace MediaPortal.UiComponents.Diagnostics.Service
       if (State == LogHandlerState.Stopped) return;
       if (_disposedValue) return;
 
+      // The worker ends by itself when it sees the stopped state (threads cannot be aborted in .NET Core)
+      State = LogHandlerState.Stopped;
       if (_worker != null)
       {
-        try
-        {
-          _worker.Abort();
-        }
-        catch (ThreadAbortException)
-        { }
+        _worker.Join(3000);
         _worker = null;
       }
-
-      State = LogHandlerState.Stopped;
     }
 
     #endregion Public Methods

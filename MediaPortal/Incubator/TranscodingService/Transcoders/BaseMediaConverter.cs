@@ -181,9 +181,9 @@ namespace MediaPortal.Extensions.TranscodingService.Service.Transcoders
                 bool fileFound = false;
                 using (StreamReader reader = new StreamReader(playlistPath, Encoding.UTF8))
                 {
-                  while (!reader.EndOfStream)
+                  string line;
+                  while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
                   {
-                    string line = await reader.ReadLineAsync().ConfigureAwait(false);
                     if (line.Contains(fileName))
                     {
                       fileFound = true;
@@ -903,8 +903,9 @@ namespace MediaPortal.Extensions.TranscodingService.Service.Transcoders
             using (var sourceReader = new StreamReader(sourceFileName, Encoding.GetEncoding(sourceCharEncoding)))
             using (var targetWriter = new StreamWriter(targetFileName, false, Encoding.GetEncoding(charEncoding)))
             {
-              while (!sourceReader.EndOfStream)
-                await targetWriter.WriteLineAsync(await sourceReader.ReadLineAsync());
+              string sourceLine;
+              while ((sourceLine = await sourceReader.ReadLineAsync()) != null)
+                await targetWriter.WriteLineAsync(sourceLine);
             };
             sub.CharacterEncoding = charEncoding;
             sub.SourcePath = LocalFsResourceProviderBase.ToProviderPath(targetFileName);

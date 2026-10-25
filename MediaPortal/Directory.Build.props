@@ -7,5 +7,8 @@
     <!-- Portable (net10.0) and Windows-only (net10.0-windows) projects must end up in the same output folder:
          the per-project build.targets copy plugins to $(SolutionDir)..\Bin\$(SolutionName)\$(OutDir), which must not depend on the TFM. -->
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <!-- FreeImage-dotnet-core ships win7-x64 native assets, which are not resolved by the SDK but copied explicitly
+         (FreeImageLib/build.targets). The warning is reported in every project which references FreeImageLib transitively. -->
+    <NoWarn>$(NoWarn);NETSDK1206</NoWarn>
   </PropertyGroup>
 </Project>

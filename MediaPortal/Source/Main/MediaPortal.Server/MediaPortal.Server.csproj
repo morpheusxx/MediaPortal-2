@@ -7,7 +7,6 @@
     <AssemblyName>MP2-Server</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <ApplicationIcon>MP2.ico</ApplicationIcon>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <StartupObject>MediaPortal.Server.ApplicationLauncher</StartupObject>
     <LargeAddressAware>true</LargeAddressAware>
     <UseWindowsForms>true</UseWindowsForms>
@@ -19,7 +18,6 @@
     <NoWarn>CS3001,CS3003,CS3008</NoWarn>
     <DebugType>full</DebugType>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>..\..\..\Bin\MP2-Server\bin\Release\</OutputPath>
@@ -27,7 +25,6 @@
     <Optimize>true</Optimize>
     <NoWarn>CS3001,CS3003,CS3008</NoWarn>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>

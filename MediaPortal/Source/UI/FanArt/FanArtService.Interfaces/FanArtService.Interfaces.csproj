@@ -5,7 +5,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Extensions.UserServices.FanArtService.Interfaces</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />

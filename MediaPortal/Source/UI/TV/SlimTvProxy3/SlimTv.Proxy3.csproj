@@ -5,7 +5,6 @@
     <RootNamespace>MediaPortal.Plugins.SlimTv.Service</RootNamespace>
     <AssemblyName>SlimTv.Proxy3</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

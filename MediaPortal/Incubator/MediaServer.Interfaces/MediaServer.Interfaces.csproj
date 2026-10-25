@@ -4,7 +4,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Extensions.MediaServer.Interfaces</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\Source\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

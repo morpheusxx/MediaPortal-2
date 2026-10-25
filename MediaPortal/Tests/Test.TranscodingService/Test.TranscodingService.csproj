@@ -5,7 +5,6 @@
     <RootNamespace>Test.TranscodingService</RootNamespace>
     <AssemblyName>Test.TranscodingService</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\Source\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

@@ -4,7 +4,6 @@
         <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Plugins.SystemStateMenu</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

@@ -10,7 +10,6 @@
     <OutputPath>bin\Test\</OutputPath>
     <DefineConstants>TRACE;DEBUG;TEST</DefineConstants>
     <DocumentationFile>bin\Debug\HttpServer.XML</DocumentationFile>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\MediaPortal.Common\VersionInfo\VersionInfo.cs">

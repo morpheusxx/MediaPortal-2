@@ -5,7 +5,6 @@
     <AssemblyName>MP2-LogCollector</AssemblyName>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\Source\</SolutionDir>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <StartupObject>MediaPortal.LogCollector.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>

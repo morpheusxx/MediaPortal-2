@@ -5,7 +5,6 @@
     <RootNamespace>MediaPortal.Plugins.SlimTv.Service35</RootNamespace>
     <AssemblyName>SlimTv.Service35</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>

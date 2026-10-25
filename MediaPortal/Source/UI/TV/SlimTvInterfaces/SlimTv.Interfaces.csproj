@@ -4,7 +4,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Plugins.SlimTv.Interfaces</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

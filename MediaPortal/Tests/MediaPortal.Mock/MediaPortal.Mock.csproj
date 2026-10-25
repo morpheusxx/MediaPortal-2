@@ -5,7 +5,6 @@
     <RootNamespace>MediaPortal.Mock</RootNamespace>
     <AssemblyName>MediaPortal.Mock</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\Source\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

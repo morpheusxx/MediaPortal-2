@@ -5,7 +5,6 @@
     <RootNamespace>WakeOnLan.Server</RootNamespace>
     <AssemblyName>WakeOnLan.Server</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\..\..\Core\MediaPortal.Common\VersionInfo\VersionInfo.cs">

@@ -5,7 +5,6 @@
     <RootNamespace>MediaPortal.Plugins.SlimTv.SlimTvResources</RootNamespace>
     <AssemblyName>SlimTv.Resources</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <!--required for assemblies from nuget packages to be copied to output folder, so our build.targets can copy them further -->

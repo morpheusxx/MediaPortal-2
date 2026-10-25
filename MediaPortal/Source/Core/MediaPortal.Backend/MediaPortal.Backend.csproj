@@ -4,7 +4,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Backend</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\MediaPortal.Common\VersionInfo\VersionInfo.cs">

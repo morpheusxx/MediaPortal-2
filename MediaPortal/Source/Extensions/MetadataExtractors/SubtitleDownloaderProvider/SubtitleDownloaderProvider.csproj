@@ -4,7 +4,6 @@
     <OutputType>Library</OutputType>
     <RootNamespace>MediaPortal.Extensions.MetadataExtractors.SubtitleDownloaderProvider</RootNamespace>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
